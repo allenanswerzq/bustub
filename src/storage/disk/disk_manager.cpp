@@ -36,36 +36,32 @@ DiskManager::DiskManager(const std::string &db_file)
     LOG_DEBUG("wrong file format");
     return;
   }
+
   log_name_ = file_name_.substr(0, n) + ".log";
 
-  log_io_.open(log_name_, std::ios::binary | std::ios::in | std::ios::app | std::ios::out);
-  // directory or file does not exist
-  if (!log_io_.is_open()) {
-    log_io_.clear();
-    // create a new file
-    log_io_.open(log_name_, std::ios::binary | std::ios::trunc | std::ios::app | std::ios::out);
-    log_io_.close();
-    // reopen with original mode
-    log_io_.open(log_name_, std::ios::binary | std::ios::in | std::ios::app | std::ios::out);
-    if (!log_io_.is_open()) {
-      throw Exception("can't open dblog file");
-    }
+  if (!OpenOrCreateFile(log_name_, log_io_)) {
+    throw Exception("can't open dblog file");
   }
 
-  db_io_.open(db_file, std::ios::binary | std::ios::in | std::ios::out);
-  // directory or file does not exist
-  if (!db_io_.is_open()) {
-    db_io_.clear();
-    // create a new file
-    db_io_.open(db_file, std::ios::binary | std::ios::trunc | std::ios::out);
-    db_io_.close();
-    // reopen with original mode
-    db_io_.open(db_file, std::ios::binary | std::ios::in | std::ios::out);
-    if (!db_io_.is_open()) {
-      throw Exception("can't open db file");
-    }
+  if (!OpenOrCreateFile(db_file, db_io_)) {
+    throw Exception("can't open db file");
   }
+
   buffer_used = nullptr;
+}
+
+bool DiskManager::OpenOrCreateFile(const std::string &filename, std::fstream &fs) {
+  fs.open(filename, std::ios::binary | std::ios::in | std::ios::app | std::ios::out);
+  // directory or file does not exist
+  if (!fs.is_open()) {
+    fs.clear();
+    // create a new file
+    fs.open(filename, std::ios::binary | std::ios::trunc | std::ios::app | std::ios::out);
+    fs.close();
+    // reopen with original mode
+    fs.open(filename, std::ios::binary | std::ios::in | std::ios::app | std::ios::out);
+  }
+  return fs.is_open();
 }
 
 /**

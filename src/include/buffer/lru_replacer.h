@@ -13,6 +13,7 @@
 #pragma once
 
 #include <list>
+#include <map>
 #include <mutex>  // NOLINT
 #include <vector>
 
@@ -46,7 +47,16 @@ class LRUReplacer : public Replacer {
   size_t Size() override;
 
  private:
-  // TODO(student): implement me!
+  // Move a frame id to the top
+  void Top(frame_id_t id);
+
+  bool Exist(frame_id_t id);
+
+  size_t num_pages_;
+  std::mutex mutex_;
+  std::list<size_t> li_;
+  using iterator = decltype(li_.begin());
+  std::map<int, iterator> mp_;
 };
 
 }  // namespace bustub

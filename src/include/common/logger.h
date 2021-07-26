@@ -34,6 +34,7 @@
  */
 
 #include <ctime>
+#include <iostream>
 #include <string>
 
 namespace bustub {
@@ -197,6 +198,40 @@ inline void OutputLogHeader(const char *file, int line, const char *func, int le
   // PAVLO: DO NOT CHANGE THIS
   ::fprintf(LOG_OUTPUT_STREAM, "%s [%s:%d:%s] %s - ", time_str, file, line, func, type);
 }
+
+class LogMessage {
+ public:
+  LogMessage(const char *file, int line) : log_stream_(std::cerr) {
+    time_t t = ::time(nullptr);
+    tm *curTime = localtime(&t);  // NOLINT
+    char time_str[32];            // FIXME
+    ::strftime(time_str, 32, LOG_LOG_TIME_FORMAT, curTime);
+    log_stream_ << "[" << time_str << "] " << file << ":" << line << ": ";
+  }
+
+  ~LogMessage() { log_stream_ << '\n'; }
+  std::ostream &stream() { return log_stream_; }
+
+ protected:
+  std::ostream &log_stream_;
+
+ private:
+  LogMessage(const LogMessage &);
+  void operator=(const LogMessage &);
+};
+
+class LogMessageFatal : public LogMessage {
+ public:
+  LogMessageFatal(const char *file, int line) : LogMessage(file, line) {}
+  ~LogMessageFatal() { abort(); }
+
+ private:
+  LogMessageFatal(const LogMessageFatal &);
+  void operator=(const LogMessageFatal &);
+};
+
+#define CHECK(x) \
+  if (!(x)) LogMessageFatal(__FILE__, __LINE__).stream() << "Check failed: " #x << ": "
 
 }  // namespace bustub
 

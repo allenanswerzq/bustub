@@ -40,10 +40,13 @@ class ReaderWriterLatch {
   void WLock() {
     std::unique_lock<mutex_t> latch(mutex_);
     while (writer_entered_) {
+      // Wait the last write finishes.
       reader_.wait(latch);
     }
+    // No writes happening now, but may still have reads running.
     writer_entered_ = true;
     while (reader_count_ > 0) {
+      // Writer waits all reads finishes
       writer_.wait(latch);
     }
   }
@@ -54,6 +57,7 @@ class ReaderWriterLatch {
   void WUnlock() {
     std::lock_guard<mutex_t> guard(mutex_);
     writer_entered_ = false;
+    // Notify all to let the waiting writers and readers to compete
     reader_.notify_all();
   }
 

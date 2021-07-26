@@ -102,6 +102,9 @@ class DiskManager {
 
  private:
   int GetFileSize(const std::string &file_name);
+
+  bool OpenOrCreateFile(const std::string &file_name, std::fstream &fs);
+
   // stream to write log file
   std::fstream log_io_;
   std::string log_name_;
