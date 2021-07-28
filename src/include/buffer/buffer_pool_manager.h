@@ -97,6 +97,8 @@ class BufferPoolManager {
   /** @return size of the buffer pool */
   size_t GetPoolSize() { return pool_size_; }
 
+  void DebugBufferPool() const;
+
  protected:
   /**
    * Grading function. Do not modify!
@@ -151,6 +153,9 @@ class BufferPoolManager {
    * Flushes all the pages in the buffer pool to disk.
    */
   void FlushAllPagesImpl();
+
+  // Whether a page already in this buffer pool
+  bool Exist(page_id_t page_id);
 
   /** Number of pages in the buffer pool. */
   size_t pool_size_;
