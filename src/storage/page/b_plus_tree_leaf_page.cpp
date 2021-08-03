@@ -13,6 +13,7 @@
 
 #include "common/exception.h"
 #include "common/rid.h"
+#include "common/logger.h"
 #include "storage/page/b_plus_tree_leaf_page.h"
 
 namespace bustub {
@@ -69,6 +70,8 @@ int B_PLUS_TREE_LEAF_PAGE_TYPE::KeyIndex(const KeyType &key, const KeyComparator
  */
 INDEX_TEMPLATE_ARGUMENTS
 KeyType B_PLUS_TREE_LEAF_PAGE_TYPE::KeyAt(int index) const {
+  // LOG_DEBUG("kay at %d : %d : %d", index, (int) array_.size(), GetSize());
+  CHECK(index < (int) array_.size());
   return array_[index].first;
 }
 
@@ -101,29 +104,56 @@ int B_PLUS_TREE_LEAF_PAGE_TYPE::Insert(const KeyType &key, const ValueType &valu
       }
     }
   }
+  SetSize(array_.size());
+  DebugOutput();
   return array_.size();
 }
 
 /*****************************************************************************
  * SPLIT
  *****************************************************************************/
+INDEX_TEMPLATE_ARGUMENTS
+void B_PLUS_TREE_LEAF_PAGE_TYPE::SetArray(const std::vector<MappingType> & array) {
+  CHECK(array_.empty());
+  array_ = array;
+  SetSize(array_.size());
+}
+
+INDEX_TEMPLATE_ARGUMENTS
+void B_PLUS_TREE_LEAF_PAGE_TYPE::DebugOutput() {
+  LOG_INFO(">>>>>>>>>>>>> left page %d, %d", GetPageId(), (int) array_.size());
+  for (size_t i = 0; i < array_.size(); i++) {
+    std::ostringstream oss;
+    oss << i << " " << KeyAt(i) << " : " << array_[i].second;
+    LOG_INFO("KEY: %s", oss.str().c_str());
+  }
+}
+
+
 /*
  * Remove half of key & value pairs from this page to "recipient" page
  */
 INDEX_TEMPLATE_ARGUMENTS
 void B_PLUS_TREE_LEAF_PAGE_TYPE::MoveHalfTo(BPlusTreeLeafPage *recipient) {
   CHECK(recipient->GetSize() == 0) << "Expected recipient is empty.";
-  CHECK(GetSize() + 1 == GetMaxSize());
+  // CHECK(GetSize() == GetMaxSize());
 
-  size_t half = GetMaxSize() / 2;
+  size_t half = GetSize() / 2;
+  std::vector<MappingType> give;
   while (array_.size() > half) {
-    // TODO: check this
-    recipient->Insert(key, value, KeyComparator());
-    array_.size().pop_back();
+    give.push_back(array_.back());
+    array_.pop_back();
   }
 
+  std::reverse(give.begin(), give.end());
+  recipient->SetArray(give);
+
   // Chain these two node together
+  int next_page = next_page_id_;
   next_page_id_ = recipient->GetPageId();
+  recipient->SetNextPageId(next_page);
+
+  SetSize(array_.size());
 }
 
 /*
@@ -143,7 +173,7 @@ void B_PLUS_TREE_LEAF_PAGE_TYPE::CopyNFrom(MappingType *items, int size) {}
 INDEX_TEMPLATE_ARGUMENTS
 bool B_PLUS_TREE_LEAF_PAGE_TYPE::Lookup(const KeyType &key, ValueType *value, const KeyComparator &comparator) const {
   for (size_t i = 0; i < array_.size(); i++) {
-    if (comparator(KeyAt(i), key)) {
+    if (comparator(KeyAt(i), key) == 0) {
       if (value) {
         *value = array_[i].second;
       }
@@ -215,4 +245,5 @@ template class BPlusTreeLeafPage<GenericKey<8>, RID, GenericComparator<8>>;
 template class BPlusTreeLeafPage<GenericKey<16>, RID, GenericComparator<16>>;
 template class BPlusTreeLeafPage<GenericKey<32>, RID, GenericComparator<32>>;
 template class BPlusTreeLeafPage<GenericKey<64>, RID, GenericComparator<64>>;
+template class BPlusTreeLeafPage<int, int, std::less<int>>;
 }  // namespace bustub

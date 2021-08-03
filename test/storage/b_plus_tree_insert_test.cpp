@@ -4,6 +4,7 @@
 
 #include <algorithm>
 #include <cstdio>
+#include <iostream>
 
 #include "b_plus_tree_test_util.h"  // NOLINT
 #include "buffer/buffer_pool_manager.h"
@@ -12,7 +13,50 @@
 
 namespace bustub {
 
-TEST(BPlusTreeTests, DISABLED_InsertTest1) {
+TEST(BPlusTreeTests, InsertTest0) {
+  // create KeyComparator and index schema
+  Schema *key_schema = ParseCreateStatement("a bigint");
+  GenericComparator<8> comparator(key_schema);
+
+  DiskManager *disk_manager = new DiskManager("test.db");
+  BufferPoolManager *bpm = new BufferPoolManager(50, disk_manager);
+
+  BPlusTree<int, int, std::less<int>> tree("foo_pk", bpm, std::less<int>{}, 2, 3);
+
+  // create transaction
+  Transaction *transaction = new Transaction(0);
+
+  // create and fetch header_page
+  page_id_t page_id;
+  auto header_page = bpm->NewPage(&page_id);
+  (void)header_page;
+  EXPECT_EQ(page_id, 0);
+
+  for (int i = 0; i < 30; i++) {
+    tree.Insert(i, i, transaction);
+  }
+
+  std::vector<int> value;
+  for (int i = 0; i < 30; i++) {
+    value.clear();
+    tree.GetValue(i, &value);
+    EXPECT_EQ(value.size(), 1);
+    EXPECT_EQ(value[0], i);
+  }
+
+  tree.Draw(bpm, "tree.dot");
+
+  bpm->UnpinPage(HEADER_PAGE_ID, true);
+  delete key_schema;
+  delete transaction;
+  delete disk_manager;
+  delete bpm;
+  remove("test.db");
+  remove("test.log");
+}
+
+
+TEST(BPlusTreeTests, InsertTest1) {
   // create KeyComparator and index schema
   Schema *key_schema = ParseCreateStatement("a bigint");
   GenericComparator<8> comparator(key_schema);
@@ -71,7 +115,7 @@ TEST(BPlusTreeTests, DISABLED_InsertTest1) {
   remove("test.log");
 }
 
-TEST(BPlusTreeTests, DISABLED_InsertTest2) {
+TEST(BPlusTreeTests, InsertTest2) {
   // create KeyComparator and index schema
   Schema *key_schema = ParseCreateStatement("a bigint");
   GenericComparator<8> comparator(key_schema);

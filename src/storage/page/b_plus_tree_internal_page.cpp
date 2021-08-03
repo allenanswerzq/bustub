@@ -38,6 +38,7 @@ void B_PLUS_TREE_INTERNAL_PAGE_TYPE::Init(page_id_t page_id, page_id_t parent_id
  */
 INDEX_TEMPLATE_ARGUMENTS
 KeyType B_PLUS_TREE_INTERNAL_PAGE_TYPE::KeyAt(int index) const {
+  CHECK(index < (int) array_.size());
   return array_[index].first;
 }
 
@@ -81,8 +82,8 @@ INDEX_TEMPLATE_ARGUMENTS
 ValueType B_PLUS_TREE_INTERNAL_PAGE_TYPE::Lookup(const KeyType &key, const KeyComparator &comparator) const {
   for (size_t i = 1; i < array_.size(); i++) {
     // k[i] <= key < k[i + 1]
-    if (comparator(key, KeyAt(i)) <= 0) {
-      return i - 1;
+    if (comparator(KeyAt(i), key) > 0) {
+      return ValueAt(i - 1);
     }
   }
   return array_.back().second;
@@ -100,6 +101,39 @@ ValueType B_PLUS_TREE_INTERNAL_PAGE_TYPE::Lookup(const KeyType &key, const KeyCo
 INDEX_TEMPLATE_ARGUMENTS
 void B_PLUS_TREE_INTERNAL_PAGE_TYPE::PopulateNewRoot(const ValueType &old_value, const KeyType &new_key,
                                                      const ValueType &new_value) {
+  CHECK(array_.empty());
+  // TODO: check this
+  array_.push_back({/*dummy*/new_key, old_value});
+  array_.push_back({new_key, new_value});
+}
+
+INDEX_TEMPLATE_ARGUMENTS
+void B_PLUS_TREE_INTERNAL_PAGE_TYPE::DebugOutput() {
+  LOG_INFO(">>>>>>>>>>>>> internal page %d, %d", GetPageId(), (int) array_.size());
+  for (size_t i = 0; i < array_.size(); i++) {
+    std::ostringstream oss;
+    oss << i << " " << KeyAt(i) << " : " << ValueAt(i);
+    LOG_INFO("KEY: %s", oss.str().c_str());
+  }
+}
+
+
+INDEX_TEMPLATE_ARGUMENTS
+int B_PLUS_TREE_INTERNAL_PAGE_TYPE::Insert(const KeyType &key, const ValueType &value, const KeyComparator &comparator) {
+  if (array_.empty()) {
+    array_.push_back({key, value});
+  }
+  else {
+    for (size_t i = 1; i < array_.size(); i++) {
+      if (comparator(KeyAt(i), key) > 0) {
+        array_.insert(array_.begin() + i, {key, value});
+        break;
+      }
+    }
+  }
+  SetSize(array_.size());
+  DebugOutput();
+  return array_.size();
 }
 
 /*
@@ -118,12 +152,35 @@ int B_PLUS_TREE_INTERNAL_PAGE_TYPE::InsertNodeAfter(const ValueType &old_value, 
 /*****************************************************************************
  * SPLIT
  *****************************************************************************/
+INDEX_TEMPLATE_ARGUMENTS
+void B_PLUS_TREE_INTERNAL_PAGE_TYPE::SetArray(const std::vector<MappingType> & array) {
+  CHECK(array_.empty());
+  array_ = array;
+  SetSize(array_.size());
+}
+
 /*
  * Remove half of key & value pairs from this page to "recipient" page
  */
 INDEX_TEMPLATE_ARGUMENTS
-void B_PLUS_TREE_INTERNAL_PAGE_TYPE::MoveHalfTo(BPlusTreeInternalPage *recipient,
-                                                BufferPoolManager *buffer_pool_manager) {
+void B_PLUS_TREE_INTERNAL_PAGE_TYPE::MoveHalfTo(BPlusTreeInternalPage *recipient) {
+  CHECK(recipient->GetSize() == 0) << "Expected recipient is empty.";
+
+  size_t half = (GetMaxSize() + 1) / 2;
+  std::vector<MappingType> give;
+  while (array_.size() > half) {
+    give.push_back(array_.back());
+    array_.pop_back();
+  }
+
+  std::reverse(give.begin(), give.end());
+  recipient->SetArray(give);
+
+  LOG_DEBUG("===============");
+  DebugOutput();
+  recipient->DebugOutput();
+
+  SetSize(array_.size());
 }
 
 /* Copy entries into me, starting from {items} and copy {size} entries.
@@ -213,4 +270,6 @@ template class BPlusTreeInternalPage<GenericKey<8>, page_id_t, GenericComparator
 template class BPlusTreeInternalPage<GenericKey<16>, page_id_t, GenericComparator<16>>;
 template class BPlusTreeInternalPage<GenericKey<32>, page_id_t, GenericComparator<32>>;
 template class BPlusTreeInternalPage<GenericKey<64>, page_id_t, GenericComparator<64>>;
+template class BPlusTreeInternalPage<int, int, std::less<int>>;
+
 }  // namespace bustub

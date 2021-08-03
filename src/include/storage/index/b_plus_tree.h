@@ -14,6 +14,7 @@
 #include <string>
 #include <vector>
 
+#include "common/logger.h"
 #include "concurrency/transaction.h"
 #include "storage/index/index_iterator.h"
 #include "storage/page/b_plus_tree_internal_page.h"
