@@ -534,6 +534,7 @@ template class BPlusTree<GenericKey<8>, RID, GenericComparator<8>>;
 template class BPlusTree<GenericKey<16>, RID, GenericComparator<16>>;
 template class BPlusTree<GenericKey<32>, RID, GenericComparator<32>>;
 template class BPlusTree<GenericKey<64>, RID, GenericComparator<64>>;
-template class BPlusTree<int, int, std::less<int>>;
+template class BPlusTree<int, int, IntegerComparator<true>>;
+template class BPlusTree<int, int, IntegerComparator<false>>;
 
 }  // namespace bustub

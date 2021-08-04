@@ -103,4 +103,20 @@ class GenericComparator {
   Schema *key_schema_;
 };
 
+
+template <bool order=true>
+class IntegerComparator {
+ public:
+  inline int operator()(const int & lhs, const int & rhs) const {
+    if (lhs < rhs) {
+      return order ? -1 : 1;
+    }
+    else if (lhs > rhs) {
+      return order ? 1 : -1;
+    }
+    else {
+      return 0;
+    }
+  }
+};
 }  // namespace bustub

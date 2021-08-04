@@ -36,6 +36,7 @@ template class IndexIterator<GenericKey<32>, RID, GenericComparator<32>>;
 
 template class IndexIterator<GenericKey<64>, RID, GenericComparator<64>>;
 
-template class IndexIterator<int, int, std::less<int>>;
+template class IndexIterator<int, int, IntegerComparator<true>>;
+template class IndexIterator<int, int, IntegerComparator<false>>;
 
 }  // namespace bustub

@@ -245,5 +245,6 @@ template class BPlusTreeLeafPage<GenericKey<8>, RID, GenericComparator<8>>;
 template class BPlusTreeLeafPage<GenericKey<16>, RID, GenericComparator<16>>;
 template class BPlusTreeLeafPage<GenericKey<32>, RID, GenericComparator<32>>;
 template class BPlusTreeLeafPage<GenericKey<64>, RID, GenericComparator<64>>;
-template class BPlusTreeLeafPage<int, int, std::less<int>>;
+template class BPlusTreeLeafPage<int, int, IntegerComparator<true>>;
+template class BPlusTreeLeafPage<int, int, IntegerComparator<false>>;
 }  // namespace bustub
