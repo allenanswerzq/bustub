@@ -13,15 +13,15 @@
 
 namespace bustub {
 
-TEST(BPlusTreeTests, InsertTest0) {
+TEST(BPlusTreeTests, DISABLED_InsertTest0) {
   // create KeyComparator and index schema
   Schema *key_schema = ParseCreateStatement("a bigint");
   GenericComparator<8> comparator(key_schema);
 
   DiskManager *disk_manager = new DiskManager("test.db");
-  BufferPoolManager *bpm = new BufferPoolManager(50, disk_manager);
+  BufferPoolManager *bpm = new BufferPoolManager(100, disk_manager);
 
-  BPlusTree<int, int, std::less<int>> tree("foo_pk", bpm, std::less<int>{}, 2, 3);
+  BPlusTree<int, int, IntegerComparator<false>> tree("foo_pk", bpm, IntegerComparator<false>{}, 2, 3);
 
   // create transaction
   Transaction *transaction = new Transaction(0);
@@ -32,14 +32,16 @@ TEST(BPlusTreeTests, InsertTest0) {
   (void)header_page;
   EXPECT_EQ(page_id, 0);
 
+  std::vector<int> inserts;
   for (int i = 0; i < 30; i++) {
-    tree.Insert(i, i, transaction);
+    inserts.push_back(RandomInt(0, 10000));
+    tree.Insert(inserts[i], i, transaction);
   }
 
   std::vector<int> value;
   for (int i = 0; i < 30; i++) {
     value.clear();
-    tree.GetValue(i, &value);
+    tree.GetValue(inserts[i], &value);
     EXPECT_EQ(value.size(), 1);
     EXPECT_EQ(value[0], i);
   }
@@ -53,10 +55,65 @@ TEST(BPlusTreeTests, InsertTest0) {
   delete bpm;
   remove("test.db");
   remove("test.log");
+  remove("tree.dot");
 }
 
+TEST(BPlusTreeTests, InsertTest3) {
+  // create KeyComparator and index schema
+  Schema *key_schema = ParseCreateStatement("a bigint");
+  GenericComparator<8> comparator(key_schema);
 
-TEST(BPlusTreeTests, InsertTest1) {
+  DiskManager *disk_manager = new DiskManager("test.db");
+  BufferPoolManager *bpm = new BufferPoolManager(50, disk_manager);
+
+  BPlusTree<int, int, IntegerComparator<true>> tree("foo_pk", bpm, IntegerComparator<true>{}, 2, 3);
+
+  // create transaction
+  Transaction *transaction = new Transaction(0);
+
+  // create and fetch header_page
+  page_id_t page_id;
+  auto header_page = bpm->NewPage(&page_id);
+  (void)header_page;
+  EXPECT_EQ(page_id, 0);
+
+  // Test insert
+  for (int i = 0; i < 30; i++) {
+    tree.Insert(i, i, transaction);
+  }
+
+  // Test point search
+  std::vector<int> value;
+  for (int i = 0; i < 30; i++) {
+    value.clear();
+    tree.GetValue(i, &value);
+    EXPECT_EQ(value.size(), 1);
+    EXPECT_EQ(value[0], i);
+  }
+
+  // Test range scan
+  int i = 0;
+  for (auto it = tree.Begin(0); it != tree.end(); it++, i++) {
+    int val1 = (*it).second;
+    int val2 = it->second;
+    EXPECT_EQ(val1, val2);
+    EXPECT_EQ(val1, i);
+  }
+  EXPECT_EQ(i, 30);
+
+  tree.Draw(bpm, "tree.dot");
+
+  bpm->UnpinPage(HEADER_PAGE_ID, true);
+  delete key_schema;
+  delete transaction;
+  delete disk_manager;
+  delete bpm;
+  remove("test.db");
+  remove("test.log");
+  // remove("tree.dot");
+}
+
+TEST(BPlusTreeTests, DISABLED_InsertTest1) {
   // create KeyComparator and index schema
   Schema *key_schema = ParseCreateStatement("a bigint");
   GenericComparator<8> comparator(key_schema);
@@ -115,7 +172,7 @@ TEST(BPlusTreeTests, InsertTest1) {
   remove("test.log");
 }
 
-TEST(BPlusTreeTests, InsertTest2) {
+TEST(BPlusTreeTests, DISABLED_InsertTest2) {
   // create KeyComparator and index schema
   Schema *key_schema = ParseCreateStatement("a bigint");
   GenericComparator<8> comparator(key_schema);

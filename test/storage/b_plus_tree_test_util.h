@@ -16,6 +16,7 @@
 #include <algorithm>
 #include <cstring>
 #include <iostream>
+#include <random>
 #include <string>
 #include <vector>
 
@@ -85,6 +86,12 @@ Schema *ParseCreateStatement(const std::string &sql_base) {
   // LOG_DEBUG("%s", schema->ToString().c_str());
 
   return schema;
+}
+
+int RandomInt(int lo, int hi) {
+  std::random_device rd;
+  std::uniform_int_distribution<int> dist(lo, hi);
+  return dist(rd);
 }
 
 }  // namespace bustub
