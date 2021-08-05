@@ -43,7 +43,7 @@ Page *BufferPoolManager::FetchPageImpl(page_id_t page_id) {
   // 3.     Delete R from the page table and insert P.
   // 4.     Update P's metadata, read in the page content from disk, and then return a pointer to P.
   if (Exist(page_id)) {
-    LOG_INFO("Fetching from the exising #page %d", page_id);
+    LOG(DEBUG) << "Fetching from the exising #page " << page_id;
     // If this page is alreay in buffer pool, simply returns it
     Page *page = &pages_[page_table_[page_id]];
     page->pin_count_++;
@@ -68,7 +68,7 @@ Page *BufferPoolManager::FetchPageImpl(page_id_t page_id) {
       // No place to put this page.
       return nullptr;
     }
-    LOG_INFO("Fetching a new #page %d to frame %d", page_id, frame_id);
+    LOG(DEBUG) << "Fetching a new #page " << page_id << " to frame " << frame_id;
     Page *page = &pages_[frame_id];
     if (page->is_dirty_) {
       disk_manager_->WritePage(page->page_id_, page->GetData());
@@ -85,7 +85,7 @@ Page *BufferPoolManager::FetchPageImpl(page_id_t page_id) {
 
 bool BufferPoolManager::UnpinPageImpl(page_id_t page_id, bool is_dirty) {
   CHECK(Exist(page_id)) << "Expected page exists.";
-  LOG_INFO("Unpinning #page: %d", page_id);
+  LOG(DEBUG) << "Unpinning #page: " << page_id;
   Page *page = &pages_[page_table_[page_id]];
   if (page->pin_count_ <= 0) {
     // Already unpinned before.
@@ -108,7 +108,7 @@ bool BufferPoolManager::FlushPageImpl(page_id_t page_id) {
   if (!Exist(page_id)) {
     return false;
   } else {
-    LOG_INFO("Flusing # page: %d", page_id);
+    LOG(DEBUG) << "Flusing # page: " << page_id;
     Page *page = &pages_[page_table_[page_id]];
     disk_manager_->WritePage(page_id, page->GetData());
     page->is_dirty_ = false;
@@ -129,16 +129,15 @@ Page *BufferPoolManager::NewPageImpl(page_id_t *page_id) {
     frame_id = free_list_.front();
     free_list_.erase(free_list_.begin());
   } else if (replacer_->Size() > 0) {
-      page_id_t page_id;
-      CHECK(replacer_->Victim(&page_id));
-      // Remove this frame from the replacer_
-      replacer_->Pin(page_id);
-      frame_id = page_table_[page_id];
-      page_table_.erase(page_id);
+    page_id_t page_id;
+    CHECK(replacer_->Victim(&page_id));
+    // Remove this frame from the replacer_
+    replacer_->Pin(page_id);
+    frame_id = page_table_[page_id];
+    page_table_.erase(page_id);
   } else {
     return nullptr;
   }
-  LOG_DEBUG("NewPage: Using #frame: %d for #page: %d", frame_id, new_page_id);
   CHECK(frame_id != -1) << "Expected find a free frame.";
   Page *page = &pages_[frame_id];
   page->ResetMemory();
@@ -181,12 +180,5 @@ void BufferPoolManager::FlushAllPagesImpl() {
 }
 
 bool BufferPoolManager::Exist(page_id_t page_id) { return page_table_.find(page_id) != page_table_.end(); }
-
-void BufferPoolManager::DebugBufferPool() const {
-  for (int i = 0; i < static_cast<int>(pool_size_); i++) {
-    Page * page = &pages_[i];
-    LOG_DEBUG("#Frame %d --> #Page %d: pin_count: %d", i, page->page_id_, page->pin_count_);
-  }
-}
 
 }  // namespace bustub

@@ -97,8 +97,6 @@ class BufferPoolManager {
   /** @return size of the buffer pool */
   size_t GetPoolSize() { return pool_size_; }
 
-  void DebugBufferPool() const;
-
  protected:
   /**
    * Grading function. Do not modify!

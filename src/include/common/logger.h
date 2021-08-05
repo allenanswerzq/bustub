@@ -199,13 +199,32 @@ inline void OutputLogHeader(const char *file, int line, const char *func, int le
   ::fprintf(LOG_OUTPUT_STREAM, "%s [%s:%d:%s] %s - ", time_str, file, line, func, type);
 }
 
+//------------------------------------------------------------------------------
+// Get debug option from env variable.
+inline bool DebugLoggingEnabled() {
+  static int state = 0;
+  if (state == 0) {
+    if (auto var = std::getenv("BUSTUB_LOG_DEBUG")) {
+      if (std::string(var) == "1") {
+        state = 1;
+      } else {
+        state = -1;
+      }
+    } else {
+      // by default hide debug logging.
+      state = -1;
+    }
+  }
+  return state == 1;
+}
+
 class LogMessage {
  public:
   LogMessage(const char *file, int line) : log_stream_(std::cerr) {
     time_t t = ::time(nullptr);
     tm *curTime = localtime(&t);  // NOLINT
     char time_str[32];            // FIXME
-    ::strftime(time_str, 32, LOG_LOG_TIME_FORMAT, curTime);
+    ::strftime(time_str, 32, "%Y-%m-%d %H:%M:%S", curTime);
     log_stream_ << "[" << time_str << "] " << file << ":" << line << ": ";
   }
 
@@ -230,8 +249,29 @@ class LogMessageFatal : public LogMessage {
   void operator=(const LogMessageFatal &);
 };
 
+// This class is used to explicitly ignore values in the conditional
+// logging macros.  This avoids compiler warnings like "value computed
+// is not used" and "statement has no effect".
+class LogMessageVoidify {
+ public:
+  LogMessageVoidify() {}
+  // This has to be an operator with a precedence lower than << but
+  // higher than "?:". See its usage.
+#if !defined(_LIBCPP_SGX_NO_IOSTREAMS)
+  void operator&(std::ostream &) {}
+#endif
+};
+
 #define CHECK(x) \
   if (!(x)) LogMessageFatal(__FILE__, __LINE__).stream() << "Check failed: " #x << ": "
+
+#define LOG(severity) MY_LOG_##severity
+#define LOG_IF(severity, condition) !(condition) ? (void)0 : LogMessageVoidify() & LOG(severity)
+
+#define MY_LOG_DEBUG \
+  if (DebugLoggingEnabled()) LogMessage(__FILE__, __LINE__).stream()
+#define MY_LOG_INFO LogMessage(__FILE__, __LINE__).stream()
+#define MY_LOG_FATAL LogMessageFatal(__FILE__, __LINE__).stream()
 
 }  // namespace bustub
 

@@ -38,14 +38,12 @@ void B_PLUS_TREE_INTERNAL_PAGE_TYPE::Init(page_id_t page_id, page_id_t parent_id
  */
 INDEX_TEMPLATE_ARGUMENTS
 KeyType B_PLUS_TREE_INTERNAL_PAGE_TYPE::KeyAt(int index) const {
-  CHECK(index < (int) array_.size());
+  CHECK(index < (int)array_.size());
   return array_[index].first;
 }
 
 INDEX_TEMPLATE_ARGUMENTS
-void B_PLUS_TREE_INTERNAL_PAGE_TYPE::SetKeyAt(int index, const KeyType &key) {
-  array_[index].first = key;
-}
+void B_PLUS_TREE_INTERNAL_PAGE_TYPE::SetKeyAt(int index, const KeyType &key) { array_[index].first = key; }
 
 /*
  * Helper method to find and return array index(or offset), so that its value
@@ -66,9 +64,7 @@ int B_PLUS_TREE_INTERNAL_PAGE_TYPE::ValueIndex(const ValueType &value) const {
  * offset)
  */
 INDEX_TEMPLATE_ARGUMENTS
-ValueType B_PLUS_TREE_INTERNAL_PAGE_TYPE::ValueAt(int index) const {
-  return array_[index].second;
-}
+ValueType B_PLUS_TREE_INTERNAL_PAGE_TYPE::ValueAt(int index) const { return array_[index].second; }
 
 /*****************************************************************************
  * LOOKUP
@@ -103,32 +99,49 @@ void B_PLUS_TREE_INTERNAL_PAGE_TYPE::PopulateNewRoot(const ValueType &old_value,
                                                      const ValueType &new_value) {
   CHECK(array_.empty());
   // TODO: check this
-  array_.push_back({/*dummy*/new_key, old_value});
+  array_.push_back({/*dummy*/ new_key, old_value});
   array_.push_back({new_key, new_value});
 }
 
 INDEX_TEMPLATE_ARGUMENTS
 void B_PLUS_TREE_INTERNAL_PAGE_TYPE::DebugOutput() {
-  LOG_INFO(">>>>>>>>>>>>> internal page %d, %d", GetPageId(), (int) array_.size());
+  LOG(DEBUG) << ">>>>>>>>>>>>> internal page " << GetPageId() << " has size: " << array_.size();
   for (size_t i = 0; i < array_.size(); i++) {
-    std::ostringstream oss;
-    oss << i << " " << KeyAt(i) << " : " << ValueAt(i);
-    LOG_INFO("KEY: %s", oss.str().c_str());
+    LOG(DEBUG) << i << " "
+              << "key: " << KeyAt(i) << " value: " << ValueAt(i);
   }
 }
 
+INDEX_TEMPLATE_ARGUMENTS
+KeyType B_PLUS_TREE_INTERNAL_PAGE_TYPE::GetMininumKey(const KeyComparator &comparator) const {
+  CHECK(array_.size() > 1);
+  // NOTE: the first key is valid after spliting a internal node
+  KeyType ans = KeyAt(0);
+  for (size_t i = 1; i < array_.size(); i++) {
+    if (comparator(KeyAt(i), ans) < 0) {
+      ans = KeyAt(i);
+    }
+  }
+  return ans;
+}
 
 INDEX_TEMPLATE_ARGUMENTS
-int B_PLUS_TREE_INTERNAL_PAGE_TYPE::Insert(const KeyType &key, const ValueType &value, const KeyComparator &comparator) {
+int B_PLUS_TREE_INTERNAL_PAGE_TYPE::Insert(const KeyType &key, const ValueType &value,
+                                           const KeyComparator &comparator) {
   if (array_.empty()) {
+    array_.push_back({/*invaild*/ key, value});
     array_.push_back({key, value});
-  }
-  else {
+  } else {
+    bool ok = false;
     for (size_t i = 1; i < array_.size(); i++) {
       if (comparator(KeyAt(i), key) > 0) {
         array_.insert(array_.begin() + i, {key, value});
+        ok = true;
         break;
       }
+    }
+    if (!ok) {
+      array_.push_back({key, value});
     }
   }
   SetSize(array_.size());
@@ -153,7 +166,7 @@ int B_PLUS_TREE_INTERNAL_PAGE_TYPE::InsertNodeAfter(const ValueType &old_value, 
  * SPLIT
  *****************************************************************************/
 INDEX_TEMPLATE_ARGUMENTS
-void B_PLUS_TREE_INTERNAL_PAGE_TYPE::SetArray(const std::vector<MappingType> & array) {
+void B_PLUS_TREE_INTERNAL_PAGE_TYPE::SetArray(const std::vector<MappingType> &array) {
   CHECK(array_.empty());
   array_ = array;
   SetSize(array_.size());
@@ -176,7 +189,6 @@ void B_PLUS_TREE_INTERNAL_PAGE_TYPE::MoveHalfTo(BPlusTreeInternalPage *recipient
   std::reverse(give.begin(), give.end());
   recipient->SetArray(give);
 
-  LOG_DEBUG("===============");
   DebugOutput();
   recipient->DebugOutput();
 

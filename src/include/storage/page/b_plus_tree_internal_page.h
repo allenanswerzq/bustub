@@ -42,6 +42,7 @@ class BPlusTreeInternalPage : public BPlusTreePage {
   void SetKeyAt(int index, const KeyType &key);
   int ValueIndex(const ValueType &value) const;
   ValueType ValueAt(int index) const;
+  KeyType GetMininumKey(const KeyComparator &comparator) const;
 
   ValueType Lookup(const KeyType &key, const KeyComparator &comparator) const;
   void PopulateNewRoot(const ValueType &old_value, const KeyType &new_key, const ValueType &new_value);
@@ -51,7 +52,7 @@ class BPlusTreeInternalPage : public BPlusTreePage {
   ValueType RemoveAndReturnOnlyChild();
 
   // Split and Merge utility methods
-  void SetArray(const std::vector<MappingType> & array);
+  void SetArray(const std::vector<MappingType> &array);
   void MoveAllTo(BPlusTreeInternalPage *recipient, const KeyType &middle_key, BufferPoolManager *buffer_pool_manager);
   void MoveHalfTo(BPlusTreeInternalPage *recipient);
   // void MoveHalfTo(BPlusTreeInternalPage *recipient, BufferPoolManager *buffer_pool_manager);
@@ -61,6 +62,7 @@ class BPlusTreeInternalPage : public BPlusTreePage {
                          BufferPoolManager *buffer_pool_manager);
 
   void DebugOutput();
+
  private:
   void CopyNFrom(MappingType *items, int size, BufferPoolManager *buffer_pool_manager);
   void CopyLastFrom(const MappingType &pair, BufferPoolManager *buffer_pool_manager);

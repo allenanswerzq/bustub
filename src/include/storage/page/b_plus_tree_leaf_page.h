@@ -51,6 +51,7 @@ class BPlusTreeLeafPage : public BPlusTreePage {
   KeyType KeyAt(int index) const;
   int KeyIndex(const KeyType &key, const KeyComparator &comparator) const;
   const MappingType &GetItem(int index);
+  KeyType GetMininumKey(const KeyComparator &comparator) const;
 
   // insert and delete methods
   int Insert(const KeyType &key, const ValueType &value, const KeyComparator &comparator);
@@ -58,7 +59,7 @@ class BPlusTreeLeafPage : public BPlusTreePage {
   int RemoveAndDeleteRecord(const KeyType &key, const KeyComparator &comparator);
 
   // Split and Merge utility methods
-  void SetArray(const std::vector<MappingType> & array);
+  void SetArray(const std::vector<MappingType> &array);
   void MoveHalfTo(BPlusTreeLeafPage *recipient);
   void MoveAllTo(BPlusTreeLeafPage *recipient);
   void MoveFirstToEndOf(BPlusTreeLeafPage *recipient);
@@ -71,7 +72,6 @@ class BPlusTreeLeafPage : public BPlusTreePage {
   void CopyLastFrom(const MappingType &item);
   void CopyFirstFrom(const MappingType &item);
   page_id_t next_page_id_;
-
 
   std::vector<MappingType> array_;
 };

@@ -12,8 +12,8 @@
 #include <sstream>
 
 #include "common/exception.h"
-#include "common/rid.h"
 #include "common/logger.h"
+#include "common/rid.h"
 #include "storage/page/b_plus_tree_leaf_page.h"
 
 namespace bustub {
@@ -41,14 +41,10 @@ void B_PLUS_TREE_LEAF_PAGE_TYPE::Init(page_id_t page_id, page_id_t parent_id, in
  * Helper methods to set/get next page id
  */
 INDEX_TEMPLATE_ARGUMENTS
-page_id_t B_PLUS_TREE_LEAF_PAGE_TYPE::GetNextPageId() const {
-  return next_page_id_;
-}
+page_id_t B_PLUS_TREE_LEAF_PAGE_TYPE::GetNextPageId() const { return next_page_id_; }
 
 INDEX_TEMPLATE_ARGUMENTS
-void B_PLUS_TREE_LEAF_PAGE_TYPE::SetNextPageId(page_id_t next_page_id) {
-  next_page_id_ = next_page_id;
-}
+void B_PLUS_TREE_LEAF_PAGE_TYPE::SetNextPageId(page_id_t next_page_id) { next_page_id_ = next_page_id; }
 
 /**
  * Helper method to find the first index i so that array[i].first >= key
@@ -70,8 +66,7 @@ int B_PLUS_TREE_LEAF_PAGE_TYPE::KeyIndex(const KeyType &key, const KeyComparator
  */
 INDEX_TEMPLATE_ARGUMENTS
 KeyType B_PLUS_TREE_LEAF_PAGE_TYPE::KeyAt(int index) const {
-  // LOG_DEBUG("kay at %d : %d : %d", index, (int) array_.size(), GetSize());
-  CHECK(index < (int) array_.size());
+  CHECK(index < (int)array_.size());
   return array_[index].first;
 }
 
@@ -80,13 +75,23 @@ KeyType B_PLUS_TREE_LEAF_PAGE_TYPE::KeyAt(int index) const {
  * "index"(a.k.a array offset)
  */
 INDEX_TEMPLATE_ARGUMENTS
-const MappingType &B_PLUS_TREE_LEAF_PAGE_TYPE::GetItem(int index) {
-  return array_[index];
-}
+const MappingType &B_PLUS_TREE_LEAF_PAGE_TYPE::GetItem(int index) { return array_[index]; }
 
 /*****************************************************************************
  * INSERTION
  *****************************************************************************/
+INDEX_TEMPLATE_ARGUMENTS
+KeyType B_PLUS_TREE_LEAF_PAGE_TYPE::GetMininumKey(const KeyComparator &comparator) const {
+  CHECK(!array_.empty());
+  KeyType ans = KeyAt(0);
+  for (size_t i = 1; i < array_.size(); i++) {
+    if (comparator(KeyAt(i), ans) < 0) {
+      ans = KeyAt(i);
+    }
+  }
+  return ans;
+}
+
 /*
  * Insert key & value pair into leaf page ordered by key
  * @return  page size after insertion
@@ -95,13 +100,18 @@ INDEX_TEMPLATE_ARGUMENTS
 int B_PLUS_TREE_LEAF_PAGE_TYPE::Insert(const KeyType &key, const ValueType &value, const KeyComparator &comparator) {
   if (array_.empty()) {
     array_.push_back({key, value});
-  }
-  else {
+  } else {
+    bool ok = false;
     for (size_t i = 0; i < array_.size(); i++) {
       if (comparator(KeyAt(i), key) > 0) {
+        // k[i-1] < key < k[i]
         array_.insert(array_.begin() + i, {key, value});
+        ok = true;
         break;
       }
+    }
+    if (!ok) {
+      array_.push_back({key, value});
     }
   }
   SetSize(array_.size());
@@ -113,7 +123,7 @@ int B_PLUS_TREE_LEAF_PAGE_TYPE::Insert(const KeyType &key, const ValueType &valu
  * SPLIT
  *****************************************************************************/
 INDEX_TEMPLATE_ARGUMENTS
-void B_PLUS_TREE_LEAF_PAGE_TYPE::SetArray(const std::vector<MappingType> & array) {
+void B_PLUS_TREE_LEAF_PAGE_TYPE::SetArray(const std::vector<MappingType> &array) {
   CHECK(array_.empty());
   array_ = array;
   SetSize(array_.size());
@@ -121,14 +131,12 @@ void B_PLUS_TREE_LEAF_PAGE_TYPE::SetArray(const std::vector<MappingType> & array
 
 INDEX_TEMPLATE_ARGUMENTS
 void B_PLUS_TREE_LEAF_PAGE_TYPE::DebugOutput() {
-  LOG_INFO(">>>>>>>>>>>>> left page %d, %d", GetPageId(), (int) array_.size());
+  LOG(DEBUG) << ">>>>>>>>>>>>> internal page " << GetPageId() << " has size: " << array_.size();
   for (size_t i = 0; i < array_.size(); i++) {
-    std::ostringstream oss;
-    oss << i << " " << KeyAt(i) << " : " << array_[i].second;
-    LOG_INFO("KEY: %s", oss.str().c_str());
+    LOG(DEBUG) << i << " "
+             << "key: " << KeyAt(i) << " value: " << array_[i].second;
   }
 }
-
 
 /*
  * Remove half of key & value pairs from this page to "recipient" page
