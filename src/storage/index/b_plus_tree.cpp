@@ -43,9 +43,11 @@ bool BPLUSTREE_TYPE::IsEmpty() const { return root_page_id_ == INVALID_PAGE_ID; 
 INDEX_TEMPLATE_ARGUMENTS
 bool BPLUSTREE_TYPE::GetValue(const KeyType &key, std::vector<ValueType> *result, Transaction *transaction) {
   BPlusTreePage *curr = reinterpret_cast<BPlusTreePage *>(buffer_pool_manager_->FetchPage(root_page_id_)->GetData());
+  LOG(DEBUG) << "GetValue for key: " << key;
   while (!curr->IsLeafPage()) {
     InternalPage *inner = reinterpret_cast<InternalPage *>(curr);
     page_id_t child = inner->Lookup(key, comparator_);
+    LOG(DEBUG) << "Move to child: " << child;
     buffer_pool_manager_->UnpinPage(inner->GetPageId(), false);
     curr = reinterpret_cast<BPlusTreePage *>(buffer_pool_manager_->FetchPage(child)->GetData());
   }
@@ -53,6 +55,7 @@ bool BPLUSTREE_TYPE::GetValue(const KeyType &key, std::vector<ValueType> *result
   LeafPage *leaf = reinterpret_cast<LeafPage *>(curr);
   ValueType val;
   bool ans = leaf->Lookup(key, &val, comparator_);
+  LOG(DEBUG) << "Lookup leaf node: " << curr->GetPageId() << " val " << val << " " << ans;
   if (result) {
     result->push_back(val);
   }
@@ -119,7 +122,7 @@ INDEX_TEMPLATE_ARGUMENTS
 bool BPLUSTREE_TYPE::InsertIntoLeaf(const KeyType &key, const ValueType &value, Transaction *transaction) {
   CHECK(root_page_id_ != INVALID_PAGE_ID) << "Expected root_page_id exists.";
 
-  LOG(DEBUG) << "Inserting into leaf...";
+  LOG(DEBUG) << "Inserting into leaf...: " << key;
   BPlusTreePage *curr = reinterpret_cast<BPlusTreePage *>(buffer_pool_manager_->FetchPage(root_page_id_)->GetData());
   while (!curr->IsLeafPage()) {
     InternalPage *inner = reinterpret_cast<InternalPage *>(curr);
@@ -326,7 +329,7 @@ INDEXITERATOR_TYPE BPLUSTREE_TYPE::begin() {
     curr = reinterpret_cast<BPlusTreePage *>(buffer_pool_manager_->FetchPage(child)->GetData());
   }
   LeafPage *leaf = reinterpret_cast<LeafPage *>(curr);
-  return INDEXITERATOR_TYPE(leaf, buffer_pool_manager_);
+  return INDEXITERATOR_TYPE(leaf, buffer_pool_manager_, /*pos*/0);
 }
 
 /*
@@ -344,7 +347,9 @@ INDEXITERATOR_TYPE BPLUSTREE_TYPE::Begin(const KeyType &key) {
     curr = reinterpret_cast<BPlusTreePage *>(buffer_pool_manager_->FetchPage(child)->GetData());
   }
   LeafPage *leaf = reinterpret_cast<LeafPage *>(curr);
-  return INDEXITERATOR_TYPE(leaf, buffer_pool_manager_);
+  int pos = leaf->KeyIndex(key, comparator_);
+  CHECK(pos != -1);
+  return INDEXITERATOR_TYPE(leaf, buffer_pool_manager_, pos);
 }
 
 /*

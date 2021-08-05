@@ -10,16 +10,18 @@
 #include "buffer/buffer_pool_manager.h"
 #include "gtest/gtest.h"
 #include "storage/index/b_plus_tree.h"
+#include "common/logger.h"
 
+// TODO: rewrite this test.
 namespace bustub {
 
-TEST(BPlusTreeTests, DISABLED_InsertTest0) {
+TEST(BPlusTreeTests, InsertTest0) {
   // create KeyComparator and index schema
   Schema *key_schema = ParseCreateStatement("a bigint");
   GenericComparator<8> comparator(key_schema);
 
   DiskManager *disk_manager = new DiskManager("test.db");
-  BufferPoolManager *bpm = new BufferPoolManager(100, disk_manager);
+  BufferPoolManager *bpm = new BufferPoolManager(1000, disk_manager);
 
   BPlusTree<int, int, IntegerComparator<false>> tree("foo_pk", bpm, IntegerComparator<false>{}, 2, 3);
 
@@ -32,21 +34,62 @@ TEST(BPlusTreeTests, DISABLED_InsertTest0) {
   (void)header_page;
   EXPECT_EQ(page_id, 0);
 
-  std::vector<int> inserts;
-  for (int i = 0; i < 30; i++) {
-    inserts.push_back(RandomInt(0, 10000));
-    tree.Insert(inserts[i], i, transaction);
+  std::map<int, int> mp;
+  for (int i = 0; i < 100; i++) {
+    int key = RandomInt(0, 10000);
+    while (mp.count(key)) {
+      key = RandomInt(0, 10000);
+    }
+    tree.Insert(key, i, transaction);
+    mp[key] = i;
+  }
+
+  std::vector<std::pair<int, int>> inserts;
+  for (auto it : mp) {
+    inserts.push_back(it);
   }
 
   std::vector<int> value;
-  for (int i = 0; i < 30; i++) {
+  for (int i = 0; i < 100; i++) {
     value.clear();
-    tree.GetValue(inserts[i], &value);
+    EXPECT_EQ(tree.GetValue(inserts[i].first, &value), true);
     EXPECT_EQ(value.size(), 1);
-    EXPECT_EQ(value[0], i);
+    EXPECT_EQ(value[0], inserts[i].second);
   }
 
   tree.Draw(bpm, "tree.dot");
+
+  // Test range scan
+  int i = 0;
+  for (auto it = tree.Begin(inserts[0].first); it != tree.end(); it++, i++) {
+    int val1 = (*it).second;
+    int val2 = it->second;
+    EXPECT_EQ(val1, val2);
+    EXPECT_EQ(it->first, inserts[i].first);
+    EXPECT_EQ(val1, inserts[i].second);
+  }
+  EXPECT_EQ(i, 100);
+
+  i = 0;
+  for (auto it = tree.begin(); it != tree.end(); it++, i++) {
+    int val1 = (*it).second;
+    int val2 = it->second;
+    EXPECT_EQ(val1, val2);
+    EXPECT_EQ(it->first, inserts[i].first);
+    EXPECT_EQ(val1, inserts[i].second);
+  }
+  EXPECT_EQ(i, 100);
+
+  i = 0;
+  for (auto it = tree.begin(); it != tree.end(); ++it, i++) {
+    int val1 = (*it).second;
+    int val2 = it->second;
+    EXPECT_EQ(val1, val2);
+    EXPECT_EQ(it->first, inserts[i].first);
+    EXPECT_EQ(val1, inserts[i].second);
+  }
+  EXPECT_EQ(i, 100);
+
 
   bpm->UnpinPage(HEADER_PAGE_ID, true);
   delete key_schema;
@@ -58,7 +101,7 @@ TEST(BPlusTreeTests, DISABLED_InsertTest0) {
   remove("tree.dot");
 }
 
-TEST(BPlusTreeTests, InsertTest3) {
+TEST(BPlusTreeTests, InsertTest1) {
   // create KeyComparator and index schema
   Schema *key_schema = ParseCreateStatement("a bigint");
   GenericComparator<8> comparator(key_schema);
@@ -91,17 +134,28 @@ TEST(BPlusTreeTests, InsertTest3) {
     EXPECT_EQ(value[0], i);
   }
 
+  tree.Draw(bpm, "tree.dot");
+
   // Test range scan
-  int i = 0;
-  for (auto it = tree.Begin(0); it != tree.end(); it++, i++) {
+  int i = 29;
+  for (auto it = tree.Begin(29); it != tree.end(); it++, i--) {
     int val1 = (*it).second;
     int val2 = it->second;
+    EXPECT_EQ(it->first, i);
     EXPECT_EQ(val1, val2);
     EXPECT_EQ(val1, i);
   }
-  EXPECT_EQ(i, 30);
+  EXPECT_EQ(i, -1);
 
-  tree.Draw(bpm, "tree.dot");
+  i = 29;
+  for (auto it = tree.begin(); it != tree.end(); it++, i--) {
+    int val1 = (*it).second;
+    int val2 = it->second;
+    EXPECT_EQ(it->first, i);
+    EXPECT_EQ(val1, val2);
+    EXPECT_EQ(val1, i);
+  }
+  EXPECT_EQ(i, -1);
 
   bpm->UnpinPage(HEADER_PAGE_ID, true);
   delete key_schema;
@@ -110,10 +164,10 @@ TEST(BPlusTreeTests, InsertTest3) {
   delete bpm;
   remove("test.db");
   remove("test.log");
-  // remove("tree.dot");
+  remove("tree.dot");
 }
 
-TEST(BPlusTreeTests, DISABLED_InsertTest1) {
+TEST(BPlusTreeTests, InsertTest2) {
   // create KeyComparator and index schema
   Schema *key_schema = ParseCreateStatement("a bigint");
   GenericComparator<8> comparator(key_schema);
@@ -172,7 +226,7 @@ TEST(BPlusTreeTests, DISABLED_InsertTest1) {
   remove("test.log");
 }
 
-TEST(BPlusTreeTests, DISABLED_InsertTest2) {
+TEST(BPlusTreeTests, InsertTest3) {
   // create KeyComparator and index schema
   Schema *key_schema = ParseCreateStatement("a bigint");
   GenericComparator<8> comparator(key_schema);
@@ -198,6 +252,8 @@ TEST(BPlusTreeTests, DISABLED_InsertTest2) {
     index_key.SetFromInteger(key);
     tree.Insert(index_key, rid, transaction);
   }
+
+  tree.Draw(bpm, "tree.dot");
 
   std::vector<RID> rids;
   for (auto key : keys) {

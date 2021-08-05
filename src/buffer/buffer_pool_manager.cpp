@@ -43,7 +43,7 @@ Page *BufferPoolManager::FetchPageImpl(page_id_t page_id) {
   // 3.     Delete R from the page table and insert P.
   // 4.     Update P's metadata, read in the page content from disk, and then return a pointer to P.
   if (Exist(page_id)) {
-    LOG(DEBUG) << "Fetching from the exising #page " << page_id;
+    // LOG(DEBUG) << "Fetching from the exising #page " << page_id;
     // If this page is alreay in buffer pool, simply returns it
     Page *page = &pages_[page_table_[page_id]];
     page->pin_count_++;
@@ -85,7 +85,7 @@ Page *BufferPoolManager::FetchPageImpl(page_id_t page_id) {
 
 bool BufferPoolManager::UnpinPageImpl(page_id_t page_id, bool is_dirty) {
   CHECK(Exist(page_id)) << "Expected page exists.";
-  LOG(DEBUG) << "Unpinning #page: " << page_id;
+  // LOG(DEBUG) << "Unpinning #page: " << page_id;
   Page *page = &pages_[page_table_[page_id]];
   if (page->pin_count_ <= 0) {
     // Already unpinned before.

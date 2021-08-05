@@ -27,8 +27,8 @@ class IndexIterator {
 
   IndexIterator() = default;
 
-  IndexIterator(LeafPage *leaf, BufferPoolManager *buffer_pool_manager)
-      : leaf_(leaf), buffer_pool_manager_(buffer_pool_manager), pos_(0) {}
+  IndexIterator(LeafPage *leaf, BufferPoolManager *buffer_pool_manager, int pos)
+      : leaf_(leaf), buffer_pool_manager_(buffer_pool_manager), pos_(pos) {}
 
   ~IndexIterator() = default;
 
@@ -38,8 +38,9 @@ class IndexIterator {
   int GetPos() const { return pos_; }
   const BufferPoolManager *GetBufferPoolManager() const { return buffer_pool_manager_; }
 
-  const MappingType &operator*();
-  const MappingType *operator->();
+  // NOTE: returns const
+  const MappingType &operator*() const;
+  const MappingType *operator->() const;
 
   // Prefix increment
   const IndexIterator &operator++();

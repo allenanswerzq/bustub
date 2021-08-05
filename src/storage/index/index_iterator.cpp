@@ -18,14 +18,14 @@ bool INDEXITERATOR_TYPE::IsEnd() {
 }
 
 INDEX_TEMPLATE_ARGUMENTS
-const MappingType &INDEXITERATOR_TYPE::operator*() {
+const MappingType &INDEXITERATOR_TYPE::operator*() const {
   CHECK(pos_ < leaf_->GetSize());
   return leaf_->GetItem(pos_);
 }
 
 
 INDEX_TEMPLATE_ARGUMENTS
-const MappingType *INDEXITERATOR_TYPE::operator->() {
+const MappingType *INDEXITERATOR_TYPE::operator->() const {
   CHECK(pos_ < leaf_->GetSize());
   return &(leaf_->GetItem(pos_));
 }
@@ -36,22 +36,24 @@ const INDEXITERATOR_TYPE &INDEXITERATOR_TYPE::operator++() {
   pos_++;
   if (pos_ >= leaf_->GetSize()) {
     page_id_t next_page = leaf_->GetNextPageId();
-    leaf_ = reinterpret_cast<LeafPage *>(buffer_pool_manager_->FetchPage(next_page)->GetData());
-    pos_ = 0;
+    if (next_page == INVALID_PAGE_ID) {
+      leaf_ = nullptr;
+      buffer_pool_manager_ = nullptr;
+      pos_ = 0;
+    }
+    else {
+      leaf_ = reinterpret_cast<LeafPage *>(buffer_pool_manager_->FetchPage(next_page)->GetData());
+      pos_ = 0;
+    }
   }
   return *this;
 }
 
 INDEX_TEMPLATE_ARGUMENTS
 INDEXITERATOR_TYPE INDEXITERATOR_TYPE::operator++(int) {
-  CHECK(!IsEnd());
-  pos_++;
-  if (pos_ >= leaf_->GetSize()) {
-    page_id_t next_page = leaf_->GetNextPageId();
-    leaf_ = reinterpret_cast<LeafPage *>(buffer_pool_manager_->FetchPage(next_page)->GetData());
-    pos_ = 0;
-  }
-  return *this;
+  INDEXITERATOR_TYPE tmp = *this;
+  ++(*this);
+  return tmp;
 }
 
 template class IndexIterator<GenericKey<4>, RID, GenericComparator<4>>;
