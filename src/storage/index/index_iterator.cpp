@@ -23,8 +23,27 @@ const MappingType &INDEXITERATOR_TYPE::operator*() {
   return leaf_->GetItem(pos_);
 }
 
+
+INDEX_TEMPLATE_ARGUMENTS
+const MappingType *INDEXITERATOR_TYPE::operator->() {
+  CHECK(pos_ < leaf_->GetSize());
+  return &(leaf_->GetItem(pos_));
+}
+
 INDEX_TEMPLATE_ARGUMENTS
 const INDEXITERATOR_TYPE &INDEXITERATOR_TYPE::operator++() {
+  CHECK(!IsEnd());
+  pos_++;
+  if (pos_ >= leaf_->GetSize()) {
+    page_id_t next_page = leaf_->GetNextPageId();
+    leaf_ = reinterpret_cast<LeafPage *>(buffer_pool_manager_->FetchPage(next_page)->GetData());
+    pos_ = 0;
+  }
+  return *this;
+}
+
+INDEX_TEMPLATE_ARGUMENTS
+INDEXITERATOR_TYPE INDEXITERATOR_TYPE::operator++(int) {
   CHECK(!IsEnd());
   pos_++;
   if (pos_ >= leaf_->GetSize()) {

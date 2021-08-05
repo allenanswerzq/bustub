@@ -35,19 +35,27 @@ class IndexIterator {
   bool IsEnd();
 
   const LeafPage *GetLeafPage() const { return leaf_; }
+  int GetPos() const { return pos_; }
+  const BufferPoolManager *GetBufferPoolManager() const { return buffer_pool_manager_; }
 
   const MappingType &operator*();
+  const MappingType *operator->();
 
+  // Prefix increment
   const IndexIterator &operator++();
+  // Postfix increment
+  IndexIterator operator++(int);
 
-  bool operator==(const IndexIterator &itr) const { return leaf_ == itr.GetLeafPage(); }
+  bool operator==(const IndexIterator &itr) const {
+    return leaf_ == itr.GetLeafPage() && pos_ == itr.GetPos() && buffer_pool_manager_ == GetBufferPoolManager();
+  }
 
   bool operator!=(const IndexIterator &itr) const { return !(*this == itr); }
 
  private:
-  LeafPage *leaf_;
-  BufferPoolManager *buffer_pool_manager_;
-  int pos_;
+  LeafPage *leaf_{nullptr};
+  BufferPoolManager *buffer_pool_manager_{nullptr};
+  int pos_{0};
 };
 
 }  // namespace bustub
