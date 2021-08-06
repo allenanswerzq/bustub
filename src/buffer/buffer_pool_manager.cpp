@@ -71,7 +71,8 @@ Page *BufferPoolManager::FetchPageImpl(page_id_t page_id) {
     LOG(DEBUG) << "Fetching a new #page " << page_id << " to frame " << frame_id;
     Page *page = &pages_[frame_id];
     if (page->is_dirty_) {
-      disk_manager_->WritePage(page->page_id_, page->GetData());
+      // Flush the old page back to disk if dirty
+      FlushPageImpl(page->page_id_);
     }
     page_table_.erase(page->page_id_);
     page_table_[page_id] = frame_id;
@@ -94,9 +95,9 @@ bool BufferPoolManager::UnpinPageImpl(page_id_t page_id, bool is_dirty) {
     page->pin_count_--;
     page->is_dirty_ = is_dirty;
     if (page->pin_count_ == 0) {
-      if (page->is_dirty_) {
-        FlushPageImpl(page_id);
-      }
+      // if (page->is_dirty_) {
+      //   FlushPageImpl(page_id);
+      // }
       replacer_->Unpin(page_id);
     }
     return true;
@@ -122,6 +123,7 @@ Page *BufferPoolManager::NewPageImpl(page_id_t *page_id) {
   // 2.   Pick a victim page P from either the free list or the replacer. Always pick from the free list first.
   // 3.   Update P's metadata, zero out memory and add P to the page table.
   // 4.   Set the page ID output parameter. Return a pointer to P.
+  CHECK(page_id);
   page_id_t new_page_id = disk_manager_->AllocatePage();
   int frame_id = -1;
   if (!free_list_.empty()) {
@@ -140,6 +142,9 @@ Page *BufferPoolManager::NewPageImpl(page_id_t *page_id) {
   }
   CHECK(frame_id != -1) << "Expected find a free frame.";
   Page *page = &pages_[frame_id];
+  if (page->is_dirty_) {
+    FlushPageImpl(page->page_id_);
+  }
   page->ResetMemory();
   page->page_id_ = new_page_id;
   page->pin_count_ = 1;
