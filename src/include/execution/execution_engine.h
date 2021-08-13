@@ -24,13 +24,14 @@
 namespace bustub {
 class ExecutionEngine {
  public:
-  ExecutionEngine(BufferPoolManager *bpm, TransactionManager *txn_mgr, Catalog *catalog)
+  ExecutionEngine(BufferPoolManager *bpm, TransactionManager *txn_mgr,
+                  Catalog *catalog)
       : bpm_(bpm), txn_mgr_(txn_mgr), catalog_(catalog) {}
 
   DISALLOW_COPY_AND_MOVE(ExecutionEngine);
 
-  bool Execute(const AbstractPlanNode *plan, std::vector<Tuple> *result_set, Transaction *txn,
-               ExecutorContext *exec_ctx) {
+  bool Execute(const AbstractPlanNode *plan, std::vector<Tuple> *result_set,
+               Transaction *txn, ExecutorContext *exec_ctx) {
     // construct executor
     auto executor = ExecutorFactory::CreateExecutor(exec_ctx, plan);
 

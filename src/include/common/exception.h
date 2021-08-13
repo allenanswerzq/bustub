@@ -23,9 +23,12 @@
 
 namespace bustub {
 
-// TODO(WAN): the comment I added below is a lie, but you shouldn't need to poke around here. Don't worry about it.
-//  Most of the exception types are type subsystem madness. I think we can get rid of it at some point.
-/** ExceptionType is all the types of exceptions that we expect to throw in our system. */
+// TODO(WAN): the comment I added below is a lie, but you shouldn't need to poke
+// around here. Don't worry about it.
+//  Most of the exception types are type subsystem madness. I think we can get
+//  rid of it at some point.
+/** ExceptionType is all the types of exceptions that we expect to throw in our
+ * system. */
 enum class ExceptionType {
   /** Invalid exception type.*/
   INVALID = 0,
@@ -51,7 +54,8 @@ enum class ExceptionType {
 
 class Exception : public std::runtime_error {
  public:
-  explicit Exception(const std::string &message) : std::runtime_error(message), type_(ExceptionType::INVALID) {
+  explicit Exception(const std::string &message)
+      : std::runtime_error(message), type_(ExceptionType::INVALID) {
     std::string exception_message = "Message :: " + message + "\n";
     std::cerr << exception_message;
   }
@@ -59,7 +63,8 @@ class Exception : public std::runtime_error {
   Exception(ExceptionType exception_type, const std::string &message)
       : std::runtime_error(message), type_(exception_type) {
     std::string exception_message =
-        "\nException Type :: " + ExpectionTypeToString(type_) + "\nMessage :: " + message + "\n";
+        "\nException Type :: " + ExpectionTypeToString(type_) +
+        "\nMessage :: " + message + "\n";
     std::cerr << exception_message;
   }
 
@@ -97,7 +102,8 @@ class Exception : public std::runtime_error {
 class NotImplementedException : public Exception {
  public:
   NotImplementedException() = delete;
-  explicit NotImplementedException(const std::string &msg) : Exception(ExceptionType::NOT_IMPLEMENTED, msg) {}
+  explicit NotImplementedException(const std::string &msg)
+      : Exception(ExceptionType::NOT_IMPLEMENTED, msg) {}
 };
 
 }  // namespace bustub

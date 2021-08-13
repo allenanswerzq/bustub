@@ -22,7 +22,8 @@ namespace bustub {
 
 #define MappingType std::pair<KeyType, ValueType>
 
-#define INDEX_TEMPLATE_ARGUMENTS template <typename KeyType, typename ValueType, typename KeyComparator>
+#define INDEX_TEMPLATE_ARGUMENTS \
+  template <typename KeyType, typename ValueType, typename KeyComparator>
 
 // define page type enum
 enum class IndexPageType { INVALID_INDEX_PAGE = 0, LEAF_PAGE, INTERNAL_PAGE };

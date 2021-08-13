@@ -33,9 +33,14 @@ class Column {
    * @param type type of the column
    * @param expr expression used to create this column
    */
-  Column(std::string column_name, TypeId type, const AbstractExpression *expr = nullptr)
-      : column_name_(std::move(column_name)), column_type_(type), fixed_length_(TypeSize(type)), expr_{expr} {
-    BUSTUB_ASSERT(type != TypeId::VARCHAR, "Wrong constructor for VARCHAR type.");
+  Column(std::string column_name, TypeId type,
+         const AbstractExpression *expr = nullptr)
+      : column_name_(std::move(column_name)),
+        column_type_(type),
+        fixed_length_(TypeSize(type)),
+        expr_{expr} {
+    BUSTUB_ASSERT(type != TypeId::VARCHAR,
+                  "Wrong constructor for VARCHAR type.");
   }
 
   /**
@@ -45,9 +50,14 @@ class Column {
    * @param length length of the varlen
    * @param expr expression used to create this column
    */
-  Column(std::string column_name, TypeId type, uint32_t length, const AbstractExpression *expr = nullptr)
-      : column_name_(std::move(column_name)), column_type_(type), fixed_length_(TypeSize(type)), expr_{expr} {
-    BUSTUB_ASSERT(type == TypeId::VARCHAR, "Wrong constructor for non-VARCHAR type.");
+  Column(std::string column_name, TypeId type, uint32_t length,
+         const AbstractExpression *expr = nullptr)
+      : column_name_(std::move(column_name)),
+        column_type_(type),
+        fixed_length_(TypeSize(type)),
+        expr_{expr} {
+    BUSTUB_ASSERT(type == TypeId::VARCHAR,
+                  "Wrong constructor for non-VARCHAR type.");
   }
 
   /** @return column name */
@@ -117,10 +127,12 @@ class Column {
   /** Column value's type. */
   TypeId column_type_;
 
-  /** For a non-inlined column, this is the size of a pointer. Otherwise, the size of the fixed length column. */
+  /** For a non-inlined column, this is the size of a pointer. Otherwise, the
+   * size of the fixed length column. */
   uint32_t fixed_length_;
 
-  /** For an inlined column, 0. Otherwise, the length of the variable length column. */
+  /** For an inlined column, 0. Otherwise, the length of the variable length
+   * column. */
   uint32_t variable_length_{0};
 
   /** Column offset in the tuple. */

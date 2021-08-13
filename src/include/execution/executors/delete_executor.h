@@ -32,7 +32,8 @@ class DeleteExecutor : public AbstractExecutor {
    * Creates a new delete executor.
    * @param exec_ctx the executor context
    * @param plan the delete plan to be executed
-   * @param child_executor the child executor (either sequential scan or index scan) to obtain tuple info
+   * @param child_executor the child executor (either sequential scan or index
+   * scan) to obtain tuple info
    */
   DeleteExecutor(ExecutorContext *exec_ctx, const DeletePlanNode *plan,
                  std::unique_ptr<AbstractExecutor> &&child_executor);
@@ -42,8 +43,8 @@ class DeleteExecutor : public AbstractExecutor {
   void Init() override;
 
   // Note that Delete does not make use of the tuple pointer being passed in.
-  // We throw exception if the delete failed for any reason, and return false if all delete succeeded.
-  // Delete from indexes if necessary.
+  // We throw exception if the delete failed for any reason, and return false if
+  // all delete succeeded. Delete from indexes if necessary.
   bool Next([[maybe_unused]] Tuple *tuple, RID *rid) override;
 
  private:

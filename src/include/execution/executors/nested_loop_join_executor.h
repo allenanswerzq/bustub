@@ -31,11 +31,14 @@ class NestedLoopJoinExecutor : public AbstractExecutor {
    * Creates a new NestedLoop join executor.
    * @param exec_ctx the executor context
    * @param plan the NestedLoop join plan to be executed
-   * @param left_executor the child executor that produces tuple for the left side of join
-   * @param right_executor the child executor that produces tuple for the right side of join
+   * @param left_executor the child executor that produces tuple for the left
+   * side of join
+   * @param right_executor the child executor that produces tuple for the right
+   * side of join
    *
    */
-  NestedLoopJoinExecutor(ExecutorContext *exec_ctx, const NestedLoopJoinPlanNode *plan,
+  NestedLoopJoinExecutor(ExecutorContext *exec_ctx,
+                         const NestedLoopJoinPlanNode *plan,
                          std::unique_ptr<AbstractExecutor> &&left_executor,
                          std::unique_ptr<AbstractExecutor> &&right_executor);
 

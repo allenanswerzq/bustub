@@ -37,8 +37,8 @@ class TableHeap {
    * @param log_manager the log manager
    * @param first_page_id the id of the first page
    */
-  TableHeap(BufferPoolManager *buffer_pool_manager, LockManager *lock_manager, LogManager *log_manager,
-            page_id_t first_page_id);
+  TableHeap(BufferPoolManager *buffer_pool_manager, LockManager *lock_manager,
+            LogManager *log_manager, page_id_t first_page_id);
 
   /**
    * Create a table heap with a transaction. (create table)
@@ -47,11 +47,12 @@ class TableHeap {
    * @param log_manager the log manager
    * @param txn the creating transaction
    */
-  TableHeap(BufferPoolManager *buffer_pool_manager, LockManager *lock_manager, LogManager *log_manager,
-            Transaction *txn);
+  TableHeap(BufferPoolManager *buffer_pool_manager, LockManager *lock_manager,
+            LogManager *log_manager, Transaction *txn);
 
   /**
-   * Insert a tuple into the table. If the tuple is too large (>= page_size), return false.
+   * Insert a tuple into the table. If the tuple is too large (>= page_size),
+   * return false.
    * @param tuple tuple to insert
    * @param[out] rid the rid of the inserted tuple
    * @param txn the transaction performing the insert
@@ -60,7 +61,8 @@ class TableHeap {
   bool InsertTuple(const Tuple &tuple, RID *rid, Transaction *txn);
 
   /**
-   * Mark the tuple as deleted. The actual delete will occur when ApplyDelete is called.
+   * Mark the tuple as deleted. The actual delete will occur when ApplyDelete is
+   * called.
    * @param rid resource id of the tuple of delete
    * @param txn transaction performing the delete
    * @return true iff the delete is successful (i.e the tuple exists)
@@ -68,7 +70,8 @@ class TableHeap {
   bool MarkDelete(const RID &rid, Transaction *txn);  // for delete
 
   /**
-   * if the new tuple is too large to fit in the old page, return false (will delete and insert)
+   * if the new tuple is too large to fit in the old page, return false (will
+   * delete and insert)
    * @param tuple new tuple
    * @param rid rid of the old tuple
    * @param txn transaction performing the update

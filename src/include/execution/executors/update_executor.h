@@ -47,7 +47,8 @@ class UpdateExecutor : public AbstractExecutor {
   bool Next([[maybe_unused]] Tuple *tuple, RID *rid) override;
 
   /*
-   * Given an old tuple, creates a new updated tuple based on the updateinfo given in the plan
+   * Given an old tuple, creates a new updated tuple based on the updateinfo
+   * given in the plan
    * @param old_tup the tuple to be updated
    */
   Tuple GenerateUpdatedTuple(const Tuple &old_tup) {
@@ -63,11 +64,13 @@ class UpdateExecutor : public AbstractExecutor {
         Value val = old_tup.GetValue(&schema, idx);
         switch (info.type_) {
           case UpdateType::Add:
-            values.emplace_back(val.Add(ValueFactory::GetIntegerValue(info.update_val_)));
+            values.emplace_back(
+                val.Add(ValueFactory::GetIntegerValue(info.update_val_)));
             break;
 
           case UpdateType::Set:
-            values.emplace_back(ValueFactory::GetIntegerValue(info.update_val_));
+            values.emplace_back(
+                ValueFactory::GetIntegerValue(info.update_val_));
             break;
         }
       }

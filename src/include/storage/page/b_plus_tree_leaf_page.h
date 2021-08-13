@@ -17,9 +17,11 @@
 
 namespace bustub {
 
-#define B_PLUS_TREE_LEAF_PAGE_TYPE BPlusTreeLeafPage<KeyType, ValueType, KeyComparator>
+#define B_PLUS_TREE_LEAF_PAGE_TYPE \
+  BPlusTreeLeafPage<KeyType, ValueType, KeyComparator>
 #define LEAF_PAGE_HEADER_SIZE 28
-#define LEAF_PAGE_SIZE ((PAGE_SIZE - LEAF_PAGE_HEADER_SIZE) / sizeof(MappingType))
+#define LEAF_PAGE_SIZE \
+  ((PAGE_SIZE - LEAF_PAGE_HEADER_SIZE) / sizeof(MappingType))
 
 /**
  * Store indexed key and record id(record id = page id combined with slot id,
@@ -44,27 +46,35 @@ class BPlusTreeLeafPage : public BPlusTreePage {
  public:
   // After creating a new leaf page from buffer pool, must call initialize
   // method to set default values
-  void Init(page_id_t page_id, page_id_t parent_id = INVALID_PAGE_ID, int max_size = LEAF_PAGE_SIZE);
+  void Init(page_id_t page_id, page_id_t parent_id = INVALID_PAGE_ID,
+            int max_size = LEAF_PAGE_SIZE);
   // helper methods
   page_id_t GetNextPageId() const;
   void SetNextPageId(page_id_t next_page_id);
   KeyType KeyAt(int index) const;
   int KeyIndex(const KeyType &key, const KeyComparator &comparator) const;
+  int ValueIndex(const ValueType& val) const;
   const MappingType &GetItem(int index);
   KeyType GetMininumKey(const KeyComparator &comparator) const;
-
   // insert and delete methods
-  int Insert(const KeyType &key, const ValueType &value, const KeyComparator &comparator);
-  bool Lookup(const KeyType &key, ValueType *value, const KeyComparator &comparator) const;
-  int RemoveAndDeleteRecord(const KeyType &key, const KeyComparator &comparator);
+  int Insert(const KeyType &key, const ValueType &value,
+             const KeyComparator &comparator);
+  bool Lookup(const KeyType &key, ValueType *value,
+              const KeyComparator &comparator) const;
+  int RemoveAndDeleteRecord(const KeyType &key,
+                            const KeyComparator &comparator);
 
   // Split and Merge utility methods
   void SetArray(const std::vector<MappingType> &array);
+  void MoveAllTo(BPlusTreeLeafPage *recipient, const KeyType &middle_key,
+                 BufferPoolManager *buffer_pool_manager);
   void MoveHalfTo(BPlusTreeLeafPage *recipient);
-  void MoveAllTo(BPlusTreeLeafPage *recipient);
-  void MoveFirstToEndOf(BPlusTreeLeafPage *recipient);
-  void MoveLastToFrontOf(BPlusTreeLeafPage *recipient);
-
+  void MoveFirstToEndOf(BPlusTreeLeafPage *recipient,
+                        const KeyType &middle_key,
+                        BufferPoolManager *buffer_pool_manager);
+  void MoveLastToFrontOf(BPlusTreeLeafPage *recipient,
+                         const KeyType &middle_key,
+                         BufferPoolManager *buffer_pool_manager);
   void DebugOutput();
 
  private:

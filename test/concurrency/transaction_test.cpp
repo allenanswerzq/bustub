@@ -32,10 +32,11 @@
   std::promise<bool> promisedFinished;               \
   auto futureResult = promisedFinished.get_future(); \
                               std::thread([](std::promise<bool>& finished) {
-#define TEST_TIMEOUT_FAIL_END(X)                                                                  \
-  finished.set_value(true);                                                                       \
-  }, std::ref(promisedFinished)).detach();                                                        \
-  EXPECT_TRUE(futureResult.wait_for(std::chrono::milliseconds(X)) != std::future_status::timeout) \
+#define TEST_TIMEOUT_FAIL_END(X)                                     \
+  finished.set_value(true);                                          \
+  }, std::ref(promisedFinished)).detach();                           \
+  EXPECT_TRUE(futureResult.wait_for(std::chrono::milliseconds(X)) != \
+              std::future_status::timeout)                           \
       << "Test Failed Due to Time Out";
 
 namespace bustub {
@@ -45,23 +46,27 @@ class TransactionTest : public ::testing::Test {
   // This function is called before every test.
   void SetUp() override {
     ::testing::Test::SetUp();
-    // For each test, we create a new DiskManager, BufferPoolManager, TransactionManager, and Catalog.
+    // For each test, we create a new DiskManager, BufferPoolManager,
+    // TransactionManager, and Catalog.
     disk_manager_ = std::make_unique<DiskManager>("executor_test.db");
     bpm_ = std::make_unique<BufferPoolManager>(2560, disk_manager_.get());
     page_id_t page_id;
     bpm_->NewPage(&page_id);
     lock_manager_ = std::make_unique<LockManager>();
-    txn_mgr_ = std::make_unique<TransactionManager>(lock_manager_.get(), log_manager_.get());
-    catalog_ = std::make_unique<Catalog>(bpm_.get(), lock_manager_.get(), log_manager_.get());
+    txn_mgr_ = std::make_unique<TransactionManager>(lock_manager_.get(),
+                                                    log_manager_.get());
+    catalog_ = std::make_unique<Catalog>(bpm_.get(), lock_manager_.get(),
+                                         log_manager_.get());
     // Begin a new transaction, along with its executor context.
     txn_ = txn_mgr_->Begin();
-    exec_ctx_ =
-        std::make_unique<ExecutorContext>(txn_, catalog_.get(), bpm_.get(), txn_mgr_.get(), lock_manager_.get());
+    exec_ctx_ = std::make_unique<ExecutorContext>(
+        txn_, catalog_.get(), bpm_.get(), txn_mgr_.get(), lock_manager_.get());
     // Generate some test tables.
     TableGenerator gen{exec_ctx_.get()};
     gen.GenerateTestTables();
 
-    execution_engine_ = std::make_unique<ExecutionEngine>(bpm_.get(), txn_mgr_.get(), catalog_.get());
+    execution_engine_ = std::make_unique<ExecutionEngine>(
+        bpm_.get(), txn_mgr_.get(), catalog_.get());
   }
 
   // This function is called after every test.
@@ -85,39 +90,48 @@ class TransactionTest : public ::testing::Test {
 
   // The below helper functions are useful for testing.
 
-  const AbstractExpression *MakeColumnValueExpression(const Schema &schema, uint32_t tuple_idx,
-                                                      const std::string &col_name) {
+  const AbstractExpression *MakeColumnValueExpression(
+      const Schema &schema, uint32_t tuple_idx, const std::string &col_name) {
     uint32_t col_idx = schema.GetColIdx(col_name);
     auto col_type = schema.GetColumn(col_idx).GetType();
-    allocated_exprs_.emplace_back(std::make_unique<ColumnValueExpression>(tuple_idx, col_idx, col_type));
+    allocated_exprs_.emplace_back(
+        std::make_unique<ColumnValueExpression>(tuple_idx, col_idx, col_type));
     return allocated_exprs_.back().get();
   }
 
   const AbstractExpression *MakeConstantValueExpression(const Value &val) {
-    allocated_exprs_.emplace_back(std::make_unique<ConstantValueExpression>(val));
-    return allocated_exprs_.back().get();
-  }
-
-  const AbstractExpression *MakeComparisonExpression(const AbstractExpression *lhs, const AbstractExpression *rhs,
-                                                     ComparisonType comp_type) {
-    allocated_exprs_.emplace_back(std::make_unique<ComparisonExpression>(lhs, rhs, comp_type));
-    return allocated_exprs_.back().get();
-  }
-
-  const AbstractExpression *MakeAggregateValueExpression(bool is_group_by_term, uint32_t term_idx) {
     allocated_exprs_.emplace_back(
-        std::make_unique<AggregateValueExpression>(is_group_by_term, term_idx, TypeId::INTEGER));
+        std::make_unique<ConstantValueExpression>(val));
     return allocated_exprs_.back().get();
   }
 
-  const Schema *MakeOutputSchema(const std::vector<std::pair<std::string, const AbstractExpression *>> &exprs) {
+  const AbstractExpression *MakeComparisonExpression(
+      const AbstractExpression *lhs, const AbstractExpression *rhs,
+      ComparisonType comp_type) {
+    allocated_exprs_.emplace_back(
+        std::make_unique<ComparisonExpression>(lhs, rhs, comp_type));
+    return allocated_exprs_.back().get();
+  }
+
+  const AbstractExpression *MakeAggregateValueExpression(bool is_group_by_term,
+                                                         uint32_t term_idx) {
+    allocated_exprs_.emplace_back(std::make_unique<AggregateValueExpression>(
+        is_group_by_term, term_idx, TypeId::INTEGER));
+    return allocated_exprs_.back().get();
+  }
+
+  const Schema *MakeOutputSchema(
+      const std::vector<std::pair<std::string, const AbstractExpression *>>
+          &exprs) {
     std::vector<Column> cols;
     cols.reserve(exprs.size());
     for (const auto &input : exprs) {
       if (input.second->GetReturnType() != TypeId::VARCHAR) {
-        cols.emplace_back(input.first, input.second->GetReturnType(), input.second);
+        cols.emplace_back(input.first, input.second->GetReturnType(),
+                          input.second);
       } else {
-        cols.emplace_back(input.first, input.second->GetReturnType(), MAX_VARCHAR_SIZE, input.second);
+        cols.emplace_back(input.first, input.second->GetReturnType(),
+                          MAX_VARCHAR_SIZE, input.second);
       }
     }
     allocated_output_schemas_.emplace_back(std::make_unique<Schema>(cols));
@@ -140,15 +154,24 @@ class TransactionTest : public ::testing::Test {
 };
 
 // --- Helper functions ---
-void CheckGrowing(Transaction *txn) { EXPECT_EQ(txn->GetState(), TransactionState::GROWING); }
+void CheckGrowing(Transaction *txn) {
+  EXPECT_EQ(txn->GetState(), TransactionState::GROWING);
+}
 
-void CheckShrinking(Transaction *txn) { EXPECT_EQ(txn->GetState(), TransactionState::SHRINKING); }
+void CheckShrinking(Transaction *txn) {
+  EXPECT_EQ(txn->GetState(), TransactionState::SHRINKING);
+}
 
-void CheckAborted(Transaction *txn) { EXPECT_EQ(txn->GetState(), TransactionState::ABORTED); }
+void CheckAborted(Transaction *txn) {
+  EXPECT_EQ(txn->GetState(), TransactionState::ABORTED);
+}
 
-void CheckCommitted(Transaction *txn) { EXPECT_EQ(txn->GetState(), TransactionState::COMMITTED); }
+void CheckCommitted(Transaction *txn) {
+  EXPECT_EQ(txn->GetState(), TransactionState::COMMITTED);
+}
 
-void CheckTxnLockSize(Transaction *txn, size_t shared_size, size_t exclusive_size) {
+void CheckTxnLockSize(Transaction *txn, size_t shared_size,
+                      size_t exclusive_size) {
   EXPECT_EQ(txn->GetSharedLockSet()->size(), shared_size);
   EXPECT_EQ(txn->GetExclusiveLockSet()->size(), exclusive_size);
 }
@@ -159,11 +182,15 @@ TEST_F(TransactionTest, DISABLED_SimpleInsertRollbackTest) {
   // txn1: abort
   // txn2: SELECT * FROM empty_table2;
   auto txn1 = GetTxnManager()->Begin();
-  auto exec_ctx1 = std::make_unique<ExecutorContext>(txn1, GetCatalog(), GetBPM(), GetTxnManager(), GetLockManager());
+  auto exec_ctx1 = std::make_unique<ExecutorContext>(
+      txn1, GetCatalog(), GetBPM(), GetTxnManager(), GetLockManager());
   // Create Values to insert
-  std::vector<Value> val1{ValueFactory::GetIntegerValue(200), ValueFactory::GetIntegerValue(20)};
-  std::vector<Value> val2{ValueFactory::GetIntegerValue(201), ValueFactory::GetIntegerValue(21)};
-  std::vector<Value> val3{ValueFactory::GetIntegerValue(202), ValueFactory::GetIntegerValue(22)};
+  std::vector<Value> val1{ValueFactory::GetIntegerValue(200),
+                          ValueFactory::GetIntegerValue(20)};
+  std::vector<Value> val2{ValueFactory::GetIntegerValue(201),
+                          ValueFactory::GetIntegerValue(21)};
+  std::vector<Value> val3{ValueFactory::GetIntegerValue(202),
+                          ValueFactory::GetIntegerValue(22)};
   std::vector<std::vector<Value>> raw_vals{val1, val2, val3};
   // Create insert plan node
   auto table_info = exec_ctx1->GetCatalog()->GetTable("empty_table2");
@@ -175,7 +202,8 @@ TEST_F(TransactionTest, DISABLED_SimpleInsertRollbackTest) {
 
   // Iterate through table make sure that values were not inserted.
   auto txn2 = GetTxnManager()->Begin();
-  auto exec_ctx2 = std::make_unique<ExecutorContext>(txn2, GetCatalog(), GetBPM(), GetTxnManager(), GetLockManager());
+  auto exec_ctx2 = std::make_unique<ExecutorContext>(
+      txn2, GetCatalog(), GetBPM(), GetTxnManager(), GetLockManager());
   auto &schema = table_info->schema_;
   auto colA = MakeColumnValueExpression(schema, 0, "colA");
   auto colB = MakeColumnValueExpression(schema, 0, "colB");
@@ -199,11 +227,15 @@ TEST_F(TransactionTest, DISABLED_DirtyReadsTest) {
   // txn2: SELECT * FROM empty_table2;
   // txn1: abort
   auto txn1 = GetTxnManager()->Begin(nullptr, IsolationLevel::READ_UNCOMMITTED);
-  auto exec_ctx1 = std::make_unique<ExecutorContext>(txn1, GetCatalog(), GetBPM(), GetTxnManager(), GetLockManager());
+  auto exec_ctx1 = std::make_unique<ExecutorContext>(
+      txn1, GetCatalog(), GetBPM(), GetTxnManager(), GetLockManager());
   // Create Values to insert
-  std::vector<Value> val1{ValueFactory::GetIntegerValue(200), ValueFactory::GetIntegerValue(20)};
-  std::vector<Value> val2{ValueFactory::GetIntegerValue(201), ValueFactory::GetIntegerValue(21)};
-  std::vector<Value> val3{ValueFactory::GetIntegerValue(202), ValueFactory::GetIntegerValue(22)};
+  std::vector<Value> val1{ValueFactory::GetIntegerValue(200),
+                          ValueFactory::GetIntegerValue(20)};
+  std::vector<Value> val2{ValueFactory::GetIntegerValue(201),
+                          ValueFactory::GetIntegerValue(21)};
+  std::vector<Value> val3{ValueFactory::GetIntegerValue(202),
+                          ValueFactory::GetIntegerValue(22)};
   std::vector<std::vector<Value>> raw_vals{val1, val2, val3};
   // Create insert plan node
   auto table_info = exec_ctx1->GetCatalog()->GetTable("empty_table2");
@@ -211,14 +243,17 @@ TEST_F(TransactionTest, DISABLED_DirtyReadsTest) {
 
   Schema *key_schema = ParseCreateStatement("a bigint");
   GenericComparator<8> comparator(key_schema);
-  //  auto index_info = exec_ctx1->GetCatalog()->CreateIndex<GenericKey<8>, RID, GenericComparator<8>>(
-  //      txn1, "index1", "empty_table2", table_info->schema_, *key_schema, {0}, 8);
+  //  auto index_info = exec_ctx1->GetCatalog()->CreateIndex<GenericKey<8>, RID,
+  //  GenericComparator<8>>(
+  //      txn1, "index1", "empty_table2", table_info->schema_, *key_schema, {0},
+  //      8);
 
   GetExecutionEngine()->Execute(&insert_plan, nullptr, txn1, exec_ctx1.get());
 
   // Iterate through table to read the tuples.
   auto txn2 = GetTxnManager()->Begin(nullptr, IsolationLevel::READ_UNCOMMITTED);
-  auto exec_ctx2 = std::make_unique<ExecutorContext>(txn2, GetCatalog(), GetBPM(), GetTxnManager(), GetLockManager());
+  auto exec_ctx2 = std::make_unique<ExecutorContext>(
+      txn2, GetCatalog(), GetBPM(), GetTxnManager(), GetLockManager());
   auto &schema = table_info->schema_;
   auto colA = MakeColumnValueExpression(schema, 0, "colA");
   auto colB = MakeColumnValueExpression(schema, 0, "colB");
@@ -232,16 +267,34 @@ TEST_F(TransactionTest, DISABLED_DirtyReadsTest) {
   delete txn1;
 
   // First value
-  ASSERT_EQ(result_set[0].GetValue(out_schema, out_schema->GetColIdx("colA")).GetAs<int32_t>(), 200);
-  ASSERT_EQ(result_set[0].GetValue(out_schema, out_schema->GetColIdx("colB")).GetAs<int32_t>(), 20);
+  ASSERT_EQ(result_set[0]
+                .GetValue(out_schema, out_schema->GetColIdx("colA"))
+                .GetAs<int32_t>(),
+            200);
+  ASSERT_EQ(result_set[0]
+                .GetValue(out_schema, out_schema->GetColIdx("colB"))
+                .GetAs<int32_t>(),
+            20);
 
   // Second value
-  ASSERT_EQ(result_set[1].GetValue(out_schema, out_schema->GetColIdx("colA")).GetAs<int32_t>(), 201);
-  ASSERT_EQ(result_set[1].GetValue(out_schema, out_schema->GetColIdx("colB")).GetAs<int32_t>(), 21);
+  ASSERT_EQ(result_set[1]
+                .GetValue(out_schema, out_schema->GetColIdx("colA"))
+                .GetAs<int32_t>(),
+            201);
+  ASSERT_EQ(result_set[1]
+                .GetValue(out_schema, out_schema->GetColIdx("colB"))
+                .GetAs<int32_t>(),
+            21);
 
   // Third value
-  ASSERT_EQ(result_set[2].GetValue(out_schema, out_schema->GetColIdx("colA")).GetAs<int32_t>(), 202);
-  ASSERT_EQ(result_set[2].GetValue(out_schema, out_schema->GetColIdx("colB")).GetAs<int32_t>(), 22);
+  ASSERT_EQ(result_set[2]
+                .GetValue(out_schema, out_schema->GetColIdx("colA"))
+                .GetAs<int32_t>(),
+            202);
+  ASSERT_EQ(result_set[2]
+                .GetValue(out_schema, out_schema->GetColIdx("colB"))
+                .GetAs<int32_t>(),
+            22);
 
   // Size
   ASSERT_EQ(result_set.size(), 3);

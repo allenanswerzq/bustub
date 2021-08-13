@@ -19,7 +19,8 @@ namespace bustub {
 /**
  * Record related
  */
-bool HeaderPage::InsertRecord(const std::string &name, const page_id_t root_id) {
+bool HeaderPage::InsertRecord(const std::string &name,
+                              const page_id_t root_id) {
   assert(name.length() < 32);
   assert(root_id > INVALID_PAGE_ID);
 
@@ -47,13 +48,15 @@ bool HeaderPage::DeleteRecord(const std::string &name) {
     return false;
   }
   int offset = index * 36 + 4;
-  memmove(GetData() + offset, GetData() + offset + 36, (record_num - index - 1) * 36);
+  memmove(GetData() + offset, GetData() + offset + 36,
+          (record_num - index - 1) * 36);
 
   SetRecordCount(record_num - 1);
   return true;
 }
 
-bool HeaderPage::UpdateRecord(const std::string &name, const page_id_t root_id) {
+bool HeaderPage::UpdateRecord(const std::string &name,
+                              const page_id_t root_id) {
   assert(name.length() < 32);
 
   int index = FindRecord(name);
@@ -88,7 +91,9 @@ bool HeaderPage::GetRootId(const std::string &name, page_id_t *root_id) {
 // record count
 int HeaderPage::GetRecordCount() { return *reinterpret_cast<int *>(GetData()); }
 
-void HeaderPage::SetRecordCount(int record_count) { memcpy(GetData(), &record_count, 4); }
+void HeaderPage::SetRecordCount(int record_count) {
+  memcpy(GetData(), &record_count, 4);
+}
 
 int HeaderPage::FindRecord(const std::string &name) {
   int record_num = GetRecordCount();

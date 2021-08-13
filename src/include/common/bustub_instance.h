@@ -32,14 +32,16 @@ class BustubInstance {
     // log related
     log_manager_ = new LogManager(disk_manager_);
 
-    buffer_pool_manager_ = new BufferPoolManager(BUFFER_POOL_SIZE, disk_manager_, log_manager_);
+    buffer_pool_manager_ =
+        new BufferPoolManager(BUFFER_POOL_SIZE, disk_manager_, log_manager_);
 
     // txn related
     lock_manager_ = new LockManager();
     transaction_manager_ = new TransactionManager(lock_manager_, log_manager_);
 
     // checkpoints
-    checkpoint_manager_ = new CheckpointManager(transaction_manager_, log_manager_, buffer_pool_manager_);
+    checkpoint_manager_ = new CheckpointManager(
+        transaction_manager_, log_manager_, buffer_pool_manager_);
   }
 
   ~BustubInstance() {

@@ -14,8 +14,9 @@
 
 namespace bustub {
 
-NestIndexJoinExecutor::NestIndexJoinExecutor(ExecutorContext *exec_ctx, const NestedIndexJoinPlanNode *plan,
-                                             std::unique_ptr<AbstractExecutor> &&child_executor)
+NestIndexJoinExecutor::NestIndexJoinExecutor(
+    ExecutorContext *exec_ctx, const NestedIndexJoinPlanNode *plan,
+    std::unique_ptr<AbstractExecutor> &&child_executor)
     : AbstractExecutor(exec_ctx) {}
 
 void NestIndexJoinExecutor::Init() {}

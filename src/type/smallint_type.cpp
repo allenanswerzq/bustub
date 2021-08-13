@@ -38,34 +38,37 @@ namespace bustub {
       break;                                                                \
   }  // SWITCH
 
-#define SMALLINT_MODIFY_FUNC(METHOD, OP)                                             \
-  switch (right.GetTypeId()) {                                                       \
-    case TypeId::TINYINT:                                                            \
-      /* NOLINTNEXTLINE */                                                           \
-      return METHOD<int16_t, int8_t>(left, right);                                   \
-    case TypeId::SMALLINT:                                                           \
-      /* NOLINTNEXTLINE */                                                           \
-      return METHOD<int16_t, int16_t>(left, right);                                  \
-    case TypeId::INTEGER:                                                            \
-      /* NOLINTNEXTLINE */                                                           \
-      return METHOD<int16_t, int32_t>(left, right);                                  \
-    case TypeId::BIGINT:                                                             \
-      /* NOLINTNEXTLINE */                                                           \
-      return METHOD<int16_t, int64_t>(left, right);                                  \
-    case TypeId::DECIMAL:                                                            \
-      return Value(TypeId::DECIMAL, left.value_.smallint_ OP right.GetAs<double>()); \
-    case TypeId::VARCHAR: {                                                          \
-      auto r_value = right.CastAs(TypeId::SMALLINT);                                 \
-      /* NOLINTNEXTLINE */                                                           \
-      return METHOD<int16_t, int16_t>(left, r_value);                                \
-    }                                                                                \
-    default:                                                                         \
-      break;                                                                         \
+#define SMALLINT_MODIFY_FUNC(METHOD, OP)                            \
+  switch (right.GetTypeId()) {                                      \
+    case TypeId::TINYINT:                                           \
+      /* NOLINTNEXTLINE */                                          \
+      return METHOD<int16_t, int8_t>(left, right);                  \
+    case TypeId::SMALLINT:                                          \
+      /* NOLINTNEXTLINE */                                          \
+      return METHOD<int16_t, int16_t>(left, right);                 \
+    case TypeId::INTEGER:                                           \
+      /* NOLINTNEXTLINE */                                          \
+      return METHOD<int16_t, int32_t>(left, right);                 \
+    case TypeId::BIGINT:                                            \
+      /* NOLINTNEXTLINE */                                          \
+      return METHOD<int16_t, int64_t>(left, right);                 \
+    case TypeId::DECIMAL:                                           \
+      return Value(TypeId::DECIMAL,                                 \
+                   left.value_.smallint_ OP right.GetAs<double>()); \
+    case TypeId::VARCHAR: {                                         \
+      auto r_value = right.CastAs(TypeId::SMALLINT);                \
+      /* NOLINTNEXTLINE */                                          \
+      return METHOD<int16_t, int16_t>(left, r_value);               \
+    }                                                               \
+    default:                                                        \
+      break;                                                        \
   }  // SWITCH
 
 SmallintType::SmallintType() : IntegerParentType(TypeId::SMALLINT) {}
 
-bool SmallintType::IsZero(const Value &val) const { return (val.value_.smallint_ == 0); }
+bool SmallintType::IsZero(const Value &val) const {
+  return (val.value_.smallint_ == 0);
+}
 
 Value SmallintType::Add(const Value &left, const Value &right) const {
   assert(left.CheckInteger());
@@ -111,7 +114,8 @@ Value SmallintType::Divide(const Value &left, const Value &right) const {
   }
 
   if (right.IsZero()) {
-    throw Exception(ExceptionType::DIVIDE_BY_ZERO, "Division by zero on right-hand side");
+    throw Exception(ExceptionType::DIVIDE_BY_ZERO,
+                    "Division by zero on right-hand side");
   }
 
   SMALLINT_MODIFY_FUNC(DivideValue, /);
@@ -127,7 +131,8 @@ Value SmallintType::Modulo(const Value &left, const Value &right) const {
   }
 
   if (right.IsZero()) {
-    throw Exception(ExceptionType::DIVIDE_BY_ZERO, "Division by zero on right-hand side");
+    throw Exception(ExceptionType::DIVIDE_BY_ZERO,
+                    "Division by zero on right-hand side");
   }
 
   switch (right.GetTypeId()) {
@@ -140,7 +145,8 @@ Value SmallintType::Modulo(const Value &left, const Value &right) const {
     case TypeId::BIGINT:
       return ModuloValue<int16_t, int64_t>(left, right);
     case TypeId::DECIMAL:
-      return Value(TypeId::DECIMAL, ValMod(left.value_.smallint_, right.GetAs<double>()));
+      return Value(TypeId::DECIMAL,
+                   ValMod(left.value_.smallint_, right.GetAs<double>()));
     case TypeId::VARCHAR: {
       auto r_value = right.CastAs(TypeId::SMALLINT);
       return ModuloValue<int16_t, int16_t>(left, r_value);
@@ -158,12 +164,14 @@ Value SmallintType::Sqrt(const Value &val) const {
   }
 
   if (val.value_.smallint_ < 0) {
-    throw Exception(ExceptionType::DECIMAL, "Cannot take square root of a negative number.");
+    throw Exception(ExceptionType::DECIMAL,
+                    "Cannot take square root of a negative number.");
   }
   return Value(TypeId::DECIMAL, std::sqrt(val.value_.smallint_));
 }
 
-Value SmallintType::OperateNull(const Value &left __attribute__((unused)), const Value &right) const {
+Value SmallintType::OperateNull(const Value &left __attribute__((unused)),
+                                const Value &right) const {
   switch (right.GetTypeId()) {
     case TypeId::TINYINT:
     case TypeId::SMALLINT:
@@ -181,7 +189,8 @@ Value SmallintType::OperateNull(const Value &left __attribute__((unused)), const
   throw Exception("type error");
 }
 
-CmpBool SmallintType::CompareEquals(const Value &left, const Value &right) const {
+CmpBool SmallintType::CompareEquals(const Value &left,
+                                    const Value &right) const {
   assert(left.CheckInteger());
   assert(left.CheckComparable(right));
 
@@ -194,7 +203,8 @@ CmpBool SmallintType::CompareEquals(const Value &left, const Value &right) const
   throw Exception("type error");
 }
 
-CmpBool SmallintType::CompareNotEquals(const Value &left, const Value &right) const {
+CmpBool SmallintType::CompareNotEquals(const Value &left,
+                                       const Value &right) const {
   assert(left.CheckInteger());
   assert(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull()) {
@@ -206,7 +216,8 @@ CmpBool SmallintType::CompareNotEquals(const Value &left, const Value &right) co
   throw Exception("type error");
 }
 
-CmpBool SmallintType::CompareLessThan(const Value &left, const Value &right) const {
+CmpBool SmallintType::CompareLessThan(const Value &left,
+                                      const Value &right) const {
   assert(left.CheckInteger());
   assert(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull()) {
@@ -218,7 +229,8 @@ CmpBool SmallintType::CompareLessThan(const Value &left, const Value &right) con
   throw Exception("type error");
 }
 
-CmpBool SmallintType::CompareLessThanEquals(const Value &left, const Value &right) const {
+CmpBool SmallintType::CompareLessThanEquals(const Value &left,
+                                            const Value &right) const {
   assert(left.CheckInteger());
   assert(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull()) {
@@ -230,7 +242,8 @@ CmpBool SmallintType::CompareLessThanEquals(const Value &left, const Value &righ
   throw Exception("type error");
 }
 
-CmpBool SmallintType::CompareGreaterThan(const Value &left, const Value &right) const {
+CmpBool SmallintType::CompareGreaterThan(const Value &left,
+                                         const Value &right) const {
   assert(left.CheckInteger());
   assert(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull()) {
@@ -242,7 +255,8 @@ CmpBool SmallintType::CompareGreaterThan(const Value &left, const Value &right) 
   throw Exception("type error");
 }
 
-CmpBool SmallintType::CompareGreaterThanEquals(const Value &left, const Value &right) const {
+CmpBool SmallintType::CompareGreaterThanEquals(const Value &left,
+                                               const Value &right) const {
   assert(left.CheckInteger());
   assert(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull()) {
@@ -307,8 +321,10 @@ Value SmallintType::CastAs(const Value &val, const TypeId type_id) const {
       if (val.IsNull()) {
         return Value(type_id, BUSTUB_INT8_NULL);
       }
-      if (val.GetAs<int16_t>() > BUSTUB_INT8_MAX || val.GetAs<int16_t>() < BUSTUB_INT8_MIN) {
-        throw Exception(ExceptionType::OUT_OF_RANGE, "Numeric value out of range.");
+      if (val.GetAs<int16_t>() > BUSTUB_INT8_MAX ||
+          val.GetAs<int16_t>() < BUSTUB_INT8_MIN) {
+        throw Exception(ExceptionType::OUT_OF_RANGE,
+                        "Numeric value out of range.");
       }
       return Value(type_id, static_cast<int8_t>(val.GetAs<int16_t>()));
     }
@@ -345,6 +361,7 @@ Value SmallintType::CastAs(const Value &val, const TypeId type_id) const {
     default:
       break;
   }
-  throw Exception("smallint is not coercable to " + Type::TypeIdToString(type_id));
+  throw Exception("smallint is not coercable to " +
+                  Type::TypeIdToString(type_id));
 }
 }  // namespace bustub

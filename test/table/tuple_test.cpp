@@ -26,7 +26,8 @@ namespace bustub {
 // NOLINTNEXTLINE
 TEST(TupleTest, DISABLED_TableHeapTest) {
   // test1: parse create sql statement
-  std::string create_stmt = "a varchar(20), b smallint, c bigint, d bool, e varchar(16)";
+  std::string create_stmt =
+      "a varchar(20), b smallint, c bigint, d bool, e varchar(16)";
   Column col1{"a", TypeId::VARCHAR, 20};
   Column col2{"b", TypeId::SMALLINT};
   Column col3{"c", TypeId::BIGINT};
@@ -42,7 +43,8 @@ TEST(TupleTest, DISABLED_TableHeapTest) {
   auto *buffer_pool_manager = new BufferPoolManager(50, disk_manager);
   auto *lock_manager = new LockManager();
   auto *log_manager = new LogManager(disk_manager);
-  auto *table = new TableHeap(buffer_pool_manager, lock_manager, log_manager, transaction);
+  auto *table = new TableHeap(buffer_pool_manager, lock_manager, log_manager,
+                              transaction);
 
   std::vector<RID> rid_v;
   for (int i = 0; i < 5000; ++i) {

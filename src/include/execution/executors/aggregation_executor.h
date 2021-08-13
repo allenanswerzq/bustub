@@ -28,7 +28,8 @@
 
 namespace bustub {
 /**
- * A simplified hash table that has all the necessary functionality for aggregations.
+ * A simplified hash table that has all the necessary functionality for
+ * aggregations.
  */
 class SimpleAggregationHashTable {
  public:
@@ -37,8 +38,9 @@ class SimpleAggregationHashTable {
    * @param agg_exprs the aggregation expressions
    * @param agg_types the types of aggregations
    */
-  SimpleAggregationHashTable(const std::vector<const AbstractExpression *> &agg_exprs,
-                             const std::vector<AggregationType> &agg_types)
+  SimpleAggregationHashTable(
+      const std::vector<const AbstractExpression *> &agg_exprs,
+      const std::vector<AggregationType> &agg_types)
       : agg_exprs_{agg_exprs}, agg_types_{agg_types} {}
 
   /** @return the initial aggregrate value for this aggregation executor */
@@ -68,35 +70,42 @@ class SimpleAggregationHashTable {
   }
 
   /** Combines the input into the aggregation result. */
-  void CombineAggregateValues(AggregateValue *result, const AggregateValue &input) {
+  void CombineAggregateValues(AggregateValue *result,
+                              const AggregateValue &input) {
     for (uint32_t i = 0; i < agg_exprs_.size(); i++) {
       switch (agg_types_[i]) {
         case AggregationType::CountAggregate:
           // Count increases by one.
-          result->aggregates_[i] = result->aggregates_[i].Add(ValueFactory::GetIntegerValue(1));
+          result->aggregates_[i] =
+              result->aggregates_[i].Add(ValueFactory::GetIntegerValue(1));
           break;
         case AggregationType::SumAggregate:
           // Sum increases by addition.
-          result->aggregates_[i] = result->aggregates_[i].Add(input.aggregates_[i]);
+          result->aggregates_[i] =
+              result->aggregates_[i].Add(input.aggregates_[i]);
           break;
         case AggregationType::MinAggregate:
           // Min is just the min.
-          result->aggregates_[i] = result->aggregates_[i].Min(input.aggregates_[i]);
+          result->aggregates_[i] =
+              result->aggregates_[i].Min(input.aggregates_[i]);
           break;
         case AggregationType::MaxAggregate:
           // Max is just the max.
-          result->aggregates_[i] = result->aggregates_[i].Max(input.aggregates_[i]);
+          result->aggregates_[i] =
+              result->aggregates_[i].Max(input.aggregates_[i]);
           break;
       }
     }
   }
 
   /**
-   * Inserts a value into the hash table and then combines it with the current aggregation.
+   * Inserts a value into the hash table and then combines it with the current
+   * aggregation.
    * @param agg_key the key to be inserted
    * @param agg_val the value to be inserted
    */
-  void InsertCombine(const AggregateKey &agg_key, const AggregateValue &agg_val) {
+  void InsertCombine(const AggregateKey &agg_key,
+                     const AggregateValue &agg_val) {
     if (ht.count(agg_key) == 0) {
       ht.insert({agg_key, GenerateInitialAggregateValue()});
     }
@@ -109,7 +118,9 @@ class SimpleAggregationHashTable {
   class Iterator {
    public:
     /** Creates an iterator for the aggregate map. */
-    explicit Iterator(std::unordered_map<AggregateKey, AggregateValue>::const_iterator iter) : iter_(iter) {}
+    explicit Iterator(
+        std::unordered_map<AggregateKey, AggregateValue>::const_iterator iter)
+        : iter_(iter) {}
 
     /** @return the key of the iterator */
     const AggregateKey &Key() { return iter_->first; }
@@ -124,10 +135,14 @@ class SimpleAggregationHashTable {
     }
 
     /** @return true if both iterators are identical */
-    bool operator==(const Iterator &other) { return this->iter_ == other.iter_; }
+    bool operator==(const Iterator &other) {
+      return this->iter_ == other.iter_;
+    }
 
     /** @return true if both iterators are different */
-    bool operator!=(const Iterator &other) { return this->iter_ != other.iter_; }
+    bool operator!=(const Iterator &other) {
+      return this->iter_ != other.iter_;
+    }
 
    private:
     /** Aggregates map. */
@@ -150,7 +165,8 @@ class SimpleAggregationHashTable {
 };
 
 /**
- * AggregationExecutor executes an aggregation operation (e.g. COUNT, SUM, MIN, MAX) on the tuples of a child executor.
+ * AggregationExecutor executes an aggregation operation (e.g. COUNT, SUM, MIN,
+ * MAX) on the tuples of a child executor.
  */
 class AggregationExecutor : public AbstractExecutor {
  public:
@@ -160,7 +176,8 @@ class AggregationExecutor : public AbstractExecutor {
    * @param plan the aggregation plan node
    * @param child the child executor
    */
-  AggregationExecutor(ExecutorContext *exec_ctx, const AggregationPlanNode *plan,
+  AggregationExecutor(ExecutorContext *exec_ctx,
+                      const AggregationPlanNode *plan,
                       std::unique_ptr<AbstractExecutor> &&child);
 
   /** Do not use or remove this function, otherwise you will get zero points. */

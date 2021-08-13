@@ -25,8 +25,12 @@ using index_oid_t = uint32_t;
  * Metadata about a table.
  */
 struct TableMetadata {
-  TableMetadata(Schema schema, std::string name, std::unique_ptr<TableHeap> &&table, table_oid_t oid)
-      : schema_(std::move(schema)), name_(std::move(name)), table_(std::move(table)), oid_(oid) {}
+  TableMetadata(Schema schema, std::string name,
+                std::unique_ptr<TableHeap> &&table, table_oid_t oid)
+      : schema_(std::move(schema)),
+        name_(std::move(name)),
+        table_(std::move(table)),
+        oid_(oid) {}
   Schema schema_;
   std::string name_;
   std::unique_ptr<TableHeap> table_;
@@ -37,8 +41,8 @@ struct TableMetadata {
  * Metadata about a index
  */
 struct IndexInfo {
-  IndexInfo(Schema key_schema, std::string name, std::unique_ptr<Index> &&index, index_oid_t index_oid,
-            std::string table_name, size_t key_size)
+  IndexInfo(Schema key_schema, std::string name, std::unique_ptr<Index> &&index,
+            index_oid_t index_oid, std::string table_name, size_t key_size)
       : key_schema_(std::move(key_schema)),
         name_(std::move(name)),
         index_(std::move(index)),
@@ -65,7 +69,8 @@ class Catalog {
    * @param lock_manager the lock manager in use by the system
    * @param log_manager the log manager in use by the system
    */
-  Catalog(BufferPoolManager *bpm, LockManager *lock_manager, LogManager *log_manager)
+  Catalog(BufferPoolManager *bpm, LockManager *lock_manager,
+          LogManager *log_manager)
       : bpm_{bpm}, lock_manager_{lock_manager}, log_manager_{log_manager} {}
 
   /**
@@ -75,8 +80,10 @@ class Catalog {
    * @param schema the schema of the new table
    * @return a pointer to the metadata of the new table
    */
-  TableMetadata *CreateTable(Transaction *txn, const std::string &table_name, const Schema &schema) {
-    BUSTUB_ASSERT(names_.count(table_name) == 0, "Table names should be unique!");
+  TableMetadata *CreateTable(Transaction *txn, const std::string &table_name,
+                             const Schema &schema) {
+    BUSTUB_ASSERT(names_.count(table_name) == 0,
+                  "Table names should be unique!");
     return nullptr;
   }
 
@@ -87,7 +94,8 @@ class Catalog {
   TableMetadata *GetTable(table_oid_t table_oid) { return nullptr; }
 
   /**
-   * Create a new index, populate existing data of the table and return its metadata.
+   * Create a new index, populate existing data of the table and return its
+   * metadata.
    * @param txn the transaction in which the table is being created
    * @param index_name the name of the new index
    * @param table_name the name of the table
@@ -98,33 +106,43 @@ class Catalog {
    * @return a pointer to the metadata of the new table
    */
   template <class KeyType, class ValueType, class KeyComparator>
-  IndexInfo *CreateIndex(Transaction *txn, const std::string &index_name, const std::string &table_name,
-                         const Schema &schema, const Schema &key_schema, const std::vector<uint32_t> &key_attrs,
+  IndexInfo *CreateIndex(Transaction *txn, const std::string &index_name,
+                         const std::string &table_name, const Schema &schema,
+                         const Schema &key_schema,
+                         const std::vector<uint32_t> &key_attrs,
                          size_t keysize) {
     return nullptr;
   }
 
-  IndexInfo *GetIndex(const std::string &index_name, const std::string &table_name) { return nullptr; }
+  IndexInfo *GetIndex(const std::string &index_name,
+                      const std::string &table_name) {
+    return nullptr;
+  }
 
   IndexInfo *GetIndex(index_oid_t index_oid) { return nullptr; }
 
-  std::vector<IndexInfo *> GetTableIndexes(const std::string &table_name) { return std::vector<IndexInfo *>(); }
+  std::vector<IndexInfo *> GetTableIndexes(const std::string &table_name) {
+    return std::vector<IndexInfo *>();
+  }
 
  private:
   [[maybe_unused]] BufferPoolManager *bpm_;
   [[maybe_unused]] LockManager *lock_manager_;
   [[maybe_unused]] LogManager *log_manager_;
 
-  /** tables_ : table identifiers -> table metadata. Note that tables_ owns all table metadata. */
+  /** tables_ : table identifiers -> table metadata. Note that tables_ owns all
+   * table metadata. */
   std::unordered_map<table_oid_t, std::unique_ptr<TableMetadata>> tables_;
   /** names_ : table names -> table identifiers */
   std::unordered_map<std::string, table_oid_t> names_;
   /** The next table identifier to be used. */
   std::atomic<table_oid_t> next_table_oid_{0};
-  /** indexes_: index identifiers -> index metadata. Note that indexes_ owns all index metadata */
+  /** indexes_: index identifiers -> index metadata. Note that indexes_ owns all
+   * index metadata */
   std::unordered_map<index_oid_t, std::unique_ptr<IndexInfo>> indexes_;
   /** index_names_: table name -> index names -> index identifiers */
-  std::unordered_map<std::string, std::unordered_map<std::string, index_oid_t>> index_names_;
+  std::unordered_map<std::string, std::unordered_map<std::string, index_oid_t>>
+      index_names_;
   /** The next index identifier to be used */
   std::atomic<index_oid_t> next_index_oid_{0};
 };

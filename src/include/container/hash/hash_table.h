@@ -33,7 +33,8 @@ class HashTable {
    * @param value the value to be associated with the key
    * @return true if insert succeeded, false otherwise
    */
-  virtual bool Insert(Transaction *transaction, const KeyType &key, const ValueType &value) = 0;
+  virtual bool Insert(Transaction *transaction, const KeyType &key,
+                      const ValueType &value) = 0;
 
   /**
    * Deletes the associated value for the given key.
@@ -42,7 +43,8 @@ class HashTable {
    * @param value the value to delete
    * @return true if remove succeeded, false otherwise
    */
-  virtual bool Remove(Transaction *transaction, const KeyType &key, const ValueType &value) = 0;
+  virtual bool Remove(Transaction *transaction, const KeyType &key,
+                      const ValueType &value) = 0;
 
   /**
    * Performs a point query on the hash table.
@@ -51,7 +53,8 @@ class HashTable {
    * @param[out] result the value(s) associated with a given key
    * @return the value(s) associated with the given key
    */
-  virtual bool GetValue(Transaction *transaction, const KeyType &key, std::vector<ValueType> *result) = 0;
+  virtual bool GetValue(Transaction *transaction, const KeyType &key,
+                        std::vector<ValueType> *result) = 0;
 };
 
 }  // namespace bustub

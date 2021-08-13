@@ -21,7 +21,8 @@ TEST(BPlusTreeTests, DISABLED_DeleteTest1) {
   DiskManager *disk_manager = new DiskManager("test.db");
   BufferPoolManager *bpm = new BufferPoolManager(50, disk_manager);
   // create b+ tree
-  BPlusTree<GenericKey<8>, RID, GenericComparator<8>> tree("foo_pk", bpm, comparator);
+  BPlusTree<GenericKey<8>, RID, GenericComparator<8>> tree("foo_pk", bpm,
+                                                           comparator);
   GenericKey<8> index_key;
   RID rid;
   // create transaction
@@ -54,7 +55,8 @@ TEST(BPlusTreeTests, DISABLED_DeleteTest1) {
   int64_t start_key = 1;
   int64_t current_key = start_key;
   index_key.SetFromInteger(start_key);
-  for (auto iterator = tree.Begin(index_key); iterator != tree.end(); ++iterator) {
+  for (auto iterator = tree.Begin(index_key); iterator != tree.end();
+       ++iterator) {
     auto location = (*iterator).second;
     EXPECT_EQ(location.GetPageId(), 0);
     EXPECT_EQ(location.GetSlotNum(), current_key);
@@ -73,7 +75,8 @@ TEST(BPlusTreeTests, DISABLED_DeleteTest1) {
   current_key = start_key;
   int64_t size = 0;
   index_key.SetFromInteger(start_key);
-  for (auto iterator = tree.Begin(index_key); iterator != tree.end(); ++iterator) {
+  for (auto iterator = tree.Begin(index_key); iterator != tree.end();
+       ++iterator) {
     auto location = (*iterator).second;
     EXPECT_EQ(location.GetPageId(), 0);
     EXPECT_EQ(location.GetSlotNum(), current_key);
@@ -100,7 +103,8 @@ TEST(BPlusTreeTests, DISABLED_DeleteTest2) {
   DiskManager *disk_manager = new DiskManager("test.db");
   BufferPoolManager *bpm = new BufferPoolManager(50, disk_manager);
   // create b+ tree
-  BPlusTree<GenericKey<8>, RID, GenericComparator<8>> tree("foo_pk", bpm, comparator);
+  BPlusTree<GenericKey<8>, RID, GenericComparator<8>> tree("foo_pk", bpm,
+                                                           comparator);
   GenericKey<8> index_key;
   RID rid;
   // create transaction
@@ -133,7 +137,8 @@ TEST(BPlusTreeTests, DISABLED_DeleteTest2) {
   int64_t start_key = 1;
   int64_t current_key = start_key;
   index_key.SetFromInteger(start_key);
-  for (auto iterator = tree.Begin(index_key); iterator != tree.end(); ++iterator) {
+  for (auto iterator = tree.Begin(index_key); iterator != tree.end();
+       ++iterator) {
     auto location = (*iterator).second;
     EXPECT_EQ(location.GetPageId(), 0);
     EXPECT_EQ(location.GetSlotNum(), current_key);
@@ -152,7 +157,8 @@ TEST(BPlusTreeTests, DISABLED_DeleteTest2) {
   current_key = start_key;
   int64_t size = 0;
   index_key.SetFromInteger(start_key);
-  for (auto iterator = tree.Begin(index_key); iterator != tree.end(); ++iterator) {
+  for (auto iterator = tree.Begin(index_key); iterator != tree.end();
+       ++iterator) {
     auto location = (*iterator).second;
     EXPECT_EQ(location.GetPageId(), 0);
     EXPECT_EQ(location.GetSlotNum(), current_key);

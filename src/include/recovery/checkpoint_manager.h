@@ -19,11 +19,13 @@
 namespace bustub {
 
 /**
- * CheckpointManager creates consistent checkpoints by blocking all other transactions temporarily.
+ * CheckpointManager creates consistent checkpoints by blocking all other
+ * transactions temporarily.
  */
 class CheckpointManager {
  public:
-  CheckpointManager(TransactionManager *transaction_manager, LogManager *log_manager,
+  CheckpointManager(TransactionManager *transaction_manager,
+                    LogManager *log_manager,
                     BufferPoolManager *buffer_pool_manager)
       : transaction_manager_(transaction_manager),
         log_manager_(log_manager),

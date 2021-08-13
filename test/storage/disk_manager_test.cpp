@@ -73,6 +73,8 @@ TEST_F(DiskManagerTest, ReadWriteLogTest) {
 }
 
 // NOLINTNEXTLINE
-TEST_F(DiskManagerTest, ThrowBadFileTest) { EXPECT_THROW(DiskManager("dev/null\\/foo/bar/baz/test.db"), Exception); }
+TEST_F(DiskManagerTest, ThrowBadFileTest) {
+  EXPECT_THROW(DiskManager("dev/null\\/foo/bar/baz/test.db"), Exception);
+}
 
 }  // namespace bustub

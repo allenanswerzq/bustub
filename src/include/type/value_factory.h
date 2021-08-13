@@ -34,43 +34,67 @@ namespace bustub {
 
 class ValueFactory {
  public:
-  static inline Value Clone(const Value &src, __attribute__((__unused__)) AbstractPool *dataPool = nullptr) {
+  static inline Value Clone(const Value &src,
+                            __attribute__((__unused__))
+                            AbstractPool *dataPool = nullptr) {
     return src.Copy();
   }
 
-  static inline Value GetTinyIntValue(int8_t value) { return Value(TypeId::TINYINT, value); }
-
-  static inline Value GetSmallIntValue(int16_t value) { return Value(TypeId::SMALLINT, value); }
-
-  static inline Value GetIntegerValue(int32_t value) { return Value(TypeId::INTEGER, value); }
-
-  static inline Value GetBigIntValue(int64_t value) { return Value(TypeId::BIGINT, value); }
-
-  static inline Value GetTimestampValue(int64_t value) { return Value(TypeId::TIMESTAMP, value); }
-
-  static inline Value GetDecimalValue(double value) { return Value(TypeId::DECIMAL, value); }
-
-  static inline Value GetBooleanValue(CmpBool value) {
-    return Value(TypeId::BOOLEAN, value == CmpBool::CmpNull ? BUSTUB_BOOLEAN_NULL : static_cast<int8_t>(value));
+  static inline Value GetTinyIntValue(int8_t value) {
+    return Value(TypeId::TINYINT, value);
   }
 
-  static inline Value GetBooleanValue(bool value) { return Value(TypeId::BOOLEAN, static_cast<int8_t>(value)); }
+  static inline Value GetSmallIntValue(int16_t value) {
+    return Value(TypeId::SMALLINT, value);
+  }
 
-  static inline Value GetBooleanValue(int8_t value) { return Value(TypeId::BOOLEAN, value); }
+  static inline Value GetIntegerValue(int32_t value) {
+    return Value(TypeId::INTEGER, value);
+  }
+
+  static inline Value GetBigIntValue(int64_t value) {
+    return Value(TypeId::BIGINT, value);
+  }
+
+  static inline Value GetTimestampValue(int64_t value) {
+    return Value(TypeId::TIMESTAMP, value);
+  }
+
+  static inline Value GetDecimalValue(double value) {
+    return Value(TypeId::DECIMAL, value);
+  }
+
+  static inline Value GetBooleanValue(CmpBool value) {
+    return Value(TypeId::BOOLEAN, value == CmpBool::CmpNull
+                                      ? BUSTUB_BOOLEAN_NULL
+                                      : static_cast<int8_t>(value));
+  }
+
+  static inline Value GetBooleanValue(bool value) {
+    return Value(TypeId::BOOLEAN, static_cast<int8_t>(value));
+  }
+
+  static inline Value GetBooleanValue(int8_t value) {
+    return Value(TypeId::BOOLEAN, value);
+  }
 
   static inline Value GetVarcharValue(const char *value, bool manage_data,
-                                      __attribute__((__unused__)) AbstractPool *pool = nullptr) {
+                                      __attribute__((__unused__))
+                                      AbstractPool *pool = nullptr) {
     auto len = static_cast<uint32_t>(value == nullptr ? 0U : strlen(value) + 1);
     return GetVarcharValue(value, len, manage_data);
   }
 
-  static inline Value GetVarcharValue(const char *value, uint32_t len, bool manage_data,
-                                      __attribute__((__unused__)) AbstractPool *pool = nullptr) {
+  static inline Value GetVarcharValue(const char *value, uint32_t len,
+                                      bool manage_data,
+                                      __attribute__((__unused__))
+                                      AbstractPool *pool = nullptr) {
     return Value(TypeId::VARCHAR, value, len, manage_data);
   }
 
   static inline Value GetVarcharValue(const std::string &value,
-                                      __attribute__((__unused__)) AbstractPool *pool = nullptr) {
+                                      __attribute__((__unused__))
+                                      AbstractPool *pool = nullptr) {
     return Value(TypeId::VARCHAR, value);
   }
 
@@ -99,7 +123,8 @@ class ValueFactory {
         ret_value = GetVarcharValue(nullptr, false, nullptr);
         break;
       default: {
-        throw Exception(ExceptionType::UNKNOWN_TYPE, "Attempting to create invalid null type");
+        throw Exception(ExceptionType::UNKNOWN_TYPE,
+                        "Attempting to create invalid null type");
       }
     }
     return ret_value;
@@ -126,29 +151,36 @@ class ValueFactory {
       default:
         break;
     }
-    throw Exception(ExceptionType::UNKNOWN_TYPE, "Unknown type for GetZeroValueType");
+    throw Exception(ExceptionType::UNKNOWN_TYPE,
+                    "Unknown type for GetZeroValueType");
   }
 
   static inline Value CastAsBigInt(const Value &value) {
     if (Type::GetInstance(TypeId::BIGINT)->IsCoercableFrom(value.GetTypeId())) {
       if (value.IsNull()) {
-        return ValueFactory::GetBigIntValue(static_cast<int64_t>(BUSTUB_INT64_NULL));
+        return ValueFactory::GetBigIntValue(
+            static_cast<int64_t>(BUSTUB_INT64_NULL));
       }
       switch (value.GetTypeId()) {
         case TypeId::TINYINT:
-          return ValueFactory::GetBigIntValue(static_cast<int64_t>(value.GetAs<int8_t>()));
+          return ValueFactory::GetBigIntValue(
+              static_cast<int64_t>(value.GetAs<int8_t>()));
         case TypeId::SMALLINT:
-          return ValueFactory::GetBigIntValue(static_cast<int64_t>(value.GetAs<int16_t>()));
+          return ValueFactory::GetBigIntValue(
+              static_cast<int64_t>(value.GetAs<int16_t>()));
         case TypeId::INTEGER:
-          return ValueFactory::GetBigIntValue(static_cast<int64_t>(value.GetAs<int32_t>()));
+          return ValueFactory::GetBigIntValue(
+              static_cast<int64_t>(value.GetAs<int32_t>()));
         case TypeId::BIGINT:
           return ValueFactory::GetBigIntValue(value.GetAs<int64_t>());
         case TypeId::DECIMAL: {
           if (value.GetAs<double>() > static_cast<double>(BUSTUB_INT64_MAX) ||
               value.GetAs<double>() < static_cast<double>(BUSTUB_INT64_MIN)) {
-            throw Exception(ExceptionType::OUT_OF_RANGE, "Numeric value out of range.");
+            throw Exception(ExceptionType::OUT_OF_RANGE,
+                            "Numeric value out of range.");
           }
-          return ValueFactory::GetBigIntValue(static_cast<int64_t>(value.GetAs<double>()));
+          return ValueFactory::GetBigIntValue(
+              static_cast<int64_t>(value.GetAs<double>()));
         }
         case TypeId::VARCHAR: {
           std::string str = value.ToString();
@@ -156,12 +188,14 @@ class ValueFactory {
           try {
             bigint = stoll(str);
           } catch (std::out_of_range &e) {
-            throw Exception(ExceptionType::OUT_OF_RANGE, "Numeric value out of range.");
+            throw Exception(ExceptionType::OUT_OF_RANGE,
+                            "Numeric value out of range.");
           } catch (std::invalid_argument &e) {
             throw Exception("Invalid input syntax for bigint: \'" + str + "\'");
           }
           if (bigint > BUSTUB_INT64_MAX || bigint < BUSTUB_INT64_MIN) {
-            throw Exception(ExceptionType::OUT_OF_RANGE, "Numeric value out of range.");
+            throw Exception(ExceptionType::OUT_OF_RANGE,
+                            "Numeric value out of range.");
           }
           return ValueFactory::GetBigIntValue(bigint);
         }
@@ -169,34 +203,42 @@ class ValueFactory {
           break;
       }
     }
-    throw Exception(Type::GetInstance(value.GetTypeId())->ToString(value) + " is not coercable to BIGINT.");
+    throw Exception(Type::GetInstance(value.GetTypeId())->ToString(value) +
+                    " is not coercable to BIGINT.");
   }
 
   static inline Value CastAsInteger(const Value &value) {
-    if (Type::GetInstance(TypeId::INTEGER)->IsCoercableFrom(value.GetTypeId())) {
+    if (Type::GetInstance(TypeId::INTEGER)
+            ->IsCoercableFrom(value.GetTypeId())) {
       if (value.IsNull()) {
         return ValueFactory::GetIntegerValue(BUSTUB_INT32_NULL);
       }
       switch (value.GetTypeId()) {
         case TypeId::TINYINT:
-          return ValueFactory::GetIntegerValue(static_cast<int32_t>(value.GetAs<int8_t>()));
+          return ValueFactory::GetIntegerValue(
+              static_cast<int32_t>(value.GetAs<int8_t>()));
         case TypeId::SMALLINT:
-          return ValueFactory::GetIntegerValue(static_cast<int32_t>(value.GetAs<int16_t>()));
+          return ValueFactory::GetIntegerValue(
+              static_cast<int32_t>(value.GetAs<int16_t>()));
         case TypeId::INTEGER:
           return ValueFactory::GetIntegerValue(value.GetAs<int32_t>());
         case TypeId::BIGINT: {
           if (value.GetAs<int64_t>() > static_cast<int64_t>(BUSTUB_INT32_MAX) ||
               value.GetAs<int64_t>() < static_cast<int64_t>(BUSTUB_INT32_MIN)) {
-            throw Exception(ExceptionType::OUT_OF_RANGE, "Numeric value out of range.");
+            throw Exception(ExceptionType::OUT_OF_RANGE,
+                            "Numeric value out of range.");
           }
-          return ValueFactory::GetIntegerValue(static_cast<int32_t>(value.GetAs<int64_t>()));
+          return ValueFactory::GetIntegerValue(
+              static_cast<int32_t>(value.GetAs<int64_t>()));
         }
         case TypeId::DECIMAL: {
           if (value.GetAs<double>() > static_cast<double>(BUSTUB_INT32_MAX) ||
               value.GetAs<double>() < static_cast<double>(BUSTUB_INT32_MIN)) {
-            throw Exception(ExceptionType::OUT_OF_RANGE, "Numeric value out of range.");
+            throw Exception(ExceptionType::OUT_OF_RANGE,
+                            "Numeric value out of range.");
           }
-          return ValueFactory::GetIntegerValue(static_cast<int32_t>(value.GetAs<double>()));
+          return ValueFactory::GetIntegerValue(
+              static_cast<int32_t>(value.GetAs<double>()));
         }
         case TypeId::VARCHAR: {
           std::string str = value.ToString();
@@ -204,13 +246,16 @@ class ValueFactory {
           try {
             integer = stoi(str);
           } catch (std::out_of_range &e) {
-            throw Exception(ExceptionType::OUT_OF_RANGE, "Numeric value out of range.");
+            throw Exception(ExceptionType::OUT_OF_RANGE,
+                            "Numeric value out of range.");
           } catch (std::invalid_argument &e) {
-            throw Exception("Invalid input syntax for integer: \'" + str + "\'");
+            throw Exception("Invalid input syntax for integer: \'" + str +
+                            "\'");
           }
 
           if (integer > BUSTUB_INT32_MAX || integer < BUSTUB_INT32_MIN) {
-            throw Exception(ExceptionType::OUT_OF_RANGE, "Numeric value out of range.");
+            throw Exception(ExceptionType::OUT_OF_RANGE,
+                            "Numeric value out of range.");
           }
           return ValueFactory::GetIntegerValue(integer);
         }
@@ -218,39 +263,49 @@ class ValueFactory {
           break;
       }
     }
-    throw Exception(Type::GetInstance(value.GetTypeId())->ToString(value) + " is not coercable to INTEGER.");
+    throw Exception(Type::GetInstance(value.GetTypeId())->ToString(value) +
+                    " is not coercable to INTEGER.");
   }
 
   static inline Value CastAsSmallInt(const Value &value) {
-    if (Type::GetInstance(TypeId::SMALLINT)->IsCoercableFrom(value.GetTypeId())) {
+    if (Type::GetInstance(TypeId::SMALLINT)
+            ->IsCoercableFrom(value.GetTypeId())) {
       if (value.IsNull()) {
-        return ValueFactory::GetSmallIntValue(static_cast<int16_t>(BUSTUB_INT16_NULL));
+        return ValueFactory::GetSmallIntValue(
+            static_cast<int16_t>(BUSTUB_INT16_NULL));
       }
       switch (value.GetTypeId()) {
         case TypeId::TINYINT:
-          return ValueFactory::GetSmallIntValue(static_cast<int16_t>(value.GetAs<int8_t>()));
+          return ValueFactory::GetSmallIntValue(
+              static_cast<int16_t>(value.GetAs<int8_t>()));
         case TypeId::SMALLINT:
           return ValueFactory::GetSmallIntValue(value.GetAs<int16_t>());
         case TypeId::INTEGER: {
           if (value.GetAs<int32_t>() > static_cast<int32_t>(BUSTUB_INT16_MAX) ||
               value.GetAs<int32_t>() < static_cast<int32_t>(BUSTUB_INT16_MIN)) {
-            throw Exception(ExceptionType::OUT_OF_RANGE, "Numeric value out of range.");
+            throw Exception(ExceptionType::OUT_OF_RANGE,
+                            "Numeric value out of range.");
           }
-          return ValueFactory::GetSmallIntValue(static_cast<int16_t>(value.GetAs<int32_t>()));
+          return ValueFactory::GetSmallIntValue(
+              static_cast<int16_t>(value.GetAs<int32_t>()));
         }
         case TypeId::BIGINT: {
           if (value.GetAs<int64_t>() > static_cast<int64_t>(BUSTUB_INT16_MAX) ||
               value.GetAs<int64_t>() < static_cast<int64_t>(BUSTUB_INT16_MIN)) {
-            throw Exception(ExceptionType::OUT_OF_RANGE, "Numeric value out of range.");
+            throw Exception(ExceptionType::OUT_OF_RANGE,
+                            "Numeric value out of range.");
           }
-          return ValueFactory::GetSmallIntValue(static_cast<int16_t>(value.GetAs<int64_t>()));
+          return ValueFactory::GetSmallIntValue(
+              static_cast<int16_t>(value.GetAs<int64_t>()));
         }
         case TypeId::DECIMAL: {
           if (value.GetAs<double>() > static_cast<double>(BUSTUB_INT16_MAX) ||
               value.GetAs<double>() < static_cast<double>(BUSTUB_INT16_MIN)) {
-            throw Exception(ExceptionType::OUT_OF_RANGE, "Numeric value out of range.");
+            throw Exception(ExceptionType::OUT_OF_RANGE,
+                            "Numeric value out of range.");
           }
-          return ValueFactory::GetSmallIntValue(static_cast<int16_t>(value.GetAs<double>()));
+          return ValueFactory::GetSmallIntValue(
+              static_cast<int16_t>(value.GetAs<double>()));
         }
         case TypeId::VARCHAR: {
           std::string str = value.ToString();
@@ -258,12 +313,15 @@ class ValueFactory {
           try {
             smallint = static_cast<int16_t>(stoi(str));
           } catch (std::out_of_range &e) {
-            throw Exception(ExceptionType::OUT_OF_RANGE, "Numeric value out of range.");
+            throw Exception(ExceptionType::OUT_OF_RANGE,
+                            "Numeric value out of range.");
           } catch (std::invalid_argument &e) {
-            throw Exception("Invalid input syntax for smallint: \'" + str + "\'");
+            throw Exception("Invalid input syntax for smallint: \'" + str +
+                            "\'");
           }
           if (smallint < BUSTUB_INT16_MIN) {
-            throw Exception(ExceptionType::OUT_OF_RANGE, "Numeric value out of range.");
+            throw Exception(ExceptionType::OUT_OF_RANGE,
+                            "Numeric value out of range.");
           }
           return ValueFactory::GetSmallIntValue(smallint);
         }
@@ -271,11 +329,13 @@ class ValueFactory {
           break;
       }
     }
-    throw Exception(Type::GetInstance(value.GetTypeId())->ToString(value) + " is not coercable to SMALLINT.");
+    throw Exception(Type::GetInstance(value.GetTypeId())->ToString(value) +
+                    " is not coercable to SMALLINT.");
   }
 
   static inline Value CastAsTinyInt(const Value &value) {
-    if (Type::GetInstance(TypeId::TINYINT)->IsCoercableFrom(value.GetTypeId())) {
+    if (Type::GetInstance(TypeId::TINYINT)
+            ->IsCoercableFrom(value.GetTypeId())) {
       if (value.IsNull()) {
         return ValueFactory::GetTinyIntValue(BUSTUB_INT8_NULL);
       }
@@ -285,30 +345,38 @@ class ValueFactory {
         case TypeId::SMALLINT: {
           if (value.GetAs<int16_t>() > static_cast<int16_t>(BUSTUB_INT8_MAX) ||
               value.GetAs<int16_t>() < static_cast<int16_t>(BUSTUB_INT8_MIN)) {
-            throw Exception(ExceptionType::OUT_OF_RANGE, "Numeric value out of range.");
+            throw Exception(ExceptionType::OUT_OF_RANGE,
+                            "Numeric value out of range.");
           }
-          return ValueFactory::GetTinyIntValue(static_cast<int8_t>(value.GetAs<int16_t>()));
+          return ValueFactory::GetTinyIntValue(
+              static_cast<int8_t>(value.GetAs<int16_t>()));
         }
         case TypeId::INTEGER: {
           if (value.GetAs<int32_t>() > static_cast<int32_t>(BUSTUB_INT8_MAX) ||
               value.GetAs<int32_t>() < static_cast<int32_t>(BUSTUB_INT8_MIN)) {
-            throw Exception(ExceptionType::OUT_OF_RANGE, "Numeric value out of range.");
+            throw Exception(ExceptionType::OUT_OF_RANGE,
+                            "Numeric value out of range.");
           }
-          return ValueFactory::GetTinyIntValue(static_cast<int8_t>(value.GetAs<int32_t>()));
+          return ValueFactory::GetTinyIntValue(
+              static_cast<int8_t>(value.GetAs<int32_t>()));
         }
         case TypeId::BIGINT: {
           if (value.GetAs<int64_t>() > static_cast<int64_t>(BUSTUB_INT8_MAX) ||
               value.GetAs<int64_t>() < static_cast<int64_t>(BUSTUB_INT8_MIN)) {
-            throw Exception(ExceptionType::OUT_OF_RANGE, "Numeric value out of range.");
+            throw Exception(ExceptionType::OUT_OF_RANGE,
+                            "Numeric value out of range.");
           }
-          return ValueFactory::GetTinyIntValue(static_cast<int8_t>(value.GetAs<int64_t>()));
+          return ValueFactory::GetTinyIntValue(
+              static_cast<int8_t>(value.GetAs<int64_t>()));
         }
         case TypeId::DECIMAL: {
           if (value.GetAs<double>() > static_cast<double>(BUSTUB_INT8_MAX) ||
               value.GetAs<double>() < static_cast<double>(BUSTUB_INT8_MIN)) {
-            throw Exception(ExceptionType::OUT_OF_RANGE, "Numeric value out of range.");
+            throw Exception(ExceptionType::OUT_OF_RANGE,
+                            "Numeric value out of range.");
           }
-          return ValueFactory::GetTinyIntValue(static_cast<int8_t>(value.GetAs<double>()));
+          return ValueFactory::GetTinyIntValue(
+              static_cast<int8_t>(value.GetAs<double>()));
         }
         case TypeId::VARCHAR: {
           std::string str = value.ToString();
@@ -316,12 +384,15 @@ class ValueFactory {
           try {
             tinyint = static_cast<int8_t>(stoi(str));
           } catch (std::out_of_range &e) {
-            throw Exception(ExceptionType::OUT_OF_RANGE, "Numeric value out of range.");
+            throw Exception(ExceptionType::OUT_OF_RANGE,
+                            "Numeric value out of range.");
           } catch (std::invalid_argument &e) {
-            throw Exception("Invalid input syntax for tinyint: \'" + str + "\'");
+            throw Exception("Invalid input syntax for tinyint: \'" + str +
+                            "\'");
           }
           if (tinyint < BUSTUB_INT8_MIN) {
-            throw Exception(ExceptionType::OUT_OF_RANGE, "Numeric value out of range.");
+            throw Exception(ExceptionType::OUT_OF_RANGE,
+                            "Numeric value out of range.");
           }
           return ValueFactory::GetTinyIntValue(tinyint);
         }
@@ -329,23 +400,30 @@ class ValueFactory {
           break;
       }
     }
-    throw Exception(Type::GetInstance(value.GetTypeId())->ToString(value) + " is not coercable to TINYINT.");
+    throw Exception(Type::GetInstance(value.GetTypeId())->ToString(value) +
+                    " is not coercable to TINYINT.");
   }
 
   static inline Value CastAsDecimal(const Value &value) {
-    if (Type::GetInstance(TypeId::DECIMAL)->IsCoercableFrom(value.GetTypeId())) {
+    if (Type::GetInstance(TypeId::DECIMAL)
+            ->IsCoercableFrom(value.GetTypeId())) {
       if (value.IsNull()) {
-        return ValueFactory::GetDecimalValue(static_cast<double>(BUSTUB_DECIMAL_NULL));
+        return ValueFactory::GetDecimalValue(
+            static_cast<double>(BUSTUB_DECIMAL_NULL));
       }
       switch (value.GetTypeId()) {
         case TypeId::TINYINT:
-          return ValueFactory::GetDecimalValue(static_cast<double>(value.GetAs<int8_t>()));
+          return ValueFactory::GetDecimalValue(
+              static_cast<double>(value.GetAs<int8_t>()));
         case TypeId::SMALLINT:
-          return ValueFactory::GetDecimalValue(static_cast<double>(value.GetAs<int16_t>()));
+          return ValueFactory::GetDecimalValue(
+              static_cast<double>(value.GetAs<int16_t>()));
         case TypeId::INTEGER:
-          return ValueFactory::GetDecimalValue(static_cast<double>(value.GetAs<int32_t>()));
+          return ValueFactory::GetDecimalValue(
+              static_cast<double>(value.GetAs<int32_t>()));
         case TypeId::BIGINT:
-          return ValueFactory::GetDecimalValue(static_cast<double>(value.GetAs<int64_t>()));
+          return ValueFactory::GetDecimalValue(
+              static_cast<double>(value.GetAs<int64_t>()));
         case TypeId::DECIMAL:
           return ValueFactory::GetDecimalValue(value.GetAs<double>());
         case TypeId::VARCHAR: {
@@ -354,12 +432,15 @@ class ValueFactory {
           try {
             res = stod(str);
           } catch (std::out_of_range &e) {
-            throw Exception(ExceptionType::OUT_OF_RANGE, "Numeric value out of range.");
+            throw Exception(ExceptionType::OUT_OF_RANGE,
+                            "Numeric value out of range.");
           } catch (std::invalid_argument &e) {
-            throw Exception("Invalid input syntax for decimal: \'" + str + "\'");
+            throw Exception("Invalid input syntax for decimal: \'" + str +
+                            "\'");
           }
           if (res > BUSTUB_DECIMAL_MAX || res < BUSTUB_DECIMAL_MIN) {
-            throw Exception(ExceptionType::OUT_OF_RANGE, "Numeric value out of range.");
+            throw Exception(ExceptionType::OUT_OF_RANGE,
+                            "Numeric value out of range.");
           }
           return ValueFactory::GetDecimalValue(res);
         }
@@ -367,11 +448,13 @@ class ValueFactory {
           break;
       }
     }
-    throw Exception(Type::GetInstance(value.GetTypeId())->ToString(value) + " is not coercable to DECIMAL.");
+    throw Exception(Type::GetInstance(value.GetTypeId())->ToString(value) +
+                    " is not coercable to DECIMAL.");
   }
 
   static inline Value CastAsVarchar(const Value &value) {
-    if (Type::GetInstance(TypeId::VARCHAR)->IsCoercableFrom(value.GetTypeId())) {
+    if (Type::GetInstance(TypeId::VARCHAR)
+            ->IsCoercableFrom(value.GetTypeId())) {
       if (value.IsNull()) {
         return ValueFactory::GetVarcharValue(nullptr, false);
       }
@@ -388,11 +471,13 @@ class ValueFactory {
           break;
       }
     }
-    throw Exception(Type::GetInstance(value.GetTypeId())->ToString(value) + " is not coercable to VARCHAR.");
+    throw Exception(Type::GetInstance(value.GetTypeId())->ToString(value) +
+                    " is not coercable to VARCHAR.");
   }
 
   static inline Value CastAsTimestamp(const Value &value) {
-    if (Type::GetInstance(TypeId::TIMESTAMP)->IsCoercableFrom(value.GetTypeId())) {
+    if (Type::GetInstance(TypeId::TIMESTAMP)
+            ->IsCoercableFrom(value.GetTypeId())) {
       if (value.IsNull()) {
         return ValueFactory::GetTimestampValue(BUSTUB_TIMESTAMP_NULL);
       }
@@ -407,13 +492,15 @@ class ValueFactory {
           if (str.length() != 29) {
             throw Exception("Timestamp format error.");
           }
-          if (str[10] != ' ' || str[4] != '-' || str[7] != '-' || str[13] != ':' || str[16] != ':' || str[19] != '.' ||
+          if (str[10] != ' ' || str[4] != '-' || str[7] != '-' ||
+              str[13] != ':' || str[16] != ':' || str[19] != '.' ||
               (str[26] != '+' && str[26] != '-')) {
             throw Exception("Timestamp format error.");
           }
-          bool is_digit[29] = {true,  true, true, true,  false, true, true,  false, true, true,
-                               false, true, true, false, true,  true, false, true,  true, false,
-                               true,  true, true, true,  true,  true, false, true,  true};
+          bool is_digit[29] = {
+              true,  true, true, true,  false, true, true,  false, true, true,
+              false, true, true, false, true,  true, false, true,  true, false,
+              true,  true, true, true,  true,  true, false, true,  true};
           for (int i = 0; i < 29; i++) {
             if (is_digit[i]) {
               if (str[i] < '0' || str[i] > '9') {
@@ -430,22 +517,27 @@ class ValueFactory {
           uint32_t sec = 0;
           uint32_t micro = 0;
           uint64_t res = 0;
-          if (sscanf(str.c_str(), "%4u-%2u-%2u %2u:%2u:%2u.%6u%3d", &year, &month, &day, &hour, &min, &sec, &micro,
-                     &tz) != 8) {
+          if (sscanf(str.c_str(), "%4u-%2u-%2u %2u:%2u:%2u.%6u%3d", &year,
+                     &month, &day, &hour, &min, &sec, &micro, &tz) != 8) {
             throw Exception("Timestamp format error.");
           }
-          if (year > 9999 || month > 12 || day > 31 || hour > 23 || min > 59 || sec > 59 || micro > 999999 ||
-              day == 0 || month == 0) {
-            throw Exception(ExceptionType::OUT_OF_RANGE, "Timestamp value out of range.");
+          if (year > 9999 || month > 12 || day > 31 || hour > 23 || min > 59 ||
+              sec > 59 || micro > 999999 || day == 0 || month == 0) {
+            throw Exception(ExceptionType::OUT_OF_RANGE,
+                            "Timestamp value out of range.");
           }
-          uint32_t max_day[13] = {0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
-          uint32_t max_day_lunar[13] = {0, 31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+          uint32_t max_day[13] = {0,  31, 28, 31, 30, 31, 30,
+                                  31, 31, 30, 31, 30, 31};
+          uint32_t max_day_lunar[13] = {0,  31, 29, 31, 30, 31, 30,
+                                        31, 31, 30, 31, 30, 31};
           if ((year % 4 == 0 && year % 100 != 0) || year % 400 == 0) {
             if (day > max_day_lunar[month]) {
-              throw Exception(ExceptionType::OUT_OF_RANGE, "Timestamp value out of range.");
+              throw Exception(ExceptionType::OUT_OF_RANGE,
+                              "Timestamp value out of range.");
             }
           } else if (day > max_day[month]) {
-            throw Exception(ExceptionType::OUT_OF_RANGE, "Timestamp value out of range.");
+            throw Exception(ExceptionType::OUT_OF_RANGE,
+                            "Timestamp value out of range.");
           }
           uint32_t timezone = tz + 12;
           if (tz > 26) {
@@ -468,11 +560,13 @@ class ValueFactory {
           break;
       }
     }
-    throw Exception(Type::GetInstance(value.GetTypeId())->ToString(value) + " is not coercable to TIMESTAMP.");
+    throw Exception(Type::GetInstance(value.GetTypeId())->ToString(value) +
+                    " is not coercable to TIMESTAMP.");
   }
 
   static inline Value CastAsBoolean(const Value &value) {
-    if (Type::GetInstance(TypeId::BOOLEAN)->IsCoercableFrom(value.GetTypeId())) {
+    if (Type::GetInstance(TypeId::BOOLEAN)
+            ->IsCoercableFrom(value.GetTypeId())) {
       if (value.IsNull()) {
         return ValueFactory::GetBooleanValue(BUSTUB_BOOLEAN_NULL);
       }
@@ -494,7 +588,8 @@ class ValueFactory {
           break;
       }
     }
-    throw Exception(Type::GetInstance(value.GetTypeId())->ToString(value) + " is not coercable to BOOLEAN.");
+    throw Exception(Type::GetInstance(value.GetTypeId())->ToString(value) +
+                    " is not coercable to BOOLEAN.");
   }
 };
 

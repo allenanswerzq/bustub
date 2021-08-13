@@ -18,22 +18,28 @@
 
 namespace bustub {
 /**
- * SeqScanPlanNode identifies a table that should be scanned with an optional predicate.
+ * SeqScanPlanNode identifies a table that should be scanned with an optional
+ * predicate.
  */
 class SeqScanPlanNode : public AbstractPlanNode {
  public:
   /**
    * Creates a new sequential scan plan node.
    * @param output the output format of this scan plan node
-   * @param predicate the predicate to scan with, tuples are returned if predicate(tuple) = true or predicate = nullptr
+   * @param predicate the predicate to scan with, tuples are returned if
+   * predicate(tuple) = true or predicate = nullptr
    * @param table_oid the identifier of table to be scanned
    */
-  SeqScanPlanNode(const Schema *output, const AbstractExpression *predicate, table_oid_t table_oid)
-      : AbstractPlanNode(output, {}), predicate_{predicate}, table_oid_(table_oid) {}
+  SeqScanPlanNode(const Schema *output, const AbstractExpression *predicate,
+                  table_oid_t table_oid)
+      : AbstractPlanNode(output, {}),
+        predicate_{predicate},
+        table_oid_(table_oid) {}
 
   PlanType GetType() const override { return PlanType::SeqScan; }
 
-  /** @return the predicate to test tuples against; tuples should only be returned if they evaluate to true */
+  /** @return the predicate to test tuples against; tuples should only be
+   * returned if they evaluate to true */
   const AbstractExpression *GetPredicate() const { return predicate_; }
 
   /** @return the identifier of the table that should be scanned */

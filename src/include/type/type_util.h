@@ -28,7 +28,8 @@ class TypeUtil {
    * Use memcmp to evaluate two strings
    * This does not work with VARBINARY attributes.
    */
-  static inline int CompareStrings(const char *str1, int len1, const char *str2, int len2) {
+  static inline int CompareStrings(const char *str1, int len1, const char *str2,
+                                   int len2) {
     assert(str1 != nullptr);
     assert(len1 >= 0);
     assert(str2 != nullptr);
@@ -105,7 +106,8 @@ class TypeUtil {
   //      uint32_t rightLen = *reinterpret_cast<const uint32_t *>(rightPtr);
   //      result = GetCmpBool(
   //          TypeUtil::CompareStrings(leftPtr + sizeof(uint32_t), leftLen,
-  //                                   rightPtr + sizeof(uint32_t), rightLen) == 0);
+  //                                   rightPtr + sizeof(uint32_t), rightLen) ==
+  //                                   0);
   //      break;
   //    }
   //    default: { break; }
@@ -175,7 +177,8 @@ class TypeUtil {
   //      uint32_t rightLen = *reinterpret_cast<const uint32_t *>(rightPtr);
   //      result = GetCmpBool(
   //          TypeUtil::CompareStrings(leftPtr + sizeof(uint32_t), leftLen,
-  //                                   rightPtr + sizeof(uint32_t), rightLen) < 0);
+  //                                   rightPtr + sizeof(uint32_t), rightLen) <
+  //                                   0);
   //      break;
   //    }
   //    default: { break; }
@@ -245,7 +248,8 @@ class TypeUtil {
   //      uint32_t rightLen = *reinterpret_cast<const uint32_t *>(rightPtr);
   //      result = GetCmpBool(
   //          TypeUtil::CompareStrings(leftPtr + sizeof(uint32_t), leftLen,
-  //                                   rightPtr + sizeof(uint32_t), rightLen) > 0);
+  //                                   rightPtr + sizeof(uint32_t), rightLen) >
+  //                                   0);
   //      break;
   //    }
   //    default: { break; }

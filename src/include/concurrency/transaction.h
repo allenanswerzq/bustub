@@ -79,9 +79,14 @@ class TableWriteRecord {
  */
 class IndexWriteRecord {
  public:
-  IndexWriteRecord(RID rid, table_oid_t table_oid, WType wtype, const Tuple &tuple, index_oid_t index_oid,
-                   Catalog *catalog)
-      : rid_(rid), table_oid_(table_oid), wtype_(wtype), tuple_(tuple), index_oid_(index_oid), catalog_(catalog) {}
+  IndexWriteRecord(RID rid, table_oid_t table_oid, WType wtype,
+                   const Tuple &tuple, index_oid_t index_oid, Catalog *catalog)
+      : rid_(rid),
+        table_oid_(table_oid),
+        wtype_(wtype),
+        tuple_(tuple),
+        index_oid_(index_oid),
+        catalog_(catalog) {}
 
   /** The rid is the value stored in the index. */
   RID rid_;
@@ -93,7 +98,8 @@ class IndexWriteRecord {
   Tuple tuple_;
   /** The old tuple is only used for the update operation. */
   Tuple old_tuple_;
-  /** Each table has an index list, this is the identifier of an index into the list. */
+  /** Each table has an index list, this is the identifier of an index into the
+   * list. */
   index_oid_t index_oid_;
   /** The catalog contains metadata required to locate index. */
   Catalog *catalog_;
@@ -111,7 +117,8 @@ enum class AbortReason {
 };
 
 /**
- * TransactionAbortException is thrown when state of a transaction is changed to ABORTED
+ * TransactionAbortException is thrown when state of a transaction is changed to
+ * ABORTED
  */
 class TransactionAbortException : public std::exception {
   txn_id_t txn_id_;
@@ -126,17 +133,22 @@ class TransactionAbortException : public std::exception {
     switch (abort_reason_) {
       case AbortReason::LOCK_ON_SHRINKING:
         return "Transaction " + std::to_string(txn_id_) +
-               " aborted because it can not take locks in the shrinking state\n";
+               " aborted because it can not take locks in the shrinking "
+               "state\n";
       case AbortReason::UNLOCK_ON_SHRINKING:
         return "Transaction " + std::to_string(txn_id_) +
-               " aborted because it can not excute unlock in the shrinking state\n";
+               " aborted because it can not excute unlock in the shrinking "
+               "state\n";
       case AbortReason::UPGRADE_CONFLICT:
         return "Transaction " + std::to_string(txn_id_) +
-               " aborted because another transaction is already waiting to upgrade its lock\n";
+               " aborted because another transaction is already waiting to "
+               "upgrade its lock\n";
       case AbortReason::DEADLOCK:
-        return "Transaction " + std::to_string(txn_id_) + " aborted on deadlock\n";
+        return "Transaction " + std::to_string(txn_id_) +
+               " aborted on deadlock\n";
       case AbortReason::LOCKSHARED_ON_READ_UNCOMMITTED:
-        return "Transaction " + std::to_string(txn_id_) + " aborted on lockshared on READ_UNCOMMITTED\n";
+        return "Transaction " + std::to_string(txn_id_) +
+               " aborted on lockshared on READ_UNCOMMITTED\n";
     }
     // Todo: Should fail with unreachable.
     return "";
@@ -148,7 +160,8 @@ class TransactionAbortException : public std::exception {
  */
 class Transaction {
  public:
-  explicit Transaction(txn_id_t txn_id, IsolationLevel isolation_level = IsolationLevel::REPEATABLE_READ)
+  explicit Transaction(txn_id_t txn_id, IsolationLevel isolation_level =
+                                            IsolationLevel::REPEATABLE_READ)
       : state_(TransactionState::GROWING),
         isolation_level_(isolation_level),
         thread_id_(std::this_thread::get_id()),
@@ -177,10 +190,14 @@ class Transaction {
   inline IsolationLevel GetIsolationLevel() const { return isolation_level_; }
 
   /** @return the list of table write records of this transaction */
-  inline std::shared_ptr<std::deque<TableWriteRecord>> GetWriteSet() { return table_write_set_; }
+  inline std::shared_ptr<std::deque<TableWriteRecord>> GetWriteSet() {
+    return table_write_set_;
+  }
 
   /** @return the list of index write records of this transaction */
-  inline std::shared_ptr<std::deque<IndexWriteRecord>> GetIndexWriteSet() { return index_write_set_; }
+  inline std::shared_ptr<std::deque<IndexWriteRecord>> GetIndexWriteSet() {
+    return index_write_set_;
+  }
 
   /** @return the page set */
   inline std::shared_ptr<std::deque<Page *>> GetPageSet() { return page_set_; }
@@ -208,25 +225,37 @@ class Transaction {
   inline void AddIntoPageSet(Page *page) { page_set_->push_back(page); }
 
   /** @return the deleted page set */
-  inline std::shared_ptr<std::unordered_set<page_id_t>> GetDeletedPageSet() { return deleted_page_set_; }
+  inline std::shared_ptr<std::unordered_set<page_id_t>> GetDeletedPageSet() {
+    return deleted_page_set_;
+  }
 
   /**
    * Adds a page to the deleted page set.
    * @param page_id id of the page to be marked as deleted
    */
-  inline void AddIntoDeletedPageSet(page_id_t page_id) { deleted_page_set_->insert(page_id); }
+  inline void AddIntoDeletedPageSet(page_id_t page_id) {
+    deleted_page_set_->insert(page_id);
+  }
 
   /** @return the set of resources under a shared lock */
-  inline std::shared_ptr<std::unordered_set<RID>> GetSharedLockSet() { return shared_lock_set_; }
+  inline std::shared_ptr<std::unordered_set<RID>> GetSharedLockSet() {
+    return shared_lock_set_;
+  }
 
   /** @return the set of resources under an exclusive lock */
-  inline std::shared_ptr<std::unordered_set<RID>> GetExclusiveLockSet() { return exclusive_lock_set_; }
+  inline std::shared_ptr<std::unordered_set<RID>> GetExclusiveLockSet() {
+    return exclusive_lock_set_;
+  }
 
   /** @return true if rid is shared locked by this transaction */
-  bool IsSharedLocked(const RID &rid) { return shared_lock_set_->find(rid) != shared_lock_set_->end(); }
+  bool IsSharedLocked(const RID &rid) {
+    return shared_lock_set_->find(rid) != shared_lock_set_->end();
+  }
 
   /** @return true if rid is exclusively locked by this transaction */
-  bool IsExclusiveLocked(const RID &rid) { return exclusive_lock_set_->find(rid) != exclusive_lock_set_->end(); }
+  bool IsExclusiveLocked(const RID &rid) {
+    return exclusive_lock_set_->find(rid) != exclusive_lock_set_->end();
+  }
 
   /** @return the current state of the transaction */
   inline TransactionState GetState() { return state_; }
@@ -270,7 +299,8 @@ class Transaction {
 
   /** LockManager: the set of shared-locked tuples held by this transaction. */
   std::shared_ptr<std::unordered_set<RID>> shared_lock_set_;
-  /** LockManager: the set of exclusive-locked tuples held by this transaction. */
+  /** LockManager: the set of exclusive-locked tuples held by this transaction.
+   */
   std::shared_ptr<std::unordered_set<RID>> exclusive_lock_set_;
 };
 

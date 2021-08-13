@@ -45,14 +45,17 @@ void LockManager::RemoveEdge(txn_id_t t1, txn_id_t t2) {}
 
 bool LockManager::HasCycle(txn_id_t *txn_id) { return false; }
 
-std::vector<std::pair<txn_id_t, txn_id_t>> LockManager::GetEdgeList() { return {}; }
+std::vector<std::pair<txn_id_t, txn_id_t>> LockManager::GetEdgeList() {
+  return {};
+}
 
 void LockManager::RunCycleDetection() {
   while (enable_cycle_detection_) {
     std::this_thread::sleep_for(cycle_detection_interval);
     {
       std::unique_lock<std::mutex> l(latch_);
-      // TODO(student): remove the continue and add your cycle detection and abort code here
+      // TODO(student): remove the continue and add your cycle detection and
+      // abort code here
       continue;
     }
   }

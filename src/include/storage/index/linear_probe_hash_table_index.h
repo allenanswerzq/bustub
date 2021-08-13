@@ -22,21 +22,27 @@
 
 namespace bustub {
 
-#define HASH_TABLE_INDEX_TYPE LinearProbeHashTableIndex<KeyType, ValueType, KeyComparator>
+#define HASH_TABLE_INDEX_TYPE \
+  LinearProbeHashTableIndex<KeyType, ValueType, KeyComparator>
 
 template <typename KeyType, typename ValueType, typename KeyComparator>
 class LinearProbeHashTableIndex : public Index {
  public:
-  LinearProbeHashTableIndex(IndexMetadata *metadata, BufferPoolManager *buffer_pool_manager, size_t num_buckets,
+  LinearProbeHashTableIndex(IndexMetadata *metadata,
+                            BufferPoolManager *buffer_pool_manager,
+                            size_t num_buckets,
                             const HashFunction<KeyType> &hash_fn);
 
   ~LinearProbeHashTableIndex() override = default;
 
-  void InsertEntry(const Tuple &key, RID rid, Transaction *transaction) override;
+  void InsertEntry(const Tuple &key, RID rid,
+                   Transaction *transaction) override;
 
-  void DeleteEntry(const Tuple &key, RID rid, Transaction *transaction) override;
+  void DeleteEntry(const Tuple &key, RID rid,
+                   Transaction *transaction) override;
 
-  void ScanKey(const Tuple &key, std::vector<RID> *result, Transaction *transaction) override;
+  void ScanKey(const Tuple &key, std::vector<RID> *result,
+               Transaction *transaction) override;
 
  protected:
   // comparator for key

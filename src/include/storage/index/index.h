@@ -36,9 +36,11 @@ class IndexMetadata {
  public:
   IndexMetadata() = delete;
 
-  IndexMetadata(std::string index_name, std::string table_name, const Schema *tuple_schema,
-                std::vector<uint32_t> key_attrs)
-      : name_(std::move(index_name)), table_name_(std::move(table_name)), key_attrs_(std::move(key_attrs)) {
+  IndexMetadata(std::string index_name, std::string table_name,
+                const Schema *tuple_schema, std::vector<uint32_t> key_attrs)
+      : name_(std::move(index_name)),
+        table_name_(std::move(table_name)),
+        key_attrs_(std::move(key_attrs)) {
     key_schema_ = Schema::CopySchema(tuple_schema, key_attrs_);
   }
 
@@ -54,7 +56,9 @@ class IndexMetadata {
   // Return the number of columns inside index key (not in tuple key)
   // Note that this must be defined inside the cpp source file
   // because it uses the member of catalog::Schema which is not known here
-  uint32_t GetIndexColumnCount() const { return static_cast<uint32_t>(key_attrs_.size()); }
+  uint32_t GetIndexColumnCount() const {
+    return static_cast<uint32_t>(key_attrs_.size());
+  }
 
   //  Returns the mapping relation between indexed columns  and base table
   //  columns
@@ -115,7 +119,9 @@ class Index {
 
   Schema *GetKeySchema() const { return metadata_->GetKeySchema(); }
 
-  const std::vector<uint32_t> &GetKeyAttrs() const { return metadata_->GetKeyAttrs(); }
+  const std::vector<uint32_t> &GetKeyAttrs() const {
+    return metadata_->GetKeyAttrs();
+  }
 
   // Get a string representation for debugging
   std::string ToString() const {
@@ -130,12 +136,15 @@ class Index {
   // Point Modification
   ///////////////////////////////////////////////////////////////////
   // designed for secondary indexes.
-  virtual void InsertEntry(const Tuple &key, RID rid, Transaction *transaction) = 0;
+  virtual void InsertEntry(const Tuple &key, RID rid,
+                           Transaction *transaction) = 0;
 
   // delete the index entry linked to given tuple
-  virtual void DeleteEntry(const Tuple &key, RID rid, Transaction *transaction) = 0;
+  virtual void DeleteEntry(const Tuple &key, RID rid,
+                           Transaction *transaction) = 0;
 
-  virtual void ScanKey(const Tuple &key, std::vector<RID> *result, Transaction *transaction) = 0;
+  virtual void ScanKey(const Tuple &key, std::vector<RID> *result,
+                       Transaction *transaction) = 0;
 
  private:
   //===--------------------------------------------------------------------===//

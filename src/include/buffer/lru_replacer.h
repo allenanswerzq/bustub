@@ -23,13 +23,15 @@
 namespace bustub {
 
 /**
- * LRUReplacer implements the lru replacement policy, which approximates the Least Recently Used policy.
+ * LRUReplacer implements the lru replacement policy, which approximates the
+ * Least Recently Used policy.
  */
 class LRUReplacer : public Replacer {
  public:
   /**
    * Create a new LRUReplacer.
-   * @param num_pages the maximum number of pages the LRUReplacer will be required to store
+   * @param num_pages the maximum number of pages the LRUReplacer will be
+   * required to store
    */
   explicit LRUReplacer(size_t num_pages);
 

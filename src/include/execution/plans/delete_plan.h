@@ -19,8 +19,9 @@
 namespace bustub {
 /**
  * DeletePlanNode identifies a table that should be deleted from.
- * The tuple/tuples to be deleted come from the child of the DeletedPlanNode. The child could either be an index scan
- * or a seq scan. To simplify the assignment, DeletePlanNode has at most one child.
+ * The tuple/tuples to be deleted come from the child of the DeletedPlanNode.
+ * The child could either be an index scan or a seq scan. To simplify the
+ * assignment, DeletePlanNode has at most one child.
  */
 class DeletePlanNode : public AbstractPlanNode {
  public:
@@ -39,7 +40,8 @@ class DeletePlanNode : public AbstractPlanNode {
 
   /** @return the child plan providing tuples to be inserted */
   const AbstractPlanNode *GetChildPlan() const {
-    BUSTUB_ASSERT(GetChildren().size() == 1, "delete should have at most one child plan.");
+    BUSTUB_ASSERT(GetChildren().size() == 1,
+                  "delete should have at most one child plan.");
     return GetChildAt(0);
   }
 

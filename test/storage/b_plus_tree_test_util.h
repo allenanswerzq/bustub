@@ -73,7 +73,8 @@ Schema *ParseCreateStatement(const std::string &sql_base) {
     }
     // construct each column
     if (type == INVALID) {
-      throw Exception(ExceptionType::UNKNOWN_TYPE, "unknown type for create table");
+      throw Exception(ExceptionType::UNKNOWN_TYPE,
+                      "unknown type for create table");
     } else if (type == VARCHAR) {
       Column col(column_name, type, column_length);
       v.emplace_back(col);

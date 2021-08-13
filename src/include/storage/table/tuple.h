@@ -77,7 +77,8 @@ class Tuple {
   Value GetValue(const Schema *schema, uint32_t column_idx) const;
 
   // Generates a key tuple given schemas and attributes
-  Tuple KeyFromTuple(const Schema &schema, const Schema &key_schema, const std::vector<uint32_t> &key_attrs);
+  Tuple KeyFromTuple(const Schema &schema, const Schema &key_schema,
+                     const std::vector<uint32_t> &key_attrs);
 
   // Is the column value null ?
   inline bool IsNull(const Schema *schema, uint32_t column_idx) const {

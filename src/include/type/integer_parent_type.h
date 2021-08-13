@@ -34,12 +34,18 @@ class IntegerParentType : public NumericType {
   Value Sqrt(const Value &val) const override = 0;
 
   // Comparison functions
-  CmpBool CompareEquals(const Value &left, const Value &right) const override = 0;
-  CmpBool CompareNotEquals(const Value &left, const Value &right) const override = 0;
-  CmpBool CompareLessThan(const Value &left, const Value &right) const override = 0;
-  CmpBool CompareLessThanEquals(const Value &left, const Value &right) const override = 0;
-  CmpBool CompareGreaterThan(const Value &left, const Value &right) const override = 0;
-  CmpBool CompareGreaterThanEquals(const Value &left, const Value &right) const override = 0;
+  CmpBool CompareEquals(const Value &left,
+                        const Value &right) const override = 0;
+  CmpBool CompareNotEquals(const Value &left,
+                           const Value &right) const override = 0;
+  CmpBool CompareLessThan(const Value &left,
+                          const Value &right) const override = 0;
+  CmpBool CompareLessThanEquals(const Value &left,
+                                const Value &right) const override = 0;
+  CmpBool CompareGreaterThan(const Value &left,
+                             const Value &right) const override = 0;
+  CmpBool CompareGreaterThanEquals(const Value &left,
+                                   const Value &right) const override = 0;
 
   Value CastAs(const Value &val, TypeId type_id) const override = 0;
 
@@ -88,7 +94,8 @@ Value IntegerParentType::AddValue(const Value &left, const Value &right) const {
   // Overflow detection
   if (sizeof(x) >= sizeof(y)) {
     if ((x > 0 && y > 0 && sum1 < 0) || (x < 0 && y < 0 && sum1 > 0)) {
-      throw Exception(ExceptionType::OUT_OF_RANGE, "Numeric value out of range.");
+      throw Exception(ExceptionType::OUT_OF_RANGE,
+                      "Numeric value out of range.");
     }
     return Value(left.GetTypeId(), sum1);
   }
@@ -99,7 +106,8 @@ Value IntegerParentType::AddValue(const Value &left, const Value &right) const {
 }
 
 template <class T1, class T2>
-Value IntegerParentType::SubtractValue(const Value &left, const Value &right) const {
+Value IntegerParentType::SubtractValue(const Value &left,
+                                       const Value &right) const {
   auto x = left.GetAs<T1>();
   auto y = right.GetAs<T2>();
   auto diff1 = static_cast<T1>(x - y);
@@ -110,7 +118,8 @@ Value IntegerParentType::SubtractValue(const Value &left, const Value &right) co
   // Overflow detection
   if (sizeof(x) >= sizeof(y)) {
     if ((x > 0 && y < 0 && diff1 < 0) || (x < 0 && y > 0 && diff1 > 0)) {
-      throw Exception(ExceptionType::OUT_OF_RANGE, "Numeric value out of range.");
+      throw Exception(ExceptionType::OUT_OF_RANGE,
+                      "Numeric value out of range.");
     }
     return Value(left.GetTypeId(), diff1);
   }
@@ -121,7 +130,8 @@ Value IntegerParentType::SubtractValue(const Value &left, const Value &right) co
 }
 
 template <class T1, class T2>
-Value IntegerParentType::MultiplyValue(const Value &left, const Value &right) const {
+Value IntegerParentType::MultiplyValue(const Value &left,
+                                       const Value &right) const {
   auto x = left.GetAs<T1>();
   auto y = right.GetAs<T2>();
   auto prod1 = static_cast<T1>(x * y);
@@ -132,7 +142,8 @@ Value IntegerParentType::MultiplyValue(const Value &left, const Value &right) co
   // Overflow detection
   if (sizeof(x) >= sizeof(y)) {
     if ((y != 0 && prod1 / y != x)) {
-      throw Exception(ExceptionType::OUT_OF_RANGE, "Numeric value out of range.");
+      throw Exception(ExceptionType::OUT_OF_RANGE,
+                      "Numeric value out of range.");
     }
     return Value(left.GetTypeId(), prod1);
   }
@@ -143,7 +154,8 @@ Value IntegerParentType::MultiplyValue(const Value &left, const Value &right) co
 }
 
 template <class T1, class T2>
-Value IntegerParentType::DivideValue(const Value &left, const Value &right) const {
+Value IntegerParentType::DivideValue(const Value &left,
+                                     const Value &right) const {
   auto x = left.GetAs<T1>();
   auto y = right.GetAs<T2>();
   if (y == 0) {
@@ -158,7 +170,8 @@ Value IntegerParentType::DivideValue(const Value &left, const Value &right) cons
 }
 
 template <class T1, class T2>
-Value IntegerParentType::ModuloValue(const Value &left, const Value &right) const {
+Value IntegerParentType::ModuloValue(const Value &left,
+                                     const Value &right) const {
   auto x = left.GetAs<T1>();
   auto y = right.GetAs<T2>();
   if (y == 0) {

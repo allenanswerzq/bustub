@@ -23,7 +23,6 @@ const MappingType &INDEXITERATOR_TYPE::operator*() const {
   return leaf_->GetItem(pos_);
 }
 
-
 INDEX_TEMPLATE_ARGUMENTS
 const MappingType *INDEXITERATOR_TYPE::operator->() const {
   CHECK(pos_ < leaf_->GetSize());
@@ -40,9 +39,9 @@ const INDEXITERATOR_TYPE &INDEXITERATOR_TYPE::operator++() {
       leaf_ = nullptr;
       buffer_pool_manager_ = nullptr;
       pos_ = 0;
-    }
-    else {
-      leaf_ = reinterpret_cast<LeafPage *>(buffer_pool_manager_->FetchPage(next_page)->GetData());
+    } else {
+      leaf_ = reinterpret_cast<LeafPage *>(
+          buffer_pool_manager_->FetchPage(next_page)->GetData());
       pos_ = 0;
     }
   }

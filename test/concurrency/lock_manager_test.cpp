@@ -18,15 +18,24 @@ namespace bustub {
  */
 
 // --- Helper functions ---
-void CheckGrowing(Transaction *txn) { EXPECT_EQ(txn->GetState(), TransactionState::GROWING); }
+void CheckGrowing(Transaction *txn) {
+  EXPECT_EQ(txn->GetState(), TransactionState::GROWING);
+}
 
-void CheckShrinking(Transaction *txn) { EXPECT_EQ(txn->GetState(), TransactionState::SHRINKING); }
+void CheckShrinking(Transaction *txn) {
+  EXPECT_EQ(txn->GetState(), TransactionState::SHRINKING);
+}
 
-void CheckAborted(Transaction *txn) { EXPECT_EQ(txn->GetState(), TransactionState::ABORTED); }
+void CheckAborted(Transaction *txn) {
+  EXPECT_EQ(txn->GetState(), TransactionState::ABORTED);
+}
 
-void CheckCommitted(Transaction *txn) { EXPECT_EQ(txn->GetState(), TransactionState::COMMITTED); }
+void CheckCommitted(Transaction *txn) {
+  EXPECT_EQ(txn->GetState(), TransactionState::COMMITTED);
+}
 
-void CheckTxnLockSize(Transaction *txn, size_t shared_size, size_t exclusive_size) {
+void CheckTxnLockSize(Transaction *txn, size_t shared_size,
+                      size_t exclusive_size) {
   EXPECT_EQ(txn->GetSharedLockSet()->size(), shared_size);
   EXPECT_EQ(txn->GetExclusiveLockSet()->size(), exclusive_size);
 }

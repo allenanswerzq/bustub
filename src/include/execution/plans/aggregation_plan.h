@@ -21,13 +21,20 @@
 
 namespace bustub {
 
-/** AggregationType enumerates all the possible aggregation functions in our system. */
-enum class AggregationType { CountAggregate, SumAggregate, MinAggregate, MaxAggregate };
+/** AggregationType enumerates all the possible aggregation functions in our
+ * system. */
+enum class AggregationType {
+  CountAggregate,
+  SumAggregate,
+  MinAggregate,
+  MaxAggregate
+};
 
 /**
  * AggregationPlanNode represents the various SQL aggregation functions.
  * For example, COUNT(), SUM(), MIN() and MAX().
- * To simplfiy this project, AggregationPlanNode must always have exactly one child.
+ * To simplfiy this project, AggregationPlanNode must always have exactly one
+ * child.
  */
 class AggregationPlanNode : public AbstractPlanNode {
  public:
@@ -40,9 +47,12 @@ class AggregationPlanNode : public AbstractPlanNode {
    * @param aggregates the expressions that we are aggregating
    * @param agg_types the types that we are aggregating
    */
-  AggregationPlanNode(const Schema *output_schema, const AbstractPlanNode *child, const AbstractExpression *having,
+  AggregationPlanNode(const Schema *output_schema,
+                      const AbstractPlanNode *child,
+                      const AbstractExpression *having,
                       std::vector<const AbstractExpression *> &&group_bys,
-                      std::vector<const AbstractExpression *> &&aggregates, std::vector<AggregationType> &&agg_types)
+                      std::vector<const AbstractExpression *> &&aggregates,
+                      std::vector<AggregationType> &&agg_types)
       : AbstractPlanNode(output_schema, {child}),
         having_(having),
         group_bys_(std::move(group_bys)),
@@ -53,7 +63,8 @@ class AggregationPlanNode : public AbstractPlanNode {
 
   /** @return the child of this aggregation plan node */
   const AbstractPlanNode *GetChildPlan() const {
-    BUSTUB_ASSERT(GetChildren().size() == 1, "Aggregation expected to only have one child.");
+    BUSTUB_ASSERT(GetChildren().size() == 1,
+                  "Aggregation expected to only have one child.");
     return GetChildAt(0);
   }
 
@@ -61,19 +72,29 @@ class AggregationPlanNode : public AbstractPlanNode {
   const AbstractExpression *GetHaving() const { return having_; }
 
   /** @return the idx'th group by expression */
-  const AbstractExpression *GetGroupByAt(uint32_t idx) const { return group_bys_[idx]; }
+  const AbstractExpression *GetGroupByAt(uint32_t idx) const {
+    return group_bys_[idx];
+  }
 
   /** @return the group by expressions */
-  const std::vector<const AbstractExpression *> &GetGroupBys() const { return group_bys_; }
+  const std::vector<const AbstractExpression *> &GetGroupBys() const {
+    return group_bys_;
+  }
 
   /** @return the idx'th aggregate expression */
-  const AbstractExpression *GetAggregateAt(uint32_t idx) const { return aggregates_[idx]; }
+  const AbstractExpression *GetAggregateAt(uint32_t idx) const {
+    return aggregates_[idx];
+  }
 
   /** @return the aggregate expressions */
-  const std::vector<const AbstractExpression *> &GetAggregates() const { return aggregates_; }
+  const std::vector<const AbstractExpression *> &GetAggregates() const {
+    return aggregates_;
+  }
 
   /** @return the aggregate types */
-  const std::vector<AggregationType> &GetAggregateTypes() const { return agg_types_; }
+  const std::vector<AggregationType> &GetAggregateTypes() const {
+    return agg_types_;
+  }
 
  private:
   const AbstractExpression *having_;
@@ -88,11 +109,13 @@ struct AggregateKey {
   /**
    * Compares two aggregate keys for equality.
    * @param other the other aggregate key to be compared with
-   * @return true if both aggregate keys have equivalent group-by expressions, false otherwise
+   * @return true if both aggregate keys have equivalent group-by expressions,
+   * false otherwise
    */
   bool operator==(const AggregateKey &other) const {
     for (uint32_t i = 0; i < other.group_bys_.size(); i++) {
-      if (group_bys_[i].CompareEquals(other.group_bys_[i]) != CmpBool::CmpTrue) {
+      if (group_bys_[i].CompareEquals(other.group_bys_[i]) !=
+          CmpBool::CmpTrue) {
         return false;
       }
     }
@@ -116,7 +139,8 @@ struct hash<bustub::AggregateKey> {
     size_t curr_hash = 0;
     for (const auto &key : agg_key.group_bys_) {
       if (!key.IsNull()) {
-        curr_hash = bustub::HashUtil::CombineHashes(curr_hash, bustub::HashUtil::HashValue(&key));
+        curr_hash = bustub::HashUtil::CombineHashes(
+            curr_hash, bustub::HashUtil::HashValue(&key));
       }
     }
     return curr_hash;
