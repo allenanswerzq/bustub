@@ -75,6 +75,12 @@ int B_PLUS_TREE_LEAF_PAGE_TYPE::ValueIndex(const ValueType &value) const {
   }
   return -1;
 }
+
+INDEX_TEMPLATE_ARGUMENTS
+ValueType B_PLUS_TREE_LEAF_PAGE_TYPE::ValueAt(int index) const {
+  CHECK(index < GetSize());
+  return array_[index].second;
+}
 /*
  * Helper method to find and return the key associated with input "index"(a.k.a
  * array offset)
@@ -245,9 +251,9 @@ int B_PLUS_TREE_LEAF_PAGE_TYPE::RemoveAndDeleteRecord(
  */
 INDEX_TEMPLATE_ARGUMENTS
 void B_PLUS_TREE_LEAF_PAGE_TYPE::MoveAllTo(BPlusTreeLeafPage *recipient,
-                                           const KeyType& /*unused*/,
-                                           BufferPoolManager* /*unused*/) {
-  for (size_t i = array_.size() - 1; i >= 0; i--) {
+                                           const KeyType & /*unused*/,
+                                           BufferPoolManager * /*unused*/) {
+  for (int i = array_.size() - 1; i >= 0; i--) {
     recipient->CopyFirstFrom(array_[i]);
   }
   array_.clear();
@@ -262,8 +268,8 @@ void B_PLUS_TREE_LEAF_PAGE_TYPE::MoveAllTo(BPlusTreeLeafPage *recipient,
  */
 INDEX_TEMPLATE_ARGUMENTS
 void B_PLUS_TREE_LEAF_PAGE_TYPE::MoveFirstToEndOf(
-    BPlusTreeLeafPage *recipient, const KeyType& /*unused*/,
-    BufferPoolManager * /*unused*/) {
+    BPlusTreeLeafPage *recipient, const KeyType & /*middle_key*/,
+    BufferPoolManager *buffer_pool_manager) {
   CHECK(array_.size() && recipient);
   recipient->CopyLastFrom(array_[0]);
   array_.erase(array_.begin());
@@ -284,8 +290,8 @@ void B_PLUS_TREE_LEAF_PAGE_TYPE::CopyLastFrom(const MappingType &item) {
  */
 INDEX_TEMPLATE_ARGUMENTS
 void B_PLUS_TREE_LEAF_PAGE_TYPE::MoveLastToFrontOf(
-    BPlusTreeLeafPage *recipient,
-    const KeyType& /*unused*/, BufferPoolManager * /*unused*/) {
+    BPlusTreeLeafPage *recipient, const KeyType & /*unused*/,
+    BufferPoolManager * /*unused*/) {
   CHECK(array_.size() && recipient);
   recipient->CopyFirstFrom(array_.back());
   array_.pop_back();

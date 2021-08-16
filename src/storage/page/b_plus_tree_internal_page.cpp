@@ -258,7 +258,7 @@ void B_PLUS_TREE_INTERNAL_PAGE_TYPE::MoveAllTo(
   CHECK(!IsRootPage() && recipient);
 
   recipient->SetKeyAt(0, middle_key);
-  for (size_t i = array_.size(); i >= 0; i--) {
+  for (int i = array_.size() - 1; i >= 0; i--) {
     recipient->CopyFirstFrom(array_[i], buffer_pool_manager);
   }
   array_.clear();
@@ -287,7 +287,7 @@ void B_PLUS_TREE_INTERNAL_PAGE_TYPE::MoveFirstToEndOf(
   Remove(0);
 
   page_id_t parent_id = GetParentPageId();
-  BPlusTreeInternalPage * parent = reinterpret_cast<BPlusTreeInternalPage*>(
+  BPlusTreeInternalPage *parent = reinterpret_cast<BPlusTreeInternalPage *>(
       buffer_pool_manager->FetchPage(parent_id)->GetData());
   int index = parent->ValueIndex(GetPageId());
   // TODO: DOULBE CHECK
@@ -308,7 +308,7 @@ void B_PLUS_TREE_INTERNAL_PAGE_TYPE::CopyLastFrom(
 
   // Modify the parent pointer for the child page
   page_id_t child_id = ValueAt(GetSize() - 1);
-  BPlusTreeInternalPage * child = reinterpret_cast<BPlusTreeInternalPage*>(
+  BPlusTreeInternalPage *child = reinterpret_cast<BPlusTreeInternalPage *>(
       buffer_pool_manager->FetchPage(child_id)->GetData());
   child->SetParentPageId(GetPageId());
   buffer_pool_manager->UnpinPage(child_id, true);
@@ -334,7 +334,7 @@ void B_PLUS_TREE_INTERNAL_PAGE_TYPE::MoveLastToFrontOf(
   Remove(last);
 
   page_id_t parent_id = GetParentPageId();
-  BPlusTreeInternalPage * parent = reinterpret_cast<BPlusTreeInternalPage*>(
+  BPlusTreeInternalPage *parent = reinterpret_cast<BPlusTreeInternalPage *>(
       buffer_pool_manager->FetchPage(parent_id)->GetData());
   int index = parent->ValueIndex(GetPageId());
   // TODO: DOULBE CHECK
@@ -345,7 +345,7 @@ void B_PLUS_TREE_INTERNAL_PAGE_TYPE::MoveLastToFrontOf(
 /* Append an entry at the beginning.
  * Since it is an internal page, the moved entry(page)'s parent needs to be
  * updated. So I need to 'adopt' it by changing its parent page id, which needs
-* to be persisted with BufferPoolManger
+ * to be persisted with BufferPoolManger
  */
 INDEX_TEMPLATE_ARGUMENTS
 void B_PLUS_TREE_INTERNAL_PAGE_TYPE::CopyFirstFrom(
@@ -355,7 +355,7 @@ void B_PLUS_TREE_INTERNAL_PAGE_TYPE::CopyFirstFrom(
 
   // Modify the parent pointer for the child page
   page_id_t child_id = ValueAt(0);
-  BPlusTreeInternalPage * child = reinterpret_cast<BPlusTreeInternalPage*>(
+  BPlusTreeInternalPage *child = reinterpret_cast<BPlusTreeInternalPage *>(
       buffer_pool_manager->FetchPage(child_id)->GetData());
   child->SetParentPageId(GetPageId());
   buffer_pool_manager->UnpinPage(child_id, true);

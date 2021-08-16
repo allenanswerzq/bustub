@@ -74,6 +74,7 @@ Page *BufferPoolManager::FetchPageImpl(page_id_t page_id) {
       // No place to put this page.
       throw Exception("Out of Memory.");
     }
+    CHECK(page_id >= 0) << "Expected page id greater or equal to 0";
     LOG(DEBUG) << "Fetching a new #page " << page_id << " to frame "
                << frame_id;
     Page *page = &pages_[frame_id];

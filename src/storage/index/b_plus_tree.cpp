@@ -268,6 +268,7 @@ void BPLUSTREE_TYPE::Remove(const KeyType &key, Transaction *transaction) {
     return;
   }
 
+  LOG(DEBUG) << "Removing key from b+ tree: " << key;
   BPlusTreePage *curr = reinterpret_cast<BPlusTreePage *>(
       buffer_pool_manager_->FetchPage(root_page_id_)->GetData());
 
@@ -282,15 +283,16 @@ void BPLUSTREE_TYPE::Remove(const KeyType &key, Transaction *transaction) {
   }
 
   LeafPage *leaf = reinterpret_cast<LeafPage *>(curr);
-  if (leaf->Lookup(key, /*value*/nullptr , comparator_)) {
+  LOG(DEBUG) << "Now we are at leaf node: " << leaf->GetPageId();
+  if (leaf->Lookup(key, /*value*/ nullptr, comparator_)) {
     leaf->RemoveAndDeleteRecord(key, comparator_);
-    if (leaf->GetSize() >= leaf->GetMinSize()) {
-      return;
-    } else if (!leaf->IsRootPage()) {
-      CoalesceOrRedistribute(leaf, transaction);
+    if (!leaf->IsRootPage()) {
+      if (leaf->GetSize() < leaf->GetMinSize()) {
+        CoalesceOrRedistribute(leaf, transaction);
+      }
     } else if (leaf->GetSize() == 0) {
+      LOG(DEBUG) << "B+ tree became empty.";
       root_page_id_ = INVALID_PAGE_ID;
-      UpdateRootPageId(root_page_id_);
     } else {
       // Do nothing
     }
@@ -307,15 +309,9 @@ void BPLUSTREE_TYPE::Remove(const KeyType &key, Transaction *transaction) {
 INDEX_TEMPLATE_ARGUMENTS
 template <typename N>
 bool BPLUSTREE_TYPE::CoalesceOrRedistribute(N *node, Transaction *transaction) {
-  if (node->IsRootPage()) {
-    if (node->GetSize() > 0) {
-      return false;
-    } else {
-      root_page_id_ = INVALID_PAGE_ID;
-      UpdateRootPageId(root_page_id_);
-    }
-    return false;
-  }
+  LOG(DEBUG) << "Merge or redistribute node: " << node->GetPageId();
+  CHECK(node && node->GetSize() < node->GetMinSize());
+
   page_id_t parent_id = node->GetParentPageId();
   InternalPage *parent = reinterpret_cast<InternalPage *>(
       buffer_pool_manager_->FetchPage(parent_id)->GetData());
@@ -324,49 +320,84 @@ bool BPLUSTREE_TYPE::CoalesceOrRedistribute(N *node, Transaction *transaction) {
   int node_index = parent->ValueIndex(node->GetPageId());
   if (node_index > 0) {
     page_id_t left_id = parent->ValueAt(node_index - 1);
-    left = reinterpret_cast<N*>(
+    left = reinterpret_cast<N *>(
         buffer_pool_manager_->FetchPage(left_id)->GetData());
   }
   if (node_index + 1 < parent->GetSize()) {
     page_id_t right_id = parent->ValueAt(node_index + 1);
-    right = reinterpret_cast<N*>(
+    right = reinterpret_cast<N *>(
         buffer_pool_manager_->FetchPage(right_id)->GetData());
   }
   CHECK(!left || !right) << "Expected either left or right should exist.";
   if (left && left->GetSize() > left->GetMinSize()) {
     // Left node has more than half of the children, borrow one from it
     KeyType middle_key = parent->KeyAt(node_index);
+    LOG(DEBUG) << "Moving last to front from: " << left->GetPageId() << " to "
+               << node->GetPageId();
     left->MoveLastToFrontOf(node, middle_key, buffer_pool_manager_);
+    int index = parent->ValueIndex(node->GetPageId());
+    parent->SetKeyAt(index, node->KeyAt(0));
     buffer_pool_manager_->UnpinPage(left->GetPageId(), true);
-  }
-  else if (right && right->GetSize() > right->GetMinSize()) {
+    return true;
+  } else if (right && right->GetSize() > right->GetMinSize()) {
     KeyType middle_key = parent->KeyAt(node_index);
+    LOG(DEBUG) << "Moving first to end from: " << right->GetPageId() << " to "
+               << node->GetPageId();
     right->MoveFirstToEndOf(node, middle_key, buffer_pool_manager_);
+    int index = parent->ValueIndex(right->GetPageId());
+    parent->SetKeyAt(index, right->KeyAt(0));
     buffer_pool_manager_->UnpinPage(right->GetPageId(), true);
-  }
-  else if (left) {
+    return true;
+  } else if (left) {
     // Merge left to node
     KeyType middle_key = parent->KeyAt(node_index);
+    LOG(DEBUG) << "Left merge node: " << left->GetPageId() << " and "
+               << node->GetPageId() << " together. "
+               << "removing parent index: " << node_index - 1;
     left->MoveAllTo(node, middle_key, buffer_pool_manager_);
     CHECK(node_index >= 1);
     parent->SetKeyAt(node_index, node->KeyAt(0));
     parent->Remove(node_index - 1);
     buffer_pool_manager_->DeletePage(left->GetPageId());
-    CoalesceOrRedistribute(parent, transaction);
-  }
-  else if (right) {
+  } else if (right) {
     // Merge node to right
-    CHECK(node_index + 1 < node->GetSize());
+    CHECK(node_index + 1 < parent->GetSize());
     KeyType middle_key = parent->KeyAt(node_index + 1);
+    LOG(DEBUG) << "Right merge node: " << right->GetPageId() << " and "
+               << node->GetPageId() << " together. "
+               << "removing parent index: " << node_index;
     node->MoveAllTo(right, middle_key, buffer_pool_manager_);
     parent->SetKeyAt(node_index + 1, right->KeyAt(0));
     parent->Remove(node_index);
-    buffer_pool_manager_->DeletePage(right->GetPageId());
-    CoalesceOrRedistribute(parent, transaction);
-  }
-  else {
+    buffer_pool_manager_->DeletePage(node->GetPageId());
+  } else {
     CHECK(false) << "Should not reach here.";
   }
+
+  if (!parent->IsRootPage()) {
+    CoalesceOrRedistribute(parent, transaction);
+  } else if (parent->GetSize() == 1) {
+    // NOTE: for internal node, size less or equals 1 means empty.
+    // Delete old root page, the height of this tree decreased by 1.
+    page_id_t new_root_id = parent->ValueAt(0);
+    LOG(DEBUG) << "B+ tree height decreases by 1, from page " << root_page_id_
+               << " to " << new_root_id;
+    buffer_pool_manager_->DeletePage(root_page_id_);
+
+    // Update the new root page
+    BPlusTreePage *new_root = reinterpret_cast<BPlusTreePage *>(
+        buffer_pool_manager_->FetchPage(new_root_id)->GetData());
+    new_root->SetParentPageId(INVALID_PAGE_ID);
+    buffer_pool_manager_->UnpinPage(new_root_id, true);
+
+    root_page_id_ = new_root_id;
+    UpdateRootPageId(root_page_id_);
+  } else if (parent->GetSize() == 0) {
+    root_page_id_ = INVALID_PAGE_ID;
+  } else {
+    // Do nothing
+  }
+
   buffer_pool_manager_->UnpinPage(parent_id, true);
   return true;
 }
@@ -385,9 +416,8 @@ bool BPLUSTREE_TYPE::CoalesceOrRedistribute(N *node, Transaction *transaction) {
  */
 INDEX_TEMPLATE_ARGUMENTS
 template <typename N>
-bool BPLUSTREE_TYPE::Coalesce(N *neighbor_node, N *node,
-                              InternalPage *parent, int index,
-                              Transaction *transaction) {}
+bool BPLUSTREE_TYPE::Coalesce(N *neighbor_node, N *node, InternalPage *parent,
+                              int index, Transaction *transaction) {}
 
 /*
  * Redistribute key & value pairs from one page to its sibling page. If index ==

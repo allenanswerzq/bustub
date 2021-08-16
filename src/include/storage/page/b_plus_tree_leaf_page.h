@@ -53,7 +53,8 @@ class BPlusTreeLeafPage : public BPlusTreePage {
   void SetNextPageId(page_id_t next_page_id);
   KeyType KeyAt(int index) const;
   int KeyIndex(const KeyType &key, const KeyComparator &comparator) const;
-  int ValueIndex(const ValueType& val) const;
+  int ValueIndex(const ValueType &val) const;
+  ValueType ValueAt(int index) const;
   const MappingType &GetItem(int index);
   KeyType GetMininumKey(const KeyComparator &comparator) const;
   // insert and delete methods
@@ -69,8 +70,7 @@ class BPlusTreeLeafPage : public BPlusTreePage {
   void MoveAllTo(BPlusTreeLeafPage *recipient, const KeyType &middle_key,
                  BufferPoolManager *buffer_pool_manager);
   void MoveHalfTo(BPlusTreeLeafPage *recipient);
-  void MoveFirstToEndOf(BPlusTreeLeafPage *recipient,
-                        const KeyType &middle_key,
+  void MoveFirstToEndOf(BPlusTreeLeafPage *recipient, const KeyType &middle_key,
                         BufferPoolManager *buffer_pool_manager);
   void MoveLastToFrontOf(BPlusTreeLeafPage *recipient,
                          const KeyType &middle_key,

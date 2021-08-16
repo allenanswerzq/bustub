@@ -12,7 +12,51 @@
 
 namespace bustub {
 
-TEST(BPlusTreeTests, DISABLED_DeleteTest1) {
+TEST(BPlusTreeTests, DeleteTest0) {
+  // create KeyComparator and index schema
+  Schema *key_schema = ParseCreateStatement("a bigint");
+  GenericComparator<8> comparator(key_schema);
+
+  DiskManager *disk_manager = new DiskManager("test.db");
+  BufferPoolManager *bpm = new BufferPoolManager(1000, disk_manager);
+
+  int leaf_max_size = 3;
+  int internal_max_size = 3;
+  BPlusTree<int, int, IntegerComparator<false>> tree(
+      "foo_pk", bpm, IntegerComparator<false>{}, leaf_max_size,
+      internal_max_size);
+
+  // create transaction
+  Transaction *transaction = new Transaction(0);
+
+  // create and fetch header_page
+  page_id_t page_id;
+  auto header_page = bpm->NewPage(&page_id);
+  (void)header_page;
+  EXPECT_EQ(page_id, 0);
+
+  for (int i = 0; i < 10; i++) {
+    tree.Insert(i, i, transaction);
+  }
+
+  tree.Draw(bpm, "tree.dot");
+  for (int i = 0; i < 10; i++) {
+    tree.Remove(i);
+    tree.Draw(bpm, "tree" + std::to_string(i) + ".dot");
+  }
+
+  bpm->UnpinPage(HEADER_PAGE_ID, true);
+
+  delete key_schema;
+  delete transaction;
+  delete disk_manager;
+  delete bpm;
+  remove("test.db");
+  remove("test.log");
+  // remove("tree.dot");
+}
+
+TEST(BPlusTreeTests, DeleteTest1) {
   // create KeyComparator and index schema
   std::string createStmt = "a bigint";
   Schema *key_schema = ParseCreateStatement(createStmt);
@@ -95,7 +139,7 @@ TEST(BPlusTreeTests, DISABLED_DeleteTest1) {
   remove("test.log");
 }
 
-TEST(BPlusTreeTests, DISABLED_DeleteTest2) {
+TEST(BPlusTreeTests, DeleteTest2) {
   // create KeyComparator and index schema
   Schema *key_schema = ParseCreateStatement("a bigint");
   GenericComparator<8> comparator(key_schema);

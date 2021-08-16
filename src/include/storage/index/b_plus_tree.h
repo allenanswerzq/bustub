@@ -73,9 +73,11 @@ class BPlusTree {
   void Draw(BufferPoolManager *bpm, const std::string &outf) {
     std::ofstream out(outf);
     out << "digraph G {" << std::endl;
-    ToGraph(reinterpret_cast<BPlusTreePage *>(
-                bpm->FetchPage(root_page_id_)->GetData()),
-            bpm, out);
+    if (root_page_id_ != INVALID_PAGE_ID) {
+      ToGraph(reinterpret_cast<BPlusTreePage *>(
+                  bpm->FetchPage(root_page_id_)->GetData()),
+              bpm, out);
+    }
     out << "}" << std::endl;
     out.close();
   }
