@@ -69,7 +69,7 @@ int B_PLUS_TREE_LEAF_PAGE_TYPE::KeyIndex(
 INDEX_TEMPLATE_ARGUMENTS
 int B_PLUS_TREE_LEAF_PAGE_TYPE::ValueIndex(const ValueType &value) const {
   for (size_t i = 0; i < array_.size(); i++) {
-    if (ValueAt(i) == value) {
+    if (array_[i].second == value) {
       return i;
     }
   }
@@ -267,7 +267,7 @@ void B_PLUS_TREE_LEAF_PAGE_TYPE::MoveFirstToEndOf(
   CHECK(array_.size() && recipient);
   recipient->CopyLastFrom(array_[0]);
   array_.erase(array_.begin());
-  SetSize(array_);
+  SetSize(array_.size());
 }
 
 /*
@@ -289,7 +289,7 @@ void B_PLUS_TREE_LEAF_PAGE_TYPE::MoveLastToFrontOf(
   CHECK(array_.size() && recipient);
   recipient->CopyFirstFrom(array_.back());
   array_.pop_back();
-  SetSize(array_);
+  SetSize(array_.size());
 }
 
 /*

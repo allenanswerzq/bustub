@@ -282,17 +282,17 @@ void B_PLUS_TREE_INTERNAL_PAGE_TYPE::MoveFirstToEndOf(
     BufferPoolManager *buffer_pool_manager) {
   CHECK(array_.size());
   // TODO: write more comments
-  recipient->CopyLastFrom(array_[0]);
+  recipient->CopyLastFrom(array_[0], buffer_pool_manager);
   recipient->SetKeyAt(recipient->GetSize() - 1, middle_key);
   Remove(0);
 
   page_id_t parent_id = GetParentPageId();
   BPlusTreeInternalPage * parent = reinterpret_cast<BPlusTreeInternalPage*>(
       buffer_pool_manager->FetchPage(parent_id)->GetData());
-  int index = parent->ValueIndex(node->GetPageId());
+  int index = parent->ValueIndex(GetPageId());
   // TODO: DOULBE CHECK
-  parent->SetKeyAt(index, node->KeyAt(0));
-  buffer_pool_manager->UnpinPage(parent_id);
+  parent->SetKeyAt(index, KeyAt(0));
+  buffer_pool_manager->UnpinPage(parent_id, true);
 }
 
 /* Append an entry at the end.
@@ -311,7 +311,7 @@ void B_PLUS_TREE_INTERNAL_PAGE_TYPE::CopyLastFrom(
   BPlusTreeInternalPage * child = reinterpret_cast<BPlusTreeInternalPage*>(
       buffer_pool_manager->FetchPage(child_id)->GetData());
   child->SetParentPageId(GetPageId());
-  buffer_pool_manager->UnpinPage(child_id);
+  buffer_pool_manager->UnpinPage(child_id, true);
 }
 
 /*
@@ -330,16 +330,16 @@ void B_PLUS_TREE_INTERNAL_PAGE_TYPE::MoveLastToFrontOf(
 
   int last = GetSize() - 1;
   recipient->SetKeyAt(0, middle_key);
-  recipient->CopyFirstFrom(array_[last]);
+  recipient->CopyFirstFrom(array_[last], buffer_pool_manager);
   Remove(last);
 
   page_id_t parent_id = GetParentPageId();
   BPlusTreeInternalPage * parent = reinterpret_cast<BPlusTreeInternalPage*>(
       buffer_pool_manager->FetchPage(parent_id)->GetData());
-  int index = parent->ValueIndex(node->GetPageId());
+  int index = parent->ValueIndex(GetPageId());
   // TODO: DOULBE CHECK
-  parent->SetKeyAt(index, node->KeyAt(0));
-  buffer_pool_manager->UnpinPage(parent_id);
+  parent->SetKeyAt(index, KeyAt(0));
+  buffer_pool_manager->UnpinPage(parent_id, true);
 }
 
 /* Append an entry at the beginning.
@@ -358,7 +358,7 @@ void B_PLUS_TREE_INTERNAL_PAGE_TYPE::CopyFirstFrom(
   BPlusTreeInternalPage * child = reinterpret_cast<BPlusTreeInternalPage*>(
       buffer_pool_manager->FetchPage(child_id)->GetData());
   child->SetParentPageId(GetPageId());
-  buffer_pool_manager->UnpinPage(child_id);
+  buffer_pool_manager->UnpinPage(child_id, true);
 }
 
 // valuetype for internalNode should be page id_t

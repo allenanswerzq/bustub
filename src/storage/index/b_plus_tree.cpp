@@ -282,15 +282,18 @@ void BPLUSTREE_TYPE::Remove(const KeyType &key, Transaction *transaction) {
   }
 
   LeafPage *leaf = reinterpret_cast<LeafPage *>(curr);
-  leaf->RemoveAndDeleteRecord(key, comparator_);
-  if (leaf->getSize() >= leaf->GetMinSize()) {
-    return;
-  } else if (!leaf->IsRootPage()) {
-    CoalesceOrRedistribute(leaf, transaction);
-  } else if (leaf->GetSize() == 0) {
-    root_page_id_ = INVALID_PAGE_ID;
-  } else {
-    // Do nothing
+  if (leaf->Lookup(key, /*value*/nullptr , comparator_)) {
+    leaf->RemoveAndDeleteRecord(key, comparator_);
+    if (leaf->GetSize() >= leaf->GetMinSize()) {
+      return;
+    } else if (!leaf->IsRootPage()) {
+      CoalesceOrRedistribute(leaf, transaction);
+    } else if (leaf->GetSize() == 0) {
+      root_page_id_ = INVALID_PAGE_ID;
+      UpdateRootPageId(root_page_id_);
+    } else {
+      // Do nothing
+    }
   }
 }
 
@@ -306,28 +309,27 @@ template <typename N>
 bool BPLUSTREE_TYPE::CoalesceOrRedistribute(N *node, Transaction *transaction) {
   if (node->IsRootPage()) {
     if (node->GetSize() > 0) {
-      return;
+      return false;
     } else {
       root_page_id_ = INVALID_PAGE_ID;
       UpdateRootPageId(root_page_id_);
     }
-    return;
+    return false;
   }
   page_id_t parent_id = node->GetParentPageId();
-  BPlusTreePage *parent = reinterpret_cast<BPlusTreePage *>(
-      buffer_pool_manager_->FetchPage(parent_id)->GetData()));
-
-  BPlusTreePage *left = nullptr;
-  BPlusTreePage *right = nullptr;
+  InternalPage *parent = reinterpret_cast<InternalPage *>(
+      buffer_pool_manager_->FetchPage(parent_id)->GetData());
+  N *left = nullptr;
+  N *right = nullptr;
   int node_index = parent->ValueIndex(node->GetPageId());
   if (node_index > 0) {
     page_id_t left_id = parent->ValueAt(node_index - 1);
-    left = reinterpret_cast<BPlusTreePage*>(
+    left = reinterpret_cast<N*>(
         buffer_pool_manager_->FetchPage(left_id)->GetData());
   }
   if (node_index + 1 < parent->GetSize()) {
     page_id_t right_id = parent->ValueAt(node_index + 1);
-    right = reinterpret_cast<BPlusTreePage*>(
+    right = reinterpret_cast<N*>(
         buffer_pool_manager_->FetchPage(right_id)->GetData());
   }
   CHECK(!left || !right) << "Expected either left or right should exist.";
@@ -335,12 +337,12 @@ bool BPLUSTREE_TYPE::CoalesceOrRedistribute(N *node, Transaction *transaction) {
     // Left node has more than half of the children, borrow one from it
     KeyType middle_key = parent->KeyAt(node_index);
     left->MoveLastToFrontOf(node, middle_key, buffer_pool_manager_);
-    buffer_pool_manager_->UnpinPage(left->GetPageId());
+    buffer_pool_manager_->UnpinPage(left->GetPageId(), true);
   }
   else if (right && right->GetSize() > right->GetMinSize()) {
     KeyType middle_key = parent->KeyAt(node_index);
     right->MoveFirstToEndOf(node, middle_key, buffer_pool_manager_);
-    buffer_pool_manager_->UnpinPage(right->GetPageId());
+    buffer_pool_manager_->UnpinPage(right->GetPageId(), true);
   }
   else if (left) {
     // Merge left to node
@@ -365,7 +367,8 @@ bool BPLUSTREE_TYPE::CoalesceOrRedistribute(N *node, Transaction *transaction) {
   else {
     CHECK(false) << "Should not reach here.";
   }
-  buffer_pool_manager_->UnpinPage(parent_id);
+  buffer_pool_manager_->UnpinPage(parent_id, true);
+  return true;
 }
 
 /*
