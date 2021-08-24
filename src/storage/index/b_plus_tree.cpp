@@ -325,9 +325,8 @@ bool BPLUSTREE_TYPE::CoalesceOrRedistribute(N *node, Transaction *transaction) {
   N *left = nullptr;
   N *right = nullptr;
   int node_index = parent->ValueIndex(node->GetPageId());
-  LOG(DEBUG) << "Node index at parent: " << node_index
-             << " id " << parent->GetPageId()
-             << " parent size: " << parent->GetSize();
+  LOG(DEBUG) << "Node index at parent: " << node_index << " id "
+             << parent->GetPageId() << " parent size: " << parent->GetSize();
   if (node_index > 0) {
     page_id_t left_id = parent->ValueAt(node_index - 1);
     left = reinterpret_cast<N *>(
@@ -349,27 +348,6 @@ bool BPLUSTREE_TYPE::CoalesceOrRedistribute(N *node, Transaction *transaction) {
     left->MoveLastToFrontOf(node, middle_key, buffer_pool_manager_);
     parent->SetKeyAt(node_index, node->KeyAt(0));
     parent->SetKeyAt(node_index - 1, left->KeyAt(0));
-
-    if (!parent->IsRootPage()) {
-      InternalPage *curr = nullptr;
-      std::swap(curr, parent);
-      parent = reinterpret_cast<InternalPage *>(
-          buffer_pool_manager_->FetchPage(curr->GetParentPageId())->GetData());
-      while (!parent->IsRootPage()) {
-        int index = parent->ValueIndex(curr->GetPageId());
-        parent->SetKeyAt(index, curr->KeyAt(0));
-        LOG(DEBUG) << "Modifying parent:" << parent->GetPageId()
-                   << " index " << index << " " << curr->KeyAt(0);
-
-        buffer_pool_manager_->UnpinPage(curr->GetPageId(), true);
-        curr = parent;
-        page_id_t parent_id = parent->GetParentPageId();
-        buffer_pool_manager_->UnpinPage(parent->GetPageId(), true);
-
-        parent = reinterpret_cast<InternalPage *>(
-            buffer_pool_manager_->FetchPage(parent_id)->GetData());
-      }
-    }
     buffer_pool_manager_->UnpinPage(parent->GetPageId(), true);
     buffer_pool_manager_->UnpinPage(left->GetPageId(), true);
     buffer_pool_manager_->UnpinPage(node->GetPageId(), true);
@@ -381,27 +359,6 @@ bool BPLUSTREE_TYPE::CoalesceOrRedistribute(N *node, Transaction *transaction) {
     right->MoveFirstToEndOf(node, middle_key, buffer_pool_manager_);
     parent->SetKeyAt(node_index, node->KeyAt(0));
     parent->SetKeyAt(node_index + 1, right->KeyAt(0));
-
-    if (!parent->IsRootPage()) {
-      InternalPage *curr = nullptr;
-      std::swap(curr, parent);
-      parent = reinterpret_cast<InternalPage *>(
-          buffer_pool_manager_->FetchPage(curr->GetParentPageId())->GetData());
-      while (!parent->IsRootPage()) {
-        int index = parent->ValueIndex(curr->GetPageId());
-        parent->SetKeyAt(index, curr->KeyAt(0));
-        LOG(DEBUG) << "Modifying parent:" << parent->GetPageId()
-                   << " index " << index << " " << curr->KeyAt(0);
-
-        buffer_pool_manager_->UnpinPage(curr->GetPageId(), true);
-        curr = parent;
-        page_id_t parent_id = parent->GetParentPageId();
-        buffer_pool_manager_->UnpinPage(parent->GetPageId(), true);
-
-        parent = reinterpret_cast<InternalPage *>(
-            buffer_pool_manager_->FetchPage(parent_id)->GetData());
-      }
-    }
     buffer_pool_manager_->UnpinPage(parent->GetPageId(), true);
     buffer_pool_manager_->UnpinPage(node->GetPageId(), true);
     buffer_pool_manager_->UnpinPage(right->GetPageId(), true);

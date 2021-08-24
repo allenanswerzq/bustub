@@ -53,7 +53,8 @@ TEST(BPlusTreeTests, DeleteTest0) {
     int key = inserts[j].first;
     tree.Remove(key);
     inserts.erase(inserts.begin() + j);
-    // tree.Draw(bpm, "tree" + std::to_string(i) + "_" + std::to_string(key) + ".dot");
+    // tree.Draw(bpm, "tree" + std::to_string(i) + "_" + std::to_string(key) +
+    // ".dot");
   }
 
   std::sort(inserts.begin(), inserts.end());
@@ -77,7 +78,7 @@ TEST(BPlusTreeTests, DeleteTest0) {
   EXPECT_EQ(i, inserts.size());
 
   // Remove all keys
-  for (auto & it : inserts) {
+  for (auto &it : inserts) {
     tree.Remove(it.first);
   }
 
