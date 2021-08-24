@@ -103,19 +103,6 @@ const MappingType &B_PLUS_TREE_LEAF_PAGE_TYPE::GetItem(int index) {
 /*****************************************************************************
  * INSERTION
  *****************************************************************************/
-INDEX_TEMPLATE_ARGUMENTS
-KeyType B_PLUS_TREE_LEAF_PAGE_TYPE::GetMininumKey(
-    const KeyComparator &comparator) const {
-  CHECK(!array_.empty());
-  KeyType ans = KeyAt(0);
-  for (size_t i = 1; i < array_.size(); i++) {
-    if (comparator(KeyAt(i), ans) < 0) {
-      ans = KeyAt(i);
-    }
-  }
-  return ans;
-}
-
 /*
  * Insert key & value pair into leaf page ordered by key
  * @return  page size after insertion
@@ -253,9 +240,11 @@ INDEX_TEMPLATE_ARGUMENTS
 void B_PLUS_TREE_LEAF_PAGE_TYPE::MoveAllTo(BPlusTreeLeafPage *recipient,
                                            const KeyType & /*unused*/,
                                            BufferPoolManager * /*unused*/) {
-  for (int i = array_.size() - 1; i >= 0; i--) {
-    recipient->CopyFirstFrom(array_[i]);
+  for (size_t i = 0; i < array_.size(); i++) {
+    recipient->CopyLastFrom(array_[i]);
   }
+  page_id_t next_id = GetNextPageId();
+  recipient->SetNextPageId(next_id);
   array_.clear();
   SetSize(array_.size());
 }

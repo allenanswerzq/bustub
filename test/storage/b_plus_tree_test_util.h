@@ -90,6 +90,7 @@ Schema *ParseCreateStatement(const std::string &sql_base) {
 }
 
 int RandomInt(int lo, int hi) {
+  // [lo, hi]
   std::random_device rd;
   std::uniform_int_distribution<int> dist(lo, hi);
   return dist(rd);

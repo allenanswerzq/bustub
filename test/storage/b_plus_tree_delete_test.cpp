@@ -20,8 +20,8 @@ TEST(BPlusTreeTests, DeleteTest0) {
   DiskManager *disk_manager = new DiskManager("test.db");
   BufferPoolManager *bpm = new BufferPoolManager(1000, disk_manager);
 
-  int leaf_max_size = 3;
-  int internal_max_size = 3;
+  int leaf_max_size = RandomInt(3, 10);
+  int internal_max_size = RandomInt(3, 10);
   BPlusTree<int, int, IntegerComparator<false>> tree(
       "foo_pk", bpm, IntegerComparator<false>{}, leaf_max_size,
       internal_max_size);
@@ -35,15 +35,53 @@ TEST(BPlusTreeTests, DeleteTest0) {
   (void)header_page;
   EXPECT_EQ(page_id, 0);
 
-  for (int i = 0; i < 10; i++) {
-    tree.Insert(i, i, transaction);
+  std::map<int, int> mp;
+  std::vector<std::pair<int, int>> inserts;
+  for (int i = 0; i < 100; i++) {
+    int key = RandomInt(0, 10000);
+    while (mp.count(key)) {
+      key = RandomInt(0, 10000);
+    }
+    tree.Insert(key, i, transaction);
+    mp[key] = i;
+    inserts.push_back({key, i});
   }
 
-  tree.Draw(bpm, "tree.dot");
-  for (int i = 0; i < 10; i++) {
-    tree.Remove(i);
-    tree.Draw(bpm, "tree" + std::to_string(i) + ".dot");
+  // tree.Draw(bpm, "tree.dot");
+  for (int i = 0; i < 40; i++) {
+    int j = RandomInt(0, inserts.size() - 1);
+    int key = inserts[j].first;
+    tree.Remove(key);
+    inserts.erase(inserts.begin() + j);
+    // tree.Draw(bpm, "tree" + std::to_string(i) + "_" + std::to_string(key) + ".dot");
   }
+
+  std::sort(inserts.begin(), inserts.end());
+
+  std::vector<int> value;
+  for (size_t i = 0; i < inserts.size(); i++) {
+    value.clear();
+    EXPECT_TRUE(tree.GetValue(inserts[i].first, &value));
+    EXPECT_EQ(value.size(), 1);
+    EXPECT_EQ(value[0], inserts[i].second);
+  }
+
+  int i = 0;
+  for (auto it = tree.begin(); it != tree.end(); it++, i++) {
+    int val1 = (*it).second;
+    int val2 = it->second;
+    EXPECT_EQ(val1, val2);
+    EXPECT_EQ(it->first, inserts[i].first);
+    EXPECT_EQ(val1, inserts[i].second);
+  }
+  EXPECT_EQ(i, inserts.size());
+
+  // Remove all keys
+  for (auto & it : inserts) {
+    tree.Remove(it.first);
+  }
+
+  EXPECT_TRUE(tree.IsEmpty());
 
   bpm->UnpinPage(HEADER_PAGE_ID, true);
 
@@ -54,6 +92,49 @@ TEST(BPlusTreeTests, DeleteTest0) {
   remove("test.db");
   remove("test.log");
   // remove("tree.dot");
+}
+
+TEST(BPlusTreeTests, DeleteTest3) {
+  // create KeyComparator and index schema
+  Schema *key_schema = ParseCreateStatement("a bigint");
+  GenericComparator<8> comparator(key_schema);
+
+  DiskManager *disk_manager = new DiskManager("test.db");
+  BufferPoolManager *bpm = new BufferPoolManager(50, disk_manager);
+
+  BPlusTree<int, int, IntegerComparator<true>> tree(
+      "foo_pk", bpm, IntegerComparator<true>{}, 2, 3);
+
+  // create transaction
+  Transaction *transaction = new Transaction(0);
+
+  // create and fetch header_page
+  page_id_t page_id;
+  auto header_page = bpm->NewPage(&page_id);
+  (void)header_page;
+  EXPECT_EQ(page_id, 0);
+
+  // Test insert
+  const int N = 20;
+  for (int i = 0; i < N; i++) {
+    tree.Insert(i, i, transaction);
+  }
+
+  // Remove a not exist key should do nothing.
+  tree.Remove(200, transaction);
+
+  for (int i = 9; i >= 0; i--) {
+    tree.Remove(i, transaction);
+  }
+
+  bpm->UnpinPage(HEADER_PAGE_ID, true);
+
+  delete key_schema;
+  delete transaction;
+  delete disk_manager;
+  delete bpm;
+  remove("test.db");
+  remove("test.log");
 }
 
 TEST(BPlusTreeTests, DeleteTest1) {

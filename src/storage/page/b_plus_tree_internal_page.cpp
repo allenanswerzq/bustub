@@ -122,20 +122,6 @@ void B_PLUS_TREE_INTERNAL_PAGE_TYPE::DebugOutput() {
 }
 
 INDEX_TEMPLATE_ARGUMENTS
-KeyType B_PLUS_TREE_INTERNAL_PAGE_TYPE::GetMininumKey(
-    const KeyComparator &comparator) const {
-  CHECK(array_.size() > 1);
-  // NOTE: the first key is valid after spliting a internal node
-  KeyType ans = KeyAt(0);
-  for (size_t i = 1; i < array_.size(); i++) {
-    if (comparator(KeyAt(i), ans) < 0) {
-      ans = KeyAt(i);
-    }
-  }
-  return ans;
-}
-
-INDEX_TEMPLATE_ARGUMENTS
 int B_PLUS_TREE_INTERNAL_PAGE_TYPE::Insert(const KeyType &key,
                                            const ValueType &value,
                                            const KeyComparator &comparator) {
@@ -256,11 +242,13 @@ void B_PLUS_TREE_INTERNAL_PAGE_TYPE::MoveAllTo(
     BPlusTreeInternalPage *recipient, const KeyType &middle_key,
     BufferPoolManager *buffer_pool_manager) {
   CHECK(!IsRootPage() && recipient);
+  CHECK(recipient->GetSize() >= 1 && GetSize() >= 1);
 
-  recipient->SetKeyAt(0, middle_key);
-  for (int i = array_.size() - 1; i >= 0; i--) {
-    recipient->CopyFirstFrom(array_[i], buffer_pool_manager);
+  int place = recipient->GetSize();
+  for (size_t i = 0; i < array_.size(); i++) {
+    recipient->CopyLastFrom(array_[i], buffer_pool_manager);
   }
+  recipient->SetKeyAt(place, middle_key);
   array_.clear();
   SetSize(0);
 }

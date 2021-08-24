@@ -17,11 +17,11 @@
 
 namespace bustub {
 
-#define B_PLUS_TREE_LEAF_PAGE_TYPE \
-  BPlusTreeLeafPage<KeyType, ValueType, KeyComparator>
+// clang-format off
+#define B_PLUS_TREE_LEAF_PAGE_TYPE BPlusTreeLeafPage<KeyType, ValueType, KeyComparator>
 #define LEAF_PAGE_HEADER_SIZE 28
-#define LEAF_PAGE_SIZE \
-  ((PAGE_SIZE - LEAF_PAGE_HEADER_SIZE) / sizeof(MappingType))
+#define LEAF_PAGE_SIZE ((PAGE_SIZE - LEAF_PAGE_HEADER_SIZE) / sizeof(MappingType))
+// clang-format on
 
 /**
  * Store indexed key and record id(record id = page id combined with slot id,
@@ -56,7 +56,7 @@ class BPlusTreeLeafPage : public BPlusTreePage {
   int ValueIndex(const ValueType &val) const;
   ValueType ValueAt(int index) const;
   const MappingType &GetItem(int index);
-  KeyType GetMininumKey(const KeyComparator &comparator) const;
+
   // insert and delete methods
   int Insert(const KeyType &key, const ValueType &value,
              const KeyComparator &comparator);
