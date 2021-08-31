@@ -36,6 +36,8 @@
 #include <ctime>
 #include <iostream>
 #include <string>
+#include <mutex>
+#include <sstream>
 
 namespace bustub {
 
@@ -218,9 +220,25 @@ inline bool DebugLoggingEnabled() {
   return state == 1;
 }
 
+class AtomicStream {
+public:
+  template <typename T>
+  AtomicStream& operator<<(T const& t) {
+    oss << t;
+    return *this;
+  }
+
+  ~AtomicStream() {
+    std::cerr << oss.str();
+  }
+
+private:
+  std::ostringstream oss;
+};
+
 class LogMessage {
  public:
-  LogMessage(const char *file, int line) : log_stream_(std::cerr) {
+  LogMessage(const char *file, int line) {
     time_t t = ::time(nullptr);
     tm *curTime = localtime(&t);  // NOLINT
     char time_str[32];            // FIXME
@@ -229,10 +247,10 @@ class LogMessage {
   }
 
   ~LogMessage() { log_stream_ << '\n'; }
-  std::ostream &stream() { return log_stream_; }
+  AtomicStream &stream() { return log_stream_; }
 
  protected:
-  std::ostream &log_stream_;
+  AtomicStream log_stream_;
 
  private:
   LogMessage(const LogMessage &);

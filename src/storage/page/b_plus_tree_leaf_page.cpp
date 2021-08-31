@@ -134,11 +134,11 @@ void B_PLUS_TREE_LEAF_PAGE_TYPE::SetArray(const std::vector<MappingType> &array)
 
 INDEX_TEMPLATE_ARGUMENTS
 void B_PLUS_TREE_LEAF_PAGE_TYPE::DebugOutput() {
-  LOG(DEBUG) << ">>>>>>>>>>>>> internal page " << GetPageId() << " has size: " << array_.size();
-  for (size_t i = 0; i < array_.size(); i++) {
-    LOG(DEBUG) << i << " "
-               << "key: " << KeyAt(i) << " value: " << array_[i].second;
-  }
+  // LOG(DEBUG) << ">>>>>>>>>>>>> internal page " << GetPageId() << " has size: " << array_.size();
+  // for (size_t i = 0; i < array_.size(); i++) {
+  //   LOG(DEBUG) << i << " "
+  //              << "key: " << KeyAt(i) << " value: " << array_[i].second;
+  // }
 }
 
 /*

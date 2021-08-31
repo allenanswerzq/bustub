@@ -65,7 +65,7 @@ bool BPLUSTREE_TYPE::GetValue(const KeyType &key, std::vector<ValueType> *result
   ValueType val;
   bool ans = leaf->Lookup(key, &val, comparator_);
   buffer_pool_manager_->UnpinPage(leaf->GetPageId(), false);
-  LOG(DEBUG) << "Lookup leaf node: " << curr->GetPageId() << " val " << val << " " << ans;
+  LOG(DEBUG) << "Lookup leaf node: " << curr->GetPageId() << " result: " << ans;
   if (result) {
     result->push_back(val);
   }
@@ -117,13 +117,14 @@ void BPLUSTREE_TYPE::StartNewTree(const KeyType &key, const ValueType &value) {
   CHECK(root);
   root->SetMaxSize(leaf_max_size_);
   root->SetPageType(IndexPageType::LEAF_PAGE);
-  root->SetPageId(root_page_id_);
+  root->SetPageId(page_id);
   root->SetNextPageId(INVALID_PAGE_ID);
   // NOTE: mark this node as the root
   root->SetParentPageId(INVALID_PAGE_ID);
   CHECK(root->Insert(key, value, comparator_) == 1);
-  UpdateRootPageId(root_page_id_);
   root_page_id_ = page_id;
+  UpdateRootPageId(page_id);
+  LOG(DEBUG) << "root_page_id changed to: " << root_page_id_;
   page->WUnlatch();
 }
 
@@ -139,7 +140,7 @@ INDEX_TEMPLATE_ARGUMENTS
 bool BPLUSTREE_TYPE::InsertIntoLeaf(const KeyType &key, const ValueType &value, Transaction *transaction) {
   CHECK(root_page_id_ != INVALID_PAGE_ID) << "Expected root_page_id exists.";
 
-  LOG(DEBUG) << "Inserting into leaf...: " << key;
+  LOG(DEBUG) << "Inserting into leaf...: " << key << " to " << root_page_id_;
   Page * curr_page = buffer_pool_manager_->FetchPage(root_page_id_);
   BPlusTreePage *curr = reinterpret_cast<BPlusTreePage *>(curr_page->GetData());
   curr_page->WLatch();
@@ -164,20 +165,19 @@ bool BPLUSTREE_TYPE::InsertIntoLeaf(const KeyType &key, const ValueType &value, 
   if (leaf->Lookup(key, nullptr, comparator_)) {
     // Trying to insert a duplicate key
     LOG(DEBUG) << "Find a existing key, returns.";
-    return false;
-  }
+  } else {
+    leaf->Insert(key, value, comparator_);
+    LOG(DEBUG) << "After insertion has size " << leaf->GetSize() << ", max_size: " << leaf->GetMaxSize();
 
-  leaf->Insert(key, value, comparator_);
-  LOG(DEBUG) << "After insertion has size " << leaf->GetSize() << ", max_size: " << leaf->GetMaxSize();
-
-  if (leaf->GetSize() > leaf->GetMaxSize()) {
-    // Overflow occured
-    LeafPage *new_leaf = Split(leaf);
-    new_leaf->SetPageType(IndexPageType::LEAF_PAGE);
-    new_leaf->SetMaxSize(leaf_max_size_);
-    LOG(DEBUG) << "Overflow: starting to split #page " << leaf->GetPageId() << " to #new page " << new_leaf->GetPageId()
-               << " insert " << new_leaf->KeyAt(0);
-    InsertIntoParent(leaf, new_leaf->KeyAt(0), new_leaf);
+    if (leaf->GetSize() > leaf->GetMaxSize()) {
+      // Overflow occured
+      LeafPage *new_leaf = Split(leaf);
+      new_leaf->SetPageType(IndexPageType::LEAF_PAGE);
+      new_leaf->SetMaxSize(leaf_max_size_);
+      LOG(DEBUG) << "Overflow: starting to split #page " << leaf->GetPageId() << " to #new page " << new_leaf->GetPageId()
+                << " insert " << new_leaf->KeyAt(0);
+      InsertIntoParent(leaf, new_leaf->KeyAt(0), new_leaf);
+    }
   }
 
   // Relase all locks
