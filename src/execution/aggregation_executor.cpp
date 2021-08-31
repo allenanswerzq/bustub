@@ -16,14 +16,11 @@
 
 namespace bustub {
 
-AggregationExecutor::AggregationExecutor(
-    ExecutorContext *exec_ctx, const AggregationPlanNode *plan,
-    std::unique_ptr<AbstractExecutor> &&child)
+AggregationExecutor::AggregationExecutor(ExecutorContext *exec_ctx, const AggregationPlanNode *plan,
+                                         std::unique_ptr<AbstractExecutor> &&child)
     : AbstractExecutor(exec_ctx) {}
 
-const AbstractExecutor *AggregationExecutor::GetChildExecutor() const {
-  return child_.get();
-}
+const AbstractExecutor *AggregationExecutor::GetChildExecutor() const { return child_.get(); }
 
 void AggregationExecutor::Init() {}
 

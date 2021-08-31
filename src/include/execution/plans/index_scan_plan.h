@@ -30,11 +30,8 @@ class IndexScanPlanNode : public AbstractPlanNode {
    * predicate(tuple) == true or predicate == nullptr
    * @param table_oid the identifier of table to be scanned
    */
-  IndexScanPlanNode(const Schema *output, const AbstractExpression *predicate,
-                    index_oid_t index_oid)
-      : AbstractPlanNode(output, {}),
-        predicate_{predicate},
-        index_oid_(index_oid) {}
+  IndexScanPlanNode(const Schema *output, const AbstractExpression *predicate, index_oid_t index_oid)
+      : AbstractPlanNode(output, {}), predicate_{predicate}, index_oid_(index_oid) {}
 
   PlanType GetType() const override { return PlanType::IndexScan; }
 

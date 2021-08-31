@@ -49,8 +49,7 @@ class GenericKey {
     if (is_inlined) {
       data_ptr = (data_ + col.GetOffset());
     } else {
-      int32_t offset = *reinterpret_cast<int32_t *>(
-          const_cast<char *>(data_ + col.GetOffset()));
+      int32_t offset = *reinterpret_cast<int32_t *>(const_cast<char *>(data_ + col.GetOffset()));
       data_ptr = (data_ + offset);
     }
     return Value::DeserializeFrom(data_ptr, column_type);
@@ -58,9 +57,7 @@ class GenericKey {
 
   // NOTE: for test purpose only
   // interpret the first 8 bytes as int64_t from data vector
-  inline int64_t ToString() const {
-    return *reinterpret_cast<int64_t *>(const_cast<char *>(data_));
-  }
+  inline int64_t ToString() const { return *reinterpret_cast<int64_t *>(const_cast<char *>(data_)); }
 
   // NOTE: for test purpose only
   // interpret the first 8 bytes as int64_t from data vector
@@ -79,8 +76,7 @@ class GenericKey {
 template <size_t KeySize>
 class GenericComparator {
  public:
-  inline int operator()(const GenericKey<KeySize> &lhs,
-                        const GenericKey<KeySize> &rhs) const {
+  inline int operator()(const GenericKey<KeySize> &lhs, const GenericKey<KeySize> &rhs) const {
     uint32_t column_count = key_schema_->GetColumnCount();
 
     for (uint32_t i = 0; i < column_count; i++) {
@@ -98,8 +94,7 @@ class GenericComparator {
     return 0;
   }
 
-  GenericComparator(const GenericComparator &other)
-      : key_schema_{other.key_schema_} {}
+  GenericComparator(const GenericComparator &other) : key_schema_{other.key_schema_} {}
 
   // constructor
   explicit GenericComparator(Schema *key_schema) : key_schema_(key_schema) {}

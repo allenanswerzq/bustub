@@ -31,9 +31,7 @@ TEST(TmpTuplePageTest, DISABLED_BasicTest) {
 
   char *data = page.GetData();
   ASSERT_EQ(*reinterpret_cast<page_id_t *>(data), page_id);
-  ASSERT_EQ(
-      *reinterpret_cast<uint32_t *>(data + sizeof(page_id_t) + sizeof(lsn_t)),
-      PAGE_SIZE);
+  ASSERT_EQ(*reinterpret_cast<uint32_t *>(data + sizeof(page_id_t) + sizeof(lsn_t)), PAGE_SIZE);
 
   std::vector<Column> columns;
   columns.emplace_back("A", TypeId::INTEGER);
@@ -46,9 +44,7 @@ TEST(TmpTuplePageTest, DISABLED_BasicTest) {
   TmpTuple tmp_tuple(INVALID_PAGE_ID, 0);
   page.Insert(tuple, &tmp_tuple);
 
-  ASSERT_EQ(
-      *reinterpret_cast<uint32_t *>(data + sizeof(page_id_t) + sizeof(lsn_t)),
-      PAGE_SIZE - 8);
+  ASSERT_EQ(*reinterpret_cast<uint32_t *>(data + sizeof(page_id_t) + sizeof(lsn_t)), PAGE_SIZE - 8);
   ASSERT_EQ(*reinterpret_cast<uint32_t *>(data + PAGE_SIZE - 8), 4);
   ASSERT_EQ(*reinterpret_cast<uint32_t *>(data + PAGE_SIZE - 4), 123);
 }

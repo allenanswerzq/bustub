@@ -43,9 +43,7 @@ namespace bustub {
 using cstr = const char *;
 
 static constexpr cstr PastLastSlash(cstr a, cstr b) {
-  return *a == '\0'  ? b
-         : *b == '/' ? PastLastSlash(a + 1, a + 1)
-                     : PastLastSlash(a + 1, b);
+  return *a == '\0' ? b : *b == '/' ? PastLastSlash(a + 1, a + 1) : PastLastSlash(a + 1, b);
 }
 
 static constexpr cstr PastLastSlash(cstr a) { return PastLastSlash(a, a); }
@@ -172,8 +170,7 @@ void OutputLogHeader(const char *file, int line, const char *func, int level);
 
 // Output log message header in this format: [type] [file:line:function] time -
 // ex: [ERROR] [somefile.cpp:123:doSome()] 2008/07/06 10:00:00 -
-inline void OutputLogHeader(const char *file, int line, const char *func,
-                            int level) {
+inline void OutputLogHeader(const char *file, int line, const char *func, int level) {
   time_t t = ::time(nullptr);
   tm *curTime = localtime(&t);  // NOLINT
   char time_str[32];            // FIXME
@@ -199,8 +196,7 @@ inline void OutputLogHeader(const char *file, int line, const char *func,
       type = "UNKWN";
   }
   // PAVLO: DO NOT CHANGE THIS
-  ::fprintf(LOG_OUTPUT_STREAM, "%s [%s:%d:%s] %s - ", time_str, file, line,
-            func, type);
+  ::fprintf(LOG_OUTPUT_STREAM, "%s [%s:%d:%s] %s - ", time_str, file, line, func, type);
 }
 
 //------------------------------------------------------------------------------
@@ -267,12 +263,10 @@ class LogMessageVoidify {
 };
 
 #define CHECK(x) \
-  if (!(x))      \
-  LogMessageFatal(__FILE__, __LINE__).stream() << "Check failed: " #x << ": "
+  if (!(x)) LogMessageFatal(__FILE__, __LINE__).stream() << "Check failed: " #x << ": "
 
 #define LOG(severity) MY_LOG_##severity
-#define LOG_IF(severity, condition) \
-  !(condition) ? (void)0 : LogMessageVoidify() & LOG(severity)
+#define LOG_IF(severity, condition) !(condition) ? (void)0 : LogMessageVoidify() & LOG(severity)
 
 #define MY_LOG_DEBUG \
   if (DebugLoggingEnabled()) LogMessage(__FILE__, __LINE__).stream()

@@ -30,12 +30,9 @@ namespace bustub {
  */
 class NestedIndexJoinPlanNode : public AbstractPlanNode {
  public:
-  NestedIndexJoinPlanNode(const Schema *output_schema,
-                          std::vector<const AbstractPlanNode *> &&children,
-                          const AbstractExpression *predicate,
-                          table_oid_t inner_table_oid, std::string index_name,
-                          const Schema *outer_table_schema,
-                          const Schema *inner_table_schema)
+  NestedIndexJoinPlanNode(const Schema *output_schema, std::vector<const AbstractPlanNode *> &&children,
+                          const AbstractExpression *predicate, table_oid_t inner_table_oid, std::string index_name,
+                          const Schema *outer_table_schema, const Schema *inner_table_schema)
       : AbstractPlanNode(output_schema, std::move(children)),
         predicate_(predicate),
         inner_table_oid_(inner_table_oid),

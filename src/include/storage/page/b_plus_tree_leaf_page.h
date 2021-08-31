@@ -46,8 +46,7 @@ class BPlusTreeLeafPage : public BPlusTreePage {
  public:
   // After creating a new leaf page from buffer pool, must call initialize
   // method to set default values
-  void Init(page_id_t page_id, page_id_t parent_id = INVALID_PAGE_ID,
-            int max_size = LEAF_PAGE_SIZE);
+  void Init(page_id_t page_id, page_id_t parent_id = INVALID_PAGE_ID, int max_size = LEAF_PAGE_SIZE);
   // helper methods
   page_id_t GetNextPageId() const;
   void SetNextPageId(page_id_t next_page_id);
@@ -58,22 +57,17 @@ class BPlusTreeLeafPage : public BPlusTreePage {
   const MappingType &GetItem(int index);
 
   // insert and delete methods
-  int Insert(const KeyType &key, const ValueType &value,
-             const KeyComparator &comparator);
-  bool Lookup(const KeyType &key, ValueType *value,
-              const KeyComparator &comparator) const;
-  int RemoveAndDeleteRecord(const KeyType &key,
-                            const KeyComparator &comparator);
+  int Insert(const KeyType &key, const ValueType &value, const KeyComparator &comparator);
+  bool Lookup(const KeyType &key, ValueType *value, const KeyComparator &comparator) const;
+  int RemoveAndDeleteRecord(const KeyType &key, const KeyComparator &comparator);
 
   // Split and Merge utility methods
   void SetArray(const std::vector<MappingType> &array);
-  void MoveAllTo(BPlusTreeLeafPage *recipient, const KeyType &middle_key,
-                 BufferPoolManager *buffer_pool_manager);
+  void MoveAllTo(BPlusTreeLeafPage *recipient, const KeyType &middle_key, BufferPoolManager *buffer_pool_manager);
   void MoveHalfTo(BPlusTreeLeafPage *recipient);
   void MoveFirstToEndOf(BPlusTreeLeafPage *recipient, const KeyType &middle_key,
                         BufferPoolManager *buffer_pool_manager);
-  void MoveLastToFrontOf(BPlusTreeLeafPage *recipient,
-                         const KeyType &middle_key,
+  void MoveLastToFrontOf(BPlusTreeLeafPage *recipient, const KeyType &middle_key,
                          BufferPoolManager *buffer_pool_manager);
   void DebugOutput();
 

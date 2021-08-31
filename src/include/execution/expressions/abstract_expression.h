@@ -32,8 +32,7 @@ class AbstractExpression {
    * @param ret_type the return type of this abstract expression when it is
    * evaluated
    */
-  AbstractExpression(std::vector<const AbstractExpression *> &&children,
-                     TypeId ret_type)
+  AbstractExpression(std::vector<const AbstractExpression *> &&children, TypeId ret_type)
       : children_{std::move(children)}, ret_type_{ret_type} {}
 
   /** Virtual destructor. */
@@ -51,8 +50,7 @@ class AbstractExpression {
    * @param right_schema the right tuple's schema
    * @return the value obtained by evaluating a join on the left and right
    */
-  virtual Value EvaluateJoin(const Tuple *left_tuple, const Schema *left_schema,
-                             const Tuple *right_tuple,
+  virtual Value EvaluateJoin(const Tuple *left_tuple, const Schema *left_schema, const Tuple *right_tuple,
                              const Schema *right_schema) const = 0;
 
   /**
@@ -61,19 +59,13 @@ class AbstractExpression {
    * @param aggregates the aggregate values
    * @return the value obtained by checking the aggregates and group bys
    */
-  virtual Value EvaluateAggregate(
-      const std::vector<Value> &group_bys,
-      const std::vector<Value> &aggregates) const = 0;
+  virtual Value EvaluateAggregate(const std::vector<Value> &group_bys, const std::vector<Value> &aggregates) const = 0;
 
   /** @return the child_idx'th child of this expression */
-  const AbstractExpression *GetChildAt(uint32_t child_idx) const {
-    return children_[child_idx];
-  }
+  const AbstractExpression *GetChildAt(uint32_t child_idx) const { return children_[child_idx]; }
 
   /** @return the children of this expression, ordering may matter */
-  const std::vector<const AbstractExpression *> &GetChildren() const {
-    return children_;
-  }
+  const std::vector<const AbstractExpression *> &GetChildren() const { return children_; }
 
   /** @return the type of this expression if it were to be evaluated */
   virtual TypeId GetReturnType() const { return ret_type_; }

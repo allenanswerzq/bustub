@@ -80,8 +80,7 @@ TEST(RWLatchTest, ExtraTest) {
       EXPECT_EQ(writes, 1);
       EXPECT_EQ(reads, 0);
 
-      std::this_thread::sleep_for(
-          std::chrono::duration<int, std::micro>(sleep));
+      std::this_thread::sleep_for(std::chrono::duration<int, std::micro>(sleep));
 
       writes--;
       rw_lock.WUnlock();
@@ -92,8 +91,7 @@ TEST(RWLatchTest, ExtraTest) {
       EXPECT_EQ(writes, 0);
       ASSERT_GE(reads, 1);
 
-      std::this_thread::sleep_for(
-          std::chrono::duration<int, std::micro>(sleep));
+      std::this_thread::sleep_for(std::chrono::duration<int, std::micro>(sleep));
 
       reads--;
       rw_lock.RUnlock();

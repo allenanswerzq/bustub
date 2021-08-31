@@ -29,8 +29,7 @@ Tuple ConstructTuple(Schema *schema) {
 
   auto seed = std::chrono::system_clock::now().time_since_epoch().count();
 
-  std::mt19937 generator(
-      seed);  // mt19937 is a standard mersenne_twister_engine
+  std::mt19937 generator(seed);  // mt19937 is a standard mersenne_twister_engine
 
   for (uint32_t i = 0; i < schema->GetColumnCount(); i++) {
     // get type

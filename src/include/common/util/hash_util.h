@@ -45,9 +45,7 @@ class HashUtil {
     return HashBytes(reinterpret_cast<char *>(both), sizeof(hash_t) * 2);
   }
 
-  static inline hash_t SumHashes(hash_t l, hash_t r) {
-    return (l % prime_factor + r % prime_factor) % prime_factor;
-  }
+  static inline hash_t SumHashes(hash_t l, hash_t r) { return (l % prime_factor + r % prime_factor) % prime_factor; }
 
   template <typename T>
   static inline hash_t Hash(const T *ptr) {

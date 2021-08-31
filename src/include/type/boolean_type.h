@@ -26,15 +26,11 @@ class BooleanType : public Type {
 
   // Comparison functions
   CmpBool CompareEquals(const Value &left, const Value &right) const override;
-  CmpBool CompareNotEquals(const Value &left,
-                           const Value &right) const override;
+  CmpBool CompareNotEquals(const Value &left, const Value &right) const override;
   CmpBool CompareLessThan(const Value &left, const Value &right) const override;
-  CmpBool CompareLessThanEquals(const Value &left,
-                                const Value &right) const override;
-  CmpBool CompareGreaterThan(const Value &left,
-                             const Value &right) const override;
-  CmpBool CompareGreaterThanEquals(const Value &left,
-                                   const Value &right) const override;
+  CmpBool CompareLessThanEquals(const Value &left, const Value &right) const override;
+  CmpBool CompareGreaterThan(const Value &left, const Value &right) const override;
+  CmpBool CompareGreaterThanEquals(const Value &left, const Value &right) const override;
 
   // Decimal types are always inlined
   bool IsInlined(const Value &val) const override { return true; }

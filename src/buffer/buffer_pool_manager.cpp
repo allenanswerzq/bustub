@@ -17,12 +17,8 @@
 
 namespace bustub {
 
-BufferPoolManager::BufferPoolManager(size_t pool_size,
-                                     DiskManager *disk_manager,
-                                     LogManager *log_manager)
-    : pool_size_(pool_size),
-      disk_manager_(disk_manager),
-      log_manager_(log_manager) {
+BufferPoolManager::BufferPoolManager(size_t pool_size, DiskManager *disk_manager, LogManager *log_manager)
+    : pool_size_(pool_size), disk_manager_(disk_manager), log_manager_(log_manager) {
   // We allocate a consecutive memory space for the buffer pool.
   pages_ = new Page[pool_size_];
   replacer_ = new LRUReplacer(pool_size);
@@ -75,8 +71,7 @@ Page *BufferPoolManager::FetchPageImpl(page_id_t page_id) {
       throw Exception("Out of Memory.");
     }
     CHECK(page_id >= 0) << "Expected page id greater or equal to 0";
-    LOG(DEBUG) << "Fetching a new #page " << page_id << " to frame "
-               << frame_id;
+    LOG(DEBUG) << "Fetching a new #page " << page_id << " to frame " << frame_id;
     Page *page = &pages_[frame_id];
     if (page->is_dirty_) {
       // Flush the old page back to disk if dirty
@@ -195,8 +190,6 @@ void BufferPoolManager::FlushAllPagesImpl() {
   }
 }
 
-bool BufferPoolManager::Exist(page_id_t page_id) {
-  return page_table_.find(page_id) != page_table_.end();
-}
+bool BufferPoolManager::Exist(page_id_t page_id) { return page_table_.find(page_id) != page_table_.end(); }
 
 }  // namespace bustub

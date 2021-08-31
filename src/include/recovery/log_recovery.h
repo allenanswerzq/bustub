@@ -28,9 +28,7 @@ namespace bustub {
 class LogRecovery {
  public:
   LogRecovery(DiskManager *disk_manager, BufferPoolManager *buffer_pool_manager)
-      : disk_manager_(disk_manager),
-        buffer_pool_manager_(buffer_pool_manager),
-        offset_(0) {
+      : disk_manager_(disk_manager), buffer_pool_manager_(buffer_pool_manager), offset_(0) {
     log_buffer_ = new char[LOG_BUFFER_SIZE];
   }
 

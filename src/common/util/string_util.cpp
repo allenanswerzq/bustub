@@ -23,22 +23,16 @@
 
 namespace bustub {
 
-bool StringUtil::Contains(const std::string &haystack,
-                          const std::string &needle) {
+bool StringUtil::Contains(const std::string &haystack, const std::string &needle) {
   return (haystack.find(needle) != std::string::npos);
 }
 
 void StringUtil::RTrim(std::string *str) {
   // remove trailing ' ', \f, \n, \r, \t, \v
-  str->erase(std::find_if(str->rbegin(), str->rend(),
-                          [](int ch) { return std::isspace(ch) == 0; })
-                 .base(),
-             str->end());
+  str->erase(std::find_if(str->rbegin(), str->rend(), [](int ch) { return std::isspace(ch) == 0; }).base(), str->end());
 }
 
-std::string StringUtil::Indent(int num_indent) {
-  return std::string(num_indent, ' ');
-}
+std::string StringUtil::Indent(int num_indent) { return std::string(num_indent, ' '); }
 
 bool StringUtil::StartsWith(const std::string &str, const std::string &prefix) {
   return std::equal(prefix.begin(), prefix.end(), str.begin());
@@ -63,8 +57,7 @@ std::string StringUtil::Repeat(const std::string &str, const std::size_t n) {
   return (os.str());
 }
 
-std::vector<std::string> StringUtil::Split(const std::string &str,
-                                           char delimiter) {
+std::vector<std::string> StringUtil::Split(const std::string &str, char delimiter) {
   std::stringstream ss(str);
   std::vector<std::string> lines;
   std::string temp;
@@ -74,8 +67,7 @@ std::vector<std::string> StringUtil::Split(const std::string &str,
   return (lines);
 }
 
-std::string StringUtil::Join(const std::vector<std::string> &input,
-                             const std::string &separator) {
+std::string StringUtil::Join(const std::vector<std::string> &input, const std::string &separator) {
   std::string result;
 
   // If the input isn't empty, append the first element. We do this so we don't
@@ -92,8 +84,7 @@ std::string StringUtil::Join(const std::vector<std::string> &input,
   return result;
 }
 
-std::string StringUtil::Prefix(const std::string &str,
-                               const std::string &prefix) {
+std::string StringUtil::Prefix(const std::string &str, const std::string &prefix) {
   std::vector<std::string> lines = StringUtil::Split(str, '\n');
 
   if (lines.empty()) {
@@ -142,15 +133,13 @@ std::string StringUtil::Bold(const std::string &str) {
 
 std::string StringUtil::Upper(const std::string &str) {
   std::string copy(str);
-  std::transform(copy.begin(), copy.end(), copy.begin(),
-                 [](unsigned char c) { return std::toupper(c); });
+  std::transform(copy.begin(), copy.end(), copy.begin(), [](unsigned char c) { return std::toupper(c); });
   return (copy);
 }
 
 std::string StringUtil::Lower(const std::string &str) {
   std::string copy(str);
-  std::transform(copy.begin(), copy.end(), copy.begin(),
-                 [](unsigned char c) { return std::tolower(c); });
+  std::transform(copy.begin(), copy.end(), copy.begin(), [](unsigned char c) { return std::tolower(c); });
   return (copy);
 }
 
@@ -170,8 +159,7 @@ std::string StringUtil::Format(std::string fmt_str, ...) {
     formatted = std::make_unique<char[]>(n);
     strcpy(&formatted[0], fmt_str.c_str());  // NOLINT
     va_start(ap, fmt_str);
-    final_n =
-        vsnprintf(&formatted[0], static_cast<size_t>(n), fmt_str.c_str(), ap);
+    final_n = vsnprintf(&formatted[0], static_cast<size_t>(n), fmt_str.c_str(), ap);
     va_end(ap);
     if (final_n < 0 || final_n >= n) {
       n += abs(final_n - n + 1);
@@ -182,8 +170,7 @@ std::string StringUtil::Format(std::string fmt_str, ...) {
   return std::string(formatted.get());
 }
 
-std::vector<std::string> StringUtil::Split(const std::string &input,
-                                           const std::string &split) {
+std::vector<std::string> StringUtil::Split(const std::string &input, const std::string &split) {
   std::vector<std::string> splits;
 
   size_t last = 0;

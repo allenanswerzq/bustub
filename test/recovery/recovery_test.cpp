@@ -55,8 +55,7 @@ TEST_F(RecoveryTest, DISABLED_RedoTest) {
 
   LOG_INFO("Create a test table");
   Transaction *txn = bustub_instance->transaction_manager_->Begin();
-  auto *test_table = new TableHeap(bustub_instance->buffer_pool_manager_,
-                                   bustub_instance->lock_manager_,
+  auto *test_table = new TableHeap(bustub_instance->buffer_pool_manager_, bustub_instance->lock_manager_,
                                    bustub_instance->log_manager_, txn);
   page_id_t first_page_id = test_table->GetFirstPageId();
 
@@ -94,8 +93,7 @@ TEST_F(RecoveryTest, DISABLED_RedoTest) {
   Tuple old_tuple;
   Tuple old_tuple1;
   txn = bustub_instance->transaction_manager_->Begin();
-  test_table = new TableHeap(bustub_instance->buffer_pool_manager_,
-                             bustub_instance->lock_manager_,
+  test_table = new TableHeap(bustub_instance->buffer_pool_manager_, bustub_instance->lock_manager_,
                              bustub_instance->log_manager_, first_page_id);
   ASSERT_FALSE(test_table->GetTuple(rid, &old_tuple, txn));
   ASSERT_FALSE(test_table->GetTuple(rid1, &old_tuple1, txn));
@@ -103,8 +101,7 @@ TEST_F(RecoveryTest, DISABLED_RedoTest) {
   delete txn;
 
   LOG_INFO("Begin recovery");
-  auto *log_recovery = new LogRecovery(bustub_instance->disk_manager_,
-                                       bustub_instance->buffer_pool_manager_);
+  auto *log_recovery = new LogRecovery(bustub_instance->disk_manager_, bustub_instance->buffer_pool_manager_);
 
   ASSERT_FALSE(enable_logging);
 
@@ -116,8 +113,7 @@ TEST_F(RecoveryTest, DISABLED_RedoTest) {
   LOG_INFO("Check if recovery success");
   txn = bustub_instance->transaction_manager_->Begin();
   delete test_table;
-  test_table = new TableHeap(bustub_instance->buffer_pool_manager_,
-                             bustub_instance->lock_manager_,
+  test_table = new TableHeap(bustub_instance->buffer_pool_manager_, bustub_instance->lock_manager_,
                              bustub_instance->log_manager_, first_page_id);
 
   ASSERT_TRUE(test_table->GetTuple(rid, &old_tuple, txn));
@@ -127,14 +123,10 @@ TEST_F(RecoveryTest, DISABLED_RedoTest) {
   delete test_table;
   delete log_recovery;
 
-  ASSERT_EQ(old_tuple.GetValue(&schema, 1).CompareEquals(val_1),
-            CmpBool::CmpTrue);
-  ASSERT_EQ(old_tuple.GetValue(&schema, 0).CompareEquals(val_0),
-            CmpBool::CmpTrue);
-  ASSERT_EQ(old_tuple1.GetValue(&schema, 1).CompareEquals(val1_1),
-            CmpBool::CmpTrue);
-  ASSERT_EQ(old_tuple1.GetValue(&schema, 0).CompareEquals(val1_0),
-            CmpBool::CmpTrue);
+  ASSERT_EQ(old_tuple.GetValue(&schema, 1).CompareEquals(val_1), CmpBool::CmpTrue);
+  ASSERT_EQ(old_tuple.GetValue(&schema, 0).CompareEquals(val_0), CmpBool::CmpTrue);
+  ASSERT_EQ(old_tuple1.GetValue(&schema, 1).CompareEquals(val1_1), CmpBool::CmpTrue);
+  ASSERT_EQ(old_tuple1.GetValue(&schema, 0).CompareEquals(val1_0), CmpBool::CmpTrue);
 
   delete bustub_instance;
 }
@@ -152,8 +144,7 @@ TEST_F(RecoveryTest, DISABLED_UndoTest) {
 
   LOG_INFO("Create a test table");
   Transaction *txn = bustub_instance->transaction_manager_->Begin();
-  auto *test_table = new TableHeap(bustub_instance->buffer_pool_manager_,
-                                   bustub_instance->lock_manager_,
+  auto *test_table = new TableHeap(bustub_instance->buffer_pool_manager_, bustub_instance->lock_manager_,
                                    bustub_instance->log_manager_, txn);
   page_id_t first_page_id = test_table->GetFirstPageId();
 
@@ -184,21 +175,17 @@ TEST_F(RecoveryTest, DISABLED_UndoTest) {
   LOG_INFO("Check if tuple exists before recovery");
   Tuple old_tuple;
   txn = bustub_instance->transaction_manager_->Begin();
-  test_table = new TableHeap(bustub_instance->buffer_pool_manager_,
-                             bustub_instance->lock_manager_,
+  test_table = new TableHeap(bustub_instance->buffer_pool_manager_, bustub_instance->lock_manager_,
                              bustub_instance->log_manager_, first_page_id);
 
   ASSERT_TRUE(test_table->GetTuple(rid, &old_tuple, txn));
-  ASSERT_EQ(old_tuple.GetValue(&schema, 0).CompareEquals(val_0),
-            CmpBool::CmpTrue);
-  ASSERT_EQ(old_tuple.GetValue(&schema, 1).CompareEquals(val_1),
-            CmpBool::CmpTrue);
+  ASSERT_EQ(old_tuple.GetValue(&schema, 0).CompareEquals(val_0), CmpBool::CmpTrue);
+  ASSERT_EQ(old_tuple.GetValue(&schema, 1).CompareEquals(val_1), CmpBool::CmpTrue);
   bustub_instance->transaction_manager_->Commit(txn);
   delete txn;
 
   LOG_INFO("Recovery started..");
-  auto *log_recovery = new LogRecovery(bustub_instance->disk_manager_,
-                                       bustub_instance->buffer_pool_manager_);
+  auto *log_recovery = new LogRecovery(bustub_instance->disk_manager_, bustub_instance->buffer_pool_manager_);
 
   ASSERT_FALSE(enable_logging);
 
@@ -210,8 +197,7 @@ TEST_F(RecoveryTest, DISABLED_UndoTest) {
   LOG_INFO("Check if failed txn is undo successfully");
   txn = bustub_instance->transaction_manager_->Begin();
   delete test_table;
-  test_table = new TableHeap(bustub_instance->buffer_pool_manager_,
-                             bustub_instance->lock_manager_,
+  test_table = new TableHeap(bustub_instance->buffer_pool_manager_, bustub_instance->lock_manager_,
                              bustub_instance->log_manager_, first_page_id);
 
   ASSERT_FALSE(test_table->GetTuple(rid, &old_tuple, txn));
@@ -237,8 +223,7 @@ TEST_F(RecoveryTest, DISABLED_CheckpointTest) {
 
   LOG_INFO("Create a test table");
   Transaction *txn = bustub_instance->transaction_manager_->Begin();
-  auto *test_table = new TableHeap(bustub_instance->buffer_pool_manager_,
-                                   bustub_instance->lock_manager_,
+  auto *test_table = new TableHeap(bustub_instance->buffer_pool_manager_, bustub_instance->lock_manager_,
                                    bustub_instance->log_manager_, txn);
   bustub_instance->transaction_manager_->Commit(txn);
 

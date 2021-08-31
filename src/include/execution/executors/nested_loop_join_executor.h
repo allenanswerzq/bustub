@@ -37,8 +37,7 @@ class NestedLoopJoinExecutor : public AbstractExecutor {
    * side of join
    *
    */
-  NestedLoopJoinExecutor(ExecutorContext *exec_ctx,
-                         const NestedLoopJoinPlanNode *plan,
+  NestedLoopJoinExecutor(ExecutorContext *exec_ctx, const NestedLoopJoinPlanNode *plan,
                          std::unique_ptr<AbstractExecutor> &&left_executor,
                          std::unique_ptr<AbstractExecutor> &&right_executor);
 

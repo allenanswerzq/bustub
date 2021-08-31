@@ -32,15 +32,11 @@ class SmallintType : public IntegerParentType {
 
   // Comparison functions
   CmpBool CompareEquals(const Value &left, const Value &right) const override;
-  CmpBool CompareNotEquals(const Value &left,
-                           const Value &right) const override;
+  CmpBool CompareNotEquals(const Value &left, const Value &right) const override;
   CmpBool CompareLessThan(const Value &left, const Value &right) const override;
-  CmpBool CompareLessThanEquals(const Value &left,
-                                const Value &right) const override;
-  CmpBool CompareGreaterThan(const Value &left,
-                             const Value &right) const override;
-  CmpBool CompareGreaterThanEquals(const Value &left,
-                                   const Value &right) const override;
+  CmpBool CompareLessThanEquals(const Value &left, const Value &right) const override;
+  CmpBool CompareGreaterThan(const Value &left, const Value &right) const override;
+  CmpBool CompareGreaterThanEquals(const Value &left, const Value &right) const override;
 
   Value CastAs(const Value &val, TypeId type_id) const override;
 

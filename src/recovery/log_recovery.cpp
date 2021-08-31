@@ -20,10 +20,7 @@ namespace bustub {
  * @return: true means deserialize succeed, otherwise can't deserialize cause
  * incomplete log record
  */
-bool LogRecovery::DeserializeLogRecord(const char *data,
-                                       LogRecord *log_record) {
-  return false;
-}
+bool LogRecovery::DeserializeLogRecord(const char *data, LogRecord *log_record) { return false; }
 
 /*
  *redo phase on TABLE PAGE level(table/table_page.h)

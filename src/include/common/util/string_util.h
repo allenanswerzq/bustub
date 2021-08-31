@@ -40,8 +40,7 @@ class StringUtil {
   static std::vector<std::string> Split(const std::string &str, char delimiter);
 
   /** @return concatenation of all input strings, separated by the separator */
-  static std::string Join(const std::vector<std::string> &input,
-                          const std::string &separator);
+  static std::string Join(const std::vector<std::string> &input, const std::string &separator);
 
   /** @return prefix prepended to the beginning of each line in str */
   static std::string Prefix(const std::string &str, const std::string &prefix);
@@ -64,8 +63,7 @@ class StringUtil {
   static std::string Format(std::string fmt_str, ...);
 
   /** @return input string split based on the split string */
-  static std::vector<std::string> Split(const std::string &input,
-                                        const std::string &split);
+  static std::vector<std::string> Split(const std::string &input, const std::string &split);
 
   /**
    * Removes the whitespace characters from the right side of the string.

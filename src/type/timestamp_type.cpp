@@ -21,8 +21,7 @@ namespace bustub {
 
 TimestampType::TimestampType() : Type(TypeId::TIMESTAMP) {}
 
-CmpBool TimestampType::CompareEquals(const Value &left,
-                                     const Value &right) const {
+CmpBool TimestampType::CompareEquals(const Value &left, const Value &right) const {
   assert(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull()) {
     return CmpBool::CmpNull;
@@ -30,8 +29,7 @@ CmpBool TimestampType::CompareEquals(const Value &left,
   return GetCmpBool(left.GetAs<uint64_t>() == right.GetAs<uint64_t>());
 }
 
-CmpBool TimestampType::CompareNotEquals(const Value &left,
-                                        const Value &right) const {
+CmpBool TimestampType::CompareNotEquals(const Value &left, const Value &right) const {
   assert(left.CheckComparable(right));
   if (right.IsNull()) {
     return CmpBool::CmpNull;
@@ -39,8 +37,7 @@ CmpBool TimestampType::CompareNotEquals(const Value &left,
   return GetCmpBool(left.GetAs<uint64_t>() != right.GetAs<uint64_t>());
 }
 
-CmpBool TimestampType::CompareLessThan(const Value &left,
-                                       const Value &right) const {
+CmpBool TimestampType::CompareLessThan(const Value &left, const Value &right) const {
   assert(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull()) {
     return CmpBool::CmpNull;
@@ -48,8 +45,7 @@ CmpBool TimestampType::CompareLessThan(const Value &left,
   return GetCmpBool(left.GetAs<uint64_t>() < right.GetAs<uint64_t>());
 }
 
-CmpBool TimestampType::CompareLessThanEquals(const Value &left,
-                                             const Value &right) const {
+CmpBool TimestampType::CompareLessThanEquals(const Value &left, const Value &right) const {
   assert(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull()) {
     return CmpBool::CmpNull;
@@ -57,8 +53,7 @@ CmpBool TimestampType::CompareLessThanEquals(const Value &left,
   return GetCmpBool(left.GetAs<uint64_t>() <= right.GetAs<uint64_t>());
 }
 
-CmpBool TimestampType::CompareGreaterThan(const Value &left,
-                                          const Value &right) const {
+CmpBool TimestampType::CompareGreaterThan(const Value &left, const Value &right) const {
   assert(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull()) {
     return CmpBool::CmpNull;
@@ -66,8 +61,7 @@ CmpBool TimestampType::CompareGreaterThan(const Value &left,
   return GetCmpBool(left.GetAs<int64_t>() > right.GetAs<int64_t>());
 }
 
-CmpBool TimestampType::CompareGreaterThanEquals(const Value &left,
-                                                const Value &right) const {
+CmpBool TimestampType::CompareGreaterThanEquals(const Value &left, const Value &right) const {
   assert(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull()) {
     return CmpBool::CmpNull;
@@ -122,8 +116,7 @@ std::string TimestampType::ToString(const Value &val) const {
   auto month = static_cast<uint16_t>(tm);
   char str[30];
   char zone[5];
-  sprintf(str, "%04d-%02d-%02d %02d:%02d:%02d.%06d", year, month, day, hour,
-          min, sec, micro);  // NOLINT
+  sprintf(str, "%04d-%02d-%02d %02d:%02d:%02d.%06d", year, month, day, hour, min, sec, micro);  // NOLINT
   if (tz >= 0) {
     str[26] = '+';
   } else {
@@ -162,8 +155,7 @@ Value TimestampType::CastAs(const Value &val, const TypeId type_id) const {
     default:
       break;
   }
-  throw Exception("TIMESTAMP is not coercable to " +
-                  Type::GetInstance(type_id)->ToString(val));
+  throw Exception("TIMESTAMP is not coercable to " + Type::GetInstance(type_id)->ToString(val));
 }
 
 }  // namespace bustub

@@ -14,8 +14,7 @@
 
 namespace bustub {
 
-LimitExecutor::LimitExecutor(ExecutorContext *exec_ctx,
-                             const LimitPlanNode *plan,
+LimitExecutor::LimitExecutor(ExecutorContext *exec_ctx, const LimitPlanNode *plan,
                              std::unique_ptr<AbstractExecutor> &&child_executor)
     : AbstractExecutor(exec_ctx) {}
 

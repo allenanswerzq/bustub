@@ -32,11 +32,9 @@ class NestedLoopJoinPlanNode : public AbstractPlanNode {
    * @param predicate the predicate to join with, the tuples are joined if
    * predicate(tuple) = true or predicate = nullptr
    */
-  NestedLoopJoinPlanNode(const Schema *output_schema,
-                         std::vector<const AbstractPlanNode *> &&children,
+  NestedLoopJoinPlanNode(const Schema *output_schema, std::vector<const AbstractPlanNode *> &&children,
                          const AbstractExpression *predicate)
-      : AbstractPlanNode(output_schema, std::move(children)),
-        predicate_(predicate) {}
+      : AbstractPlanNode(output_schema, std::move(children)), predicate_(predicate) {}
 
   PlanType GetType() const override { return PlanType::NestedLoopJoin; }
 
@@ -46,15 +44,13 @@ class NestedLoopJoinPlanNode : public AbstractPlanNode {
   /** @return the left plan node of the nested loop join, by convention it
    * should be the smaller table*/
   const AbstractPlanNode *GetLeftPlan() const {
-    BUSTUB_ASSERT(GetChildren().size() == 2,
-                  "Nested loop joins should have exactly two children plans.");
+    BUSTUB_ASSERT(GetChildren().size() == 2, "Nested loop joins should have exactly two children plans.");
     return GetChildAt(0);
   }
 
   /** @return the right plan node of the nested loop join */
   const AbstractPlanNode *GetRightPlan() const {
-    BUSTUB_ASSERT(GetChildren().size() == 2,
-                  "Nested loop joins should have exactly two children plans.");
+    BUSTUB_ASSERT(GetChildren().size() == 2, "Nested loop joins should have exactly two children plans.");
     return GetChildAt(1);
   }
 

@@ -30,12 +30,7 @@ static char *buffer_used;
  * @input db_file: database file name
  */
 DiskManager::DiskManager(const std::string &db_file)
-    : file_name_(db_file),
-      next_page_id_(0),
-      num_flushes_(0),
-      num_writes_(0),
-      flush_log_(false),
-      flush_log_f_(nullptr) {
+    : file_name_(db_file), next_page_id_(0), num_flushes_(0), num_writes_(0), flush_log_(false), flush_log_f_(nullptr) {
   std::string::size_type n = file_name_.rfind('.');
   if (n == std::string::npos) {
     LOG_DEBUG("wrong file format");
@@ -55,20 +50,16 @@ DiskManager::DiskManager(const std::string &db_file)
   buffer_used = nullptr;
 }
 
-bool DiskManager::OpenOrCreateFile(const std::string &filename,
-                                   std::fstream &fs) {
-  fs.open(filename,
-          std::ios::binary | std::ios::in | std::ios::app | std::ios::out);
+bool DiskManager::OpenOrCreateFile(const std::string &filename, std::fstream &fs) {
+  fs.open(filename, std::ios::binary | std::ios::in | std::ios::app | std::ios::out);
   // directory or file does not exist
   if (!fs.is_open()) {
     fs.clear();
     // create a new file
-    fs.open(filename,
-            std::ios::binary | std::ios::trunc | std::ios::app | std::ios::out);
+    fs.open(filename, std::ios::binary | std::ios::trunc | std::ios::app | std::ios::out);
     fs.close();
     // reopen with original mode
-    fs.open(filename,
-            std::ios::binary | std::ios::in | std::ios::app | std::ios::out);
+    fs.open(filename, std::ios::binary | std::ios::in | std::ios::app | std::ios::out);
   }
   return fs.is_open();
 }
@@ -144,8 +135,7 @@ void DiskManager::WriteLog(char *log_data, int size) {
 
   if (flush_log_f_ != nullptr) {
     // used for checking non-blocking flushing
-    assert(flush_log_f_->wait_for(std::chrono::seconds(10)) ==
-           std::future_status::ready);
+    assert(flush_log_f_->wait_for(std::chrono::seconds(10)) == std::future_status::ready);
   }
 
   num_flushes_ += 1;

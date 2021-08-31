@@ -64,13 +64,11 @@ class UpdateExecutor : public AbstractExecutor {
         Value val = old_tup.GetValue(&schema, idx);
         switch (info.type_) {
           case UpdateType::Add:
-            values.emplace_back(
-                val.Add(ValueFactory::GetIntegerValue(info.update_val_)));
+            values.emplace_back(val.Add(ValueFactory::GetIntegerValue(info.update_val_)));
             break;
 
           case UpdateType::Set:
-            values.emplace_back(
-                ValueFactory::GetIntegerValue(info.update_val_));
+            values.emplace_back(ValueFactory::GetIntegerValue(info.update_val_));
             break;
         }
       }

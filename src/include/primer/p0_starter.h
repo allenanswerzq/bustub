@@ -91,8 +91,8 @@ class RowMatrixOperations {
  public:
   // Compute (mat1 + mat2) and return the result.
   // Return nullptr if dimensions mismatch for input matrices.
-  static std::unique_ptr<RowMatrix<T>> AddMatrices(
-      std::unique_ptr<RowMatrix<T>> mat1, std::unique_ptr<RowMatrix<T>> mat2) {
+  static std::unique_ptr<RowMatrix<T>> AddMatrices(std::unique_ptr<RowMatrix<T>> mat1,
+                                                   std::unique_ptr<RowMatrix<T>> mat2) {
     // TODO(P0): Add code
 
     return std::unique_ptr<RowMatrix<T>>(nullptr);
@@ -100,8 +100,8 @@ class RowMatrixOperations {
 
   // Compute matrix multiplication (mat1 * mat2) and return the result.
   // Return nullptr if dimensions mismatch for input matrices.
-  static std::unique_ptr<RowMatrix<T>> MultiplyMatrices(
-      std::unique_ptr<RowMatrix<T>> mat1, std::unique_ptr<RowMatrix<T>> mat2) {
+  static std::unique_ptr<RowMatrix<T>> MultiplyMatrices(std::unique_ptr<RowMatrix<T>> mat1,
+                                                        std::unique_ptr<RowMatrix<T>> mat2) {
     // TODO(P0): Add code
 
     return std::unique_ptr<RowMatrix<T>>(nullptr);
@@ -110,9 +110,9 @@ class RowMatrixOperations {
   // Simplified GEMM (general matrix multiply) operation
   // Compute (matA * matB + matC). Return nullptr if dimensions mismatch for
   // input matrices
-  static std::unique_ptr<RowMatrix<T>> GemmMatrices(
-      std::unique_ptr<RowMatrix<T>> matA, std::unique_ptr<RowMatrix<T>> matB,
-      std::unique_ptr<RowMatrix<T>> matC) {
+  static std::unique_ptr<RowMatrix<T>> GemmMatrices(std::unique_ptr<RowMatrix<T>> matA,
+                                                    std::unique_ptr<RowMatrix<T>> matB,
+                                                    std::unique_ptr<RowMatrix<T>> matC) {
     // TODO(P0): Add code
 
     return std::unique_ptr<RowMatrix<T>>(nullptr);

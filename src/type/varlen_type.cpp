@@ -41,92 +41,77 @@ VarlenType::VarlenType(TypeId type) : Type(type) {}
 VarlenType::~VarlenType() = default;
 
 // Access the raw variable length data
-const char *VarlenType::GetData(const Value &val) const {
-  return val.value_.varlen_;
-}
+const char *VarlenType::GetData(const Value &val) const { return val.value_.varlen_; }
 
 // Get the length of the variable length data (including the length field)
-uint32_t VarlenType::GetLength(const Value &val) const {
-  return val.size_.len_;
-}
+uint32_t VarlenType::GetLength(const Value &val) const { return val.size_.len_; }
 
 CmpBool VarlenType::CompareEquals(const Value &left, const Value &right) const {
   assert(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull()) {
     return CmpBool::CmpNull;
   }
-  if (GetLength(left) == BUSTUB_VARCHAR_MAX_LEN ||
-      GetLength(right) == BUSTUB_VARCHAR_MAX_LEN) {
+  if (GetLength(left) == BUSTUB_VARCHAR_MAX_LEN || GetLength(right) == BUSTUB_VARCHAR_MAX_LEN) {
     return GetCmpBool(GetLength(left) == GetLength(right));
   }
 
   VARLEN_COMPARE_FUNC(==);  // NOLINT
 }
 
-CmpBool VarlenType::CompareNotEquals(const Value &left,
-                                     const Value &right) const {
+CmpBool VarlenType::CompareNotEquals(const Value &left, const Value &right) const {
   assert(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull()) {
     return CmpBool::CmpNull;
   }
-  if (GetLength(left) == BUSTUB_VARCHAR_MAX_LEN ||
-      GetLength(right) == BUSTUB_VARCHAR_MAX_LEN) {
+  if (GetLength(left) == BUSTUB_VARCHAR_MAX_LEN || GetLength(right) == BUSTUB_VARCHAR_MAX_LEN) {
     return GetCmpBool(GetLength(left) != GetLength(right));
   }
 
   VARLEN_COMPARE_FUNC(!=);  // NOLINT
 }
 
-CmpBool VarlenType::CompareLessThan(const Value &left,
-                                    const Value &right) const {
+CmpBool VarlenType::CompareLessThan(const Value &left, const Value &right) const {
   assert(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull()) {
     return CmpBool::CmpNull;
   }
-  if (GetLength(left) == BUSTUB_VARCHAR_MAX_LEN ||
-      GetLength(right) == BUSTUB_VARCHAR_MAX_LEN) {
+  if (GetLength(left) == BUSTUB_VARCHAR_MAX_LEN || GetLength(right) == BUSTUB_VARCHAR_MAX_LEN) {
     return GetCmpBool(GetLength(left) < GetLength(right));
   }
 
   VARLEN_COMPARE_FUNC(<);  // NOLINT
 }
 
-CmpBool VarlenType::CompareLessThanEquals(const Value &left,
-                                          const Value &right) const {
+CmpBool VarlenType::CompareLessThanEquals(const Value &left, const Value &right) const {
   assert(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull()) {
     return CmpBool::CmpNull;
   }
-  if (GetLength(left) == BUSTUB_VARCHAR_MAX_LEN ||
-      GetLength(right) == BUSTUB_VARCHAR_MAX_LEN) {
+  if (GetLength(left) == BUSTUB_VARCHAR_MAX_LEN || GetLength(right) == BUSTUB_VARCHAR_MAX_LEN) {
     return GetCmpBool(GetLength(left) <= GetLength(right));
   }
 
   VARLEN_COMPARE_FUNC(<=);  // NOLINT
 }
 
-CmpBool VarlenType::CompareGreaterThan(const Value &left,
-                                       const Value &right) const {
+CmpBool VarlenType::CompareGreaterThan(const Value &left, const Value &right) const {
   assert(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull()) {
     return CmpBool::CmpNull;
   }
-  if (GetLength(left) == BUSTUB_VARCHAR_MAX_LEN ||
-      GetLength(right) == BUSTUB_VARCHAR_MAX_LEN) {
+  if (GetLength(left) == BUSTUB_VARCHAR_MAX_LEN || GetLength(right) == BUSTUB_VARCHAR_MAX_LEN) {
     return GetCmpBool(GetLength(left) > GetLength(right));
   }
 
   VARLEN_COMPARE_FUNC(>);  // NOLINT
 }
 
-CmpBool VarlenType::CompareGreaterThanEquals(const Value &left,
-                                             const Value &right) const {
+CmpBool VarlenType::CompareGreaterThanEquals(const Value &left, const Value &right) const {
   assert(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull()) {
     return CmpBool::CmpNull;
   }
-  if (GetLength(left) == BUSTUB_VARCHAR_MAX_LEN ||
-      GetLength(right) == BUSTUB_VARCHAR_MAX_LEN) {
+  if (GetLength(left) == BUSTUB_VARCHAR_MAX_LEN || GetLength(right) == BUSTUB_VARCHAR_MAX_LEN) {
     return GetCmpBool(GetLength(left) >= GetLength(right));
   }
 
@@ -213,12 +198,10 @@ Value VarlenType::CastAs(const Value &value, const TypeId type_id) const {
       try {
         tinyint = static_cast<int8_t>(stoi(str));
       } catch (std::out_of_range &e) {
-        throw Exception(ExceptionType::OUT_OF_RANGE,
-                        "Numeric value out of range.");
+        throw Exception(ExceptionType::OUT_OF_RANGE, "Numeric value out of range.");
       }
       if (tinyint < BUSTUB_INT8_MIN) {
-        throw Exception(ExceptionType::OUT_OF_RANGE,
-                        "Numeric value out of range.");
+        throw Exception(ExceptionType::OUT_OF_RANGE, "Numeric value out of range.");
       }
       return Value(type_id, tinyint);
     }
@@ -228,12 +211,10 @@ Value VarlenType::CastAs(const Value &value, const TypeId type_id) const {
       try {
         smallint = static_cast<int16_t>(stoi(str));
       } catch (std::out_of_range &e) {
-        throw Exception(ExceptionType::OUT_OF_RANGE,
-                        "Numeric value out of range.");
+        throw Exception(ExceptionType::OUT_OF_RANGE, "Numeric value out of range.");
       }
       if (smallint < BUSTUB_INT16_MIN) {
-        throw Exception(ExceptionType::OUT_OF_RANGE,
-                        "Numeric value out of range.");
+        throw Exception(ExceptionType::OUT_OF_RANGE, "Numeric value out of range.");
       }
       return Value(type_id, smallint);
     }
@@ -243,12 +224,10 @@ Value VarlenType::CastAs(const Value &value, const TypeId type_id) const {
       try {
         integer = stoi(str);
       } catch (std::out_of_range &e) {
-        throw Exception(ExceptionType::OUT_OF_RANGE,
-                        "Numeric value out of range.");
+        throw Exception(ExceptionType::OUT_OF_RANGE, "Numeric value out of range.");
       }
       if (integer > BUSTUB_INT32_MAX || integer < BUSTUB_INT32_MIN) {
-        throw Exception(ExceptionType::OUT_OF_RANGE,
-                        "Numeric value out of range.");
+        throw Exception(ExceptionType::OUT_OF_RANGE, "Numeric value out of range.");
       }
       return Value(type_id, integer);
     }
@@ -258,12 +237,10 @@ Value VarlenType::CastAs(const Value &value, const TypeId type_id) const {
       try {
         bigint = stoll(str);
       } catch (std::out_of_range &e) {
-        throw Exception(ExceptionType::OUT_OF_RANGE,
-                        "Numeric value out of range.");
+        throw Exception(ExceptionType::OUT_OF_RANGE, "Numeric value out of range.");
       }
       if (bigint > BUSTUB_INT64_MAX || bigint < BUSTUB_INT64_MIN) {
-        throw Exception(ExceptionType::OUT_OF_RANGE,
-                        "Numeric value out of range.");
+        throw Exception(ExceptionType::OUT_OF_RANGE, "Numeric value out of range.");
       }
       return Value(type_id, bigint);
     }
@@ -273,12 +250,10 @@ Value VarlenType::CastAs(const Value &value, const TypeId type_id) const {
       try {
         res = stod(str);
       } catch (std::out_of_range &e) {
-        throw Exception(ExceptionType::OUT_OF_RANGE,
-                        "Numeric value out of range.");
+        throw Exception(ExceptionType::OUT_OF_RANGE, "Numeric value out of range.");
       }
       if (res > BUSTUB_DECIMAL_MAX || res < BUSTUB_DECIMAL_MIN) {
-        throw Exception(ExceptionType::OUT_OF_RANGE,
-                        "Numeric value out of range.");
+        throw Exception(ExceptionType::OUT_OF_RANGE, "Numeric value out of range.");
       }
       return Value(type_id, res);
     }

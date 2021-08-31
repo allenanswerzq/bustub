@@ -29,14 +29,7 @@ class TableGenerator {
   /**
    * Enumeration to characterize the distribution of values in a given column
    */
-  enum class Dist : uint8_t {
-    Uniform,
-    Zipf_50,
-    Zipf_75,
-    Zipf_95,
-    Zipf_99,
-    Serial
-  };
+  enum class Dist : uint8_t { Uniform, Zipf_50, Zipf_75, Zipf_95, Zipf_99, Serial };
 
   /**
    * Metadata about the data for a given column. Specifically, the type of the
@@ -75,14 +68,8 @@ class TableGenerator {
     /**
      * Constructor
      */
-    ColumnInsertMeta(const char *name, const TypeId type, bool nullable,
-                     Dist dist, uint64_t min, uint64_t max)
-        : name_(name),
-          type_(type),
-          nullable_(nullable),
-          dist_(dist),
-          min_(min),
-          max_(max) {}
+    ColumnInsertMeta(const char *name, const TypeId type, bool nullable, Dist dist, uint64_t min, uint64_t max)
+        : name_(name), type_(type), nullable_(nullable), dist_(dist), min_(min), max_(max) {}
   };
 
   /**
@@ -106,8 +93,7 @@ class TableGenerator {
     /**
      * Constructor
      */
-    TableInsertMeta(const char *name, uint32_t num_rows,
-                    std::vector<ColumnInsertMeta> col_meta)
+    TableInsertMeta(const char *name, uint32_t num_rows, std::vector<ColumnInsertMeta> col_meta)
         : name_(name), num_rows_(num_rows), col_meta_(std::move(col_meta)) {}
   };
 
@@ -116,8 +102,7 @@ class TableGenerator {
   std::vector<Value> MakeValues(ColumnInsertMeta *col_meta, uint32_t count);
 
   template <typename CppType>
-  std::vector<Value> GenNumericValues(ColumnInsertMeta *col_meta,
-                                      uint32_t count);
+  std::vector<Value> GenNumericValues(ColumnInsertMeta *col_meta, uint32_t count);
 
  private:
   ExecutorContext *exec_ctx_;

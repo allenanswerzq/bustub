@@ -29,8 +29,7 @@ namespace bustub {
 class BufferPoolManager {
  public:
   enum class CallbackType { BEFORE, AFTER };
-  using bufferpool_callback_fn = void (*)(enum CallbackType,
-                                          const page_id_t page_id);
+  using bufferpool_callback_fn = void (*)(enum CallbackType, const page_id_t page_id);
 
   /**
    * Creates a new BufferPoolManager.
@@ -39,8 +38,7 @@ class BufferPoolManager {
    * @param log_manager the log manager (for testing only: nullptr = disable
    * logging)
    */
-  BufferPoolManager(size_t pool_size, DiskManager *disk_manager,
-                    LogManager *log_manager = nullptr);
+  BufferPoolManager(size_t pool_size, DiskManager *disk_manager, LogManager *log_manager = nullptr);
 
   /**
    * Destroys an existing BufferPoolManager.
@@ -48,8 +46,7 @@ class BufferPoolManager {
   ~BufferPoolManager();
 
   /** Grading function. Do not modify! */
-  Page *FetchPage(page_id_t page_id,
-                  bufferpool_callback_fn callback = nullptr) {
+  Page *FetchPage(page_id_t page_id, bufferpool_callback_fn callback = nullptr) {
     GradingCallback(callback, CallbackType::BEFORE, page_id);
     auto *result = FetchPageImpl(page_id);
     GradingCallback(callback, CallbackType::AFTER, page_id);
@@ -57,8 +54,7 @@ class BufferPoolManager {
   }
 
   /** Grading function. Do not modify! */
-  bool UnpinPage(page_id_t page_id, bool is_dirty,
-                 bufferpool_callback_fn callback = nullptr) {
+  bool UnpinPage(page_id_t page_id, bool is_dirty, bufferpool_callback_fn callback = nullptr) {
     GradingCallback(callback, CallbackType::BEFORE, page_id);
     auto result = UnpinPageImpl(page_id, is_dirty);
     GradingCallback(callback, CallbackType::AFTER, page_id);
@@ -82,8 +78,7 @@ class BufferPoolManager {
   }
 
   /** Grading function. Do not modify! */
-  bool DeletePage(page_id_t page_id,
-                  bufferpool_callback_fn callback = nullptr) {
+  bool DeletePage(page_id_t page_id, bufferpool_callback_fn callback = nullptr) {
     GradingCallback(callback, CallbackType::BEFORE, page_id);
     auto result = DeletePageImpl(page_id);
     GradingCallback(callback, CallbackType::AFTER, page_id);
@@ -111,8 +106,7 @@ class BufferPoolManager {
    * @param callback_type BEFORE or AFTER
    * @param page_id the page id to invoke the callback with
    */
-  void GradingCallback(bufferpool_callback_fn callback,
-                       CallbackType callback_type, page_id_t page_id) {
+  void GradingCallback(bufferpool_callback_fn callback, CallbackType callback_type, page_id_t page_id) {
     if (callback != nullptr) {
       callback(callback_type, page_id);
     }

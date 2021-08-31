@@ -36,8 +36,7 @@ class LockManager {
 
   class LockRequest {
    public:
-    LockRequest(txn_id_t txn_id, LockMode lock_mode)
-        : txn_id_(txn_id), lock_mode_(lock_mode), granted_(false) {}
+    LockRequest(txn_id_t txn_id, LockMode lock_mode) : txn_id_(txn_id), lock_mode_(lock_mode), granted_(false) {}
 
     txn_id_t txn_id_;
     LockMode lock_mode_;
@@ -47,8 +46,7 @@ class LockManager {
   class LockRequestQueue {
    public:
     std::list<LockRequest> request_queue_;
-    std::condition_variable
-        cv_;  // for notifying blocked transactions on this rid
+    std::condition_variable cv_;  // for notifying blocked transactions on this rid
     bool upgrading_ = false;
   };
 
@@ -58,8 +56,7 @@ class LockManager {
    */
   LockManager() {
     enable_cycle_detection_ = true;
-    cycle_detection_thread_ =
-        new std::thread(&LockManager::RunCycleDetection, this);
+    cycle_detection_thread_ = new std::thread(&LockManager::RunCycleDetection, this);
     LOG_INFO("Cycle detection thread launched");
   }
 

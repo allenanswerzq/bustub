@@ -17,16 +17,12 @@ namespace bustub {
  * Helper methods to get/set page type
  * Page type enum class is defined in b_plus_tree_page.h
  */
-bool BPlusTreePage::IsLeafPage() const {
-  return page_type_ == IndexPageType::LEAF_PAGE;
-}
+bool BPlusTreePage::IsLeafPage() const { return page_type_ == IndexPageType::LEAF_PAGE; }
 bool BPlusTreePage::IsRootPage() const {
   // Root page should not have a parent
   return parent_page_id_ == INVALID_PAGE_ID;
 }
-void BPlusTreePage::SetPageType(IndexPageType page_type) {
-  page_type_ = page_type;
-}
+void BPlusTreePage::SetPageType(IndexPageType page_type) { page_type_ = page_type; }
 
 /*
  * Helper methods to get/set size (number of key/value pairs stored in that
@@ -58,9 +54,7 @@ int BPlusTreePage::GetMinSize() const {
  * Helper methods to get/set parent page id
  */
 page_id_t BPlusTreePage::GetParentPageId() const { return parent_page_id_; }
-void BPlusTreePage::SetParentPageId(page_id_t parent_page_id) {
-  parent_page_id_ = parent_page_id;
-}
+void BPlusTreePage::SetParentPageId(page_id_t parent_page_id) { parent_page_id_ = parent_page_id; }
 
 /*
  * Helper methods to get/set self page id

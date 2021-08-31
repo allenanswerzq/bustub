@@ -36,9 +36,7 @@ class IndexIterator {
 
   const LeafPage *GetLeafPage() const { return leaf_; }
   int GetPos() const { return pos_; }
-  const BufferPoolManager *GetBufferPoolManager() const {
-    return buffer_pool_manager_;
-  }
+  const BufferPoolManager *GetBufferPoolManager() const { return buffer_pool_manager_; }
 
   // NOTE: returns const
   const MappingType &operator*() const;
@@ -50,8 +48,7 @@ class IndexIterator {
   IndexIterator operator++(int);
 
   bool operator==(const IndexIterator &itr) const {
-    return leaf_ == itr.GetLeafPage() && pos_ == itr.GetPos() &&
-           buffer_pool_manager_ == GetBufferPoolManager();
+    return leaf_ == itr.GetLeafPage() && pos_ == itr.GetPos() && buffer_pool_manager_ == GetBufferPoolManager();
   }
 
   bool operator!=(const IndexIterator &itr) const { return !(*this == itr); }

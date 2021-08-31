@@ -29,8 +29,7 @@ class LockManager;
  */
 class TransactionManager {
  public:
-  explicit TransactionManager(LockManager *lock_manager,
-                              LogManager *log_manager = nullptr)
+  explicit TransactionManager(LockManager *lock_manager, LogManager *log_manager = nullptr)
       : lock_manager_(lock_manager), log_manager_(log_manager) {}
 
   ~TransactionManager() = default;
@@ -42,9 +41,7 @@ class TransactionManager {
    * @param isolation_level an optional isolation level of the transaction.
    * @return an initialized transaction
    */
-  Transaction *Begin(
-      Transaction *txn = nullptr,
-      IsolationLevel isolation_level = IsolationLevel::REPEATABLE_READ);
+  Transaction *Begin(Transaction *txn = nullptr, IsolationLevel isolation_level = IsolationLevel::REPEATABLE_READ);
 
   /**
    * Commits a transaction.
@@ -72,8 +69,7 @@ class TransactionManager {
    * @return the transaction with the given transaction id
    */
   static Transaction *GetTransaction(txn_id_t txn_id) {
-    assert(TransactionManager::txn_map.find(txn_id) !=
-           TransactionManager::txn_map.end());
+    assert(TransactionManager::txn_map.find(txn_id) != TransactionManager::txn_map.end());
     auto *res = TransactionManager::txn_map[txn_id];
     assert(res != nullptr);
     return res;

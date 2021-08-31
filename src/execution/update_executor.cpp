@@ -15,14 +15,11 @@
 
 namespace bustub {
 
-UpdateExecutor::UpdateExecutor(
-    ExecutorContext *exec_ctx, const UpdatePlanNode *plan,
-    std::unique_ptr<AbstractExecutor> &&child_executor)
+UpdateExecutor::UpdateExecutor(ExecutorContext *exec_ctx, const UpdatePlanNode *plan,
+                               std::unique_ptr<AbstractExecutor> &&child_executor)
     : AbstractExecutor(exec_ctx) {}
 
 void UpdateExecutor::Init() {}
 
-bool UpdateExecutor::Next([[maybe_unused]] Tuple *tuple, RID *rid) {
-  return false;
-}
+bool UpdateExecutor::Next([[maybe_unused]] Tuple *tuple, RID *rid) { return false; }
 }  // namespace bustub

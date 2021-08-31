@@ -24,8 +24,7 @@ namespace bustub {
  */
 class CheckpointManager {
  public:
-  CheckpointManager(TransactionManager *transaction_manager,
-                    LogManager *log_manager,
+  CheckpointManager(TransactionManager *transaction_manager, LogManager *log_manager,
                     BufferPoolManager *buffer_pool_manager)
       : transaction_manager_(transaction_manager),
         log_manager_(log_manager),

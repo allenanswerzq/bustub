@@ -65,12 +65,9 @@ class Type {
   virtual CmpBool CompareEquals(const Value &left, const Value &right) const;
   virtual CmpBool CompareNotEquals(const Value &left, const Value &right) const;
   virtual CmpBool CompareLessThan(const Value &left, const Value &right) const;
-  virtual CmpBool CompareLessThanEquals(const Value &left,
-                                        const Value &right) const;
-  virtual CmpBool CompareGreaterThan(const Value &left,
-                                     const Value &right) const;
-  virtual CmpBool CompareGreaterThanEquals(const Value &left,
-                                           const Value &right) const;
+  virtual CmpBool CompareLessThanEquals(const Value &left, const Value &right) const;
+  virtual CmpBool CompareGreaterThan(const Value &left, const Value &right) const;
+  virtual CmpBool CompareGreaterThanEquals(const Value &left, const Value &right) const;
 
   // Other mathematical functions
   virtual Value Add(const Value &left, const Value &right) const;

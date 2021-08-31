@@ -28,8 +28,7 @@ class TypeUtil {
    * Use memcmp to evaluate two strings
    * This does not work with VARBINARY attributes.
    */
-  static inline int CompareStrings(const char *str1, int len1, const char *str2,
-                                   int len2) {
+  static inline int CompareStrings(const char *str1, int len1, const char *str2, int len2) {
     assert(str1 != nullptr);
     assert(len1 >= 0);
     assert(str2 != nullptr);

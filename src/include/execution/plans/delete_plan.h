@@ -40,8 +40,7 @@ class DeletePlanNode : public AbstractPlanNode {
 
   /** @return the child plan providing tuples to be inserted */
   const AbstractPlanNode *GetChildPlan() const {
-    BUSTUB_ASSERT(GetChildren().size() == 1,
-                  "delete should have at most one child plan.");
+    BUSTUB_ASSERT(GetChildren().size() == 1, "delete should have at most one child plan.");
     return GetChildAt(0);
   }
 

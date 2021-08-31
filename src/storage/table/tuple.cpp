@@ -21,8 +21,7 @@
 namespace bustub {
 
 // TODO(Amadou): It does not look like nulls are supported. Add a null bitmap?
-Tuple::Tuple(std::vector<Value> values, const Schema *schema)
-    : allocated_(true) {
+Tuple::Tuple(std::vector<Value> values, const Schema *schema) : allocated_(true) {
   assert(values.size() == schema->GetColumnCount());
 
   // 1. Calculate the size of the tuple.
@@ -54,8 +53,7 @@ Tuple::Tuple(std::vector<Value> values, const Schema *schema)
   }
 }
 
-Tuple::Tuple(const Tuple &other)
-    : allocated_(other.allocated_), rid_(other.rid_), size_(other.size_) {
+Tuple::Tuple(const Tuple &other) : allocated_(other.allocated_), rid_(other.rid_), size_(other.size_) {
   if (allocated_) {
     delete[] data_;
   }
@@ -98,8 +96,7 @@ Value Tuple::GetValue(const Schema *schema, const uint32_t column_idx) const {
   return Value::DeserializeFrom(data_ptr, column_type);
 }
 
-Tuple Tuple::KeyFromTuple(const Schema &schema, const Schema &key_schema,
-                          const std::vector<uint32_t> &key_attrs) {
+Tuple Tuple::KeyFromTuple(const Schema &schema, const Schema &key_schema, const std::vector<uint32_t> &key_attrs) {
   std::vector<Value> values;
   values.reserve(key_attrs.size());
   for (auto idx : key_attrs) {
@@ -108,8 +105,7 @@ Tuple Tuple::KeyFromTuple(const Schema &schema, const Schema &key_schema,
   return Tuple(values, &key_schema);
 }
 
-const char *Tuple::GetDataPtr(const Schema *schema,
-                              const uint32_t column_idx) const {
+const char *Tuple::GetDataPtr(const Schema *schema, const uint32_t column_idx) const {
   assert(schema);
   assert(data_);
   const auto &col = schema->GetColumn(column_idx);

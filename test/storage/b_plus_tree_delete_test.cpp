@@ -22,9 +22,8 @@ TEST(BPlusTreeTests, DeleteTest0) {
 
   int leaf_max_size = RandomInt(3, 10);
   int internal_max_size = RandomInt(3, 10);
-  BPlusTree<int, int, IntegerComparator<false>> tree(
-      "foo_pk", bpm, IntegerComparator<false>{}, leaf_max_size,
-      internal_max_size);
+  BPlusTree<int, int, IntegerComparator<false>> tree("foo_pk", bpm, IntegerComparator<false>{}, leaf_max_size,
+                                                     internal_max_size);
 
   // create transaction
   Transaction *transaction = new Transaction(0);
@@ -103,8 +102,7 @@ TEST(BPlusTreeTests, DeleteTest3) {
   DiskManager *disk_manager = new DiskManager("test.db");
   BufferPoolManager *bpm = new BufferPoolManager(50, disk_manager);
 
-  BPlusTree<int, int, IntegerComparator<true>> tree(
-      "foo_pk", bpm, IntegerComparator<true>{}, 2, 3);
+  BPlusTree<int, int, IntegerComparator<true>> tree("foo_pk", bpm, IntegerComparator<true>{}, 2, 3);
 
   // create transaction
   Transaction *transaction = new Transaction(0);
@@ -147,8 +145,7 @@ TEST(BPlusTreeTests, DeleteTest1) {
   DiskManager *disk_manager = new DiskManager("test.db");
   BufferPoolManager *bpm = new BufferPoolManager(50, disk_manager);
   // create b+ tree
-  BPlusTree<GenericKey<8>, RID, GenericComparator<8>> tree("foo_pk", bpm,
-                                                           comparator);
+  BPlusTree<GenericKey<8>, RID, GenericComparator<8>> tree("foo_pk", bpm, comparator);
   GenericKey<8> index_key;
   RID rid;
   // create transaction
@@ -181,8 +178,7 @@ TEST(BPlusTreeTests, DeleteTest1) {
   int64_t start_key = 1;
   int64_t current_key = start_key;
   index_key.SetFromInteger(start_key);
-  for (auto iterator = tree.Begin(index_key); iterator != tree.end();
-       ++iterator) {
+  for (auto iterator = tree.Begin(index_key); iterator != tree.end(); ++iterator) {
     auto location = (*iterator).second;
     EXPECT_EQ(location.GetPageId(), 0);
     EXPECT_EQ(location.GetSlotNum(), current_key);
@@ -201,8 +197,7 @@ TEST(BPlusTreeTests, DeleteTest1) {
   current_key = start_key;
   int64_t size = 0;
   index_key.SetFromInteger(start_key);
-  for (auto iterator = tree.Begin(index_key); iterator != tree.end();
-       ++iterator) {
+  for (auto iterator = tree.Begin(index_key); iterator != tree.end(); ++iterator) {
     auto location = (*iterator).second;
     EXPECT_EQ(location.GetPageId(), 0);
     EXPECT_EQ(location.GetSlotNum(), current_key);
@@ -229,8 +224,7 @@ TEST(BPlusTreeTests, DeleteTest2) {
   DiskManager *disk_manager = new DiskManager("test.db");
   BufferPoolManager *bpm = new BufferPoolManager(50, disk_manager);
   // create b+ tree
-  BPlusTree<GenericKey<8>, RID, GenericComparator<8>> tree("foo_pk", bpm,
-                                                           comparator);
+  BPlusTree<GenericKey<8>, RID, GenericComparator<8>> tree("foo_pk", bpm, comparator);
   GenericKey<8> index_key;
   RID rid;
   // create transaction
@@ -263,8 +257,7 @@ TEST(BPlusTreeTests, DeleteTest2) {
   int64_t start_key = 1;
   int64_t current_key = start_key;
   index_key.SetFromInteger(start_key);
-  for (auto iterator = tree.Begin(index_key); iterator != tree.end();
-       ++iterator) {
+  for (auto iterator = tree.Begin(index_key); iterator != tree.end(); ++iterator) {
     auto location = (*iterator).second;
     EXPECT_EQ(location.GetPageId(), 0);
     EXPECT_EQ(location.GetSlotNum(), current_key);
@@ -283,8 +276,7 @@ TEST(BPlusTreeTests, DeleteTest2) {
   current_key = start_key;
   int64_t size = 0;
   index_key.SetFromInteger(start_key);
-  for (auto iterator = tree.Begin(index_key); iterator != tree.end();
-       ++iterator) {
+  for (auto iterator = tree.Begin(index_key); iterator != tree.end(); ++iterator) {
     auto location = (*iterator).second;
     EXPECT_EQ(location.GetPageId(), 0);
     EXPECT_EQ(location.GetSlotNum(), current_key);

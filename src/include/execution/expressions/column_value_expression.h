@@ -34,25 +34,18 @@ class ColumnValueExpression : public AbstractExpression {
    * @param ret_type the return type of the expression
    */
   ColumnValueExpression(uint32_t tuple_idx, uint32_t col_idx, TypeId ret_type)
-      : AbstractExpression({}, ret_type),
-        tuple_idx_{tuple_idx},
-        col_idx_{col_idx} {}
+      : AbstractExpression({}, ret_type), tuple_idx_{tuple_idx}, col_idx_{col_idx} {}
 
-  Value Evaluate(const Tuple *tuple, const Schema *schema) const override {
-    return tuple->GetValue(schema, col_idx_);
-  }
+  Value Evaluate(const Tuple *tuple, const Schema *schema) const override { return tuple->GetValue(schema, col_idx_); }
 
-  Value EvaluateJoin(const Tuple *left_tuple, const Schema *left_schema,
-                     const Tuple *right_tuple,
+  Value EvaluateJoin(const Tuple *left_tuple, const Schema *left_schema, const Tuple *right_tuple,
                      const Schema *right_schema) const override {
     return tuple_idx_ == 0 ? left_tuple->GetValue(left_schema, col_idx_)
                            : right_tuple->GetValue(right_schema, col_idx_);
   }
 
-  Value EvaluateAggregate(const std::vector<Value> &group_bys,
-                          const std::vector<Value> &aggregates) const override {
-    BUSTUB_ASSERT(false,
-                  "Aggregation should only refer to group-by and aggregates.");
+  Value EvaluateAggregate(const std::vector<Value> &group_bys, const std::vector<Value> &aggregates) const override {
+    BUSTUB_ASSERT(false, "Aggregation should only refer to group-by and aggregates.");
   }
 
   uint32_t GetTupleIdx() const { return tuple_idx_; }

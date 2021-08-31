@@ -22,8 +22,7 @@ namespace bustub {
 
 std::unordered_map<txn_id_t, Transaction *> TransactionManager::txn_map = {};
 
-Transaction *TransactionManager::Begin(Transaction *txn,
-                                       IsolationLevel isolation_level) {
+Transaction *TransactionManager::Begin(Transaction *txn, IsolationLevel isolation_level) {
   // Acquire the global transaction latch in shared mode.
   global_txn_latch_.RLock();
 
@@ -83,9 +82,8 @@ void TransactionManager::Abort(Transaction *txn) {
     // Metadata identifying the table that should be deleted from.
     TableMetadata *table_info = catalog->GetTable(item.table_oid_);
     IndexInfo *index_info = catalog->GetIndex(item.index_oid_);
-    auto new_key = item.tuple_.KeyFromTuple(
-        table_info->schema_, *(index_info->index_->GetKeySchema()),
-        index_info->index_->GetKeyAttrs());
+    auto new_key = item.tuple_.KeyFromTuple(table_info->schema_, *(index_info->index_->GetKeySchema()),
+                                            index_info->index_->GetKeyAttrs());
     if (item.wtype_ == WType::DELETE) {
       index_info->index_->InsertEntry(new_key, item.rid_, txn);
     } else if (item.wtype_ == WType::INSERT) {
@@ -93,9 +91,8 @@ void TransactionManager::Abort(Transaction *txn) {
     } else if (item.wtype_ == WType::UPDATE) {
       // Delete the new key and insert the old key
       index_info->index_->DeleteEntry(new_key, item.rid_, txn);
-      auto old_key = item.old_tuple_.KeyFromTuple(
-          table_info->schema_, *(index_info->index_->GetKeySchema()),
-          index_info->index_->GetKeyAttrs());
+      auto old_key = item.old_tuple_.KeyFromTuple(table_info->schema_, *(index_info->index_->GetKeySchema()),
+                                                  index_info->index_->GetKeyAttrs());
       index_info->index_->InsertEntry(old_key, item.rid_, txn);
     }
     index_write_set->pop_back();

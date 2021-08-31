@@ -38,8 +38,7 @@ class NestIndexJoinExecutor : public AbstractExecutor {
    * @param plan the nested index join plan node
    * @param outer table child
    */
-  NestIndexJoinExecutor(ExecutorContext *exec_ctx,
-                        const NestedIndexJoinPlanNode *plan,
+  NestIndexJoinExecutor(ExecutorContext *exec_ctx, const NestedIndexJoinPlanNode *plan,
                         std::unique_ptr<AbstractExecutor> &&child_executor);
 
   const Schema *GetOutputSchema() override { return plan_->OutputSchema(); }

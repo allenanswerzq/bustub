@@ -33,11 +33,8 @@ class InsertPlanNode : public AbstractPlanNode {
    * @param raw_values the raw values to be inserted
    * @param table_oid the identifier of the table to be inserted into
    */
-  InsertPlanNode(std::vector<std::vector<Value>> &&raw_values,
-                 table_oid_t table_oid)
-      : AbstractPlanNode(nullptr, {}),
-        raw_values_(std::move(raw_values)),
-        table_oid_(table_oid) {}
+  InsertPlanNode(std::vector<std::vector<Value>> &&raw_values, table_oid_t table_oid)
+      : AbstractPlanNode(nullptr, {}), raw_values_(std::move(raw_values)), table_oid_(table_oid) {}
 
   /**
    * Creates a new insert plan node for inserting values from a child plan.
@@ -58,24 +55,20 @@ class InsertPlanNode : public AbstractPlanNode {
 
   /** @return the raw values to be inserted at the particular index */
   const std::vector<Value> &RawValuesAt(uint32_t idx) const {
-    BUSTUB_ASSERT(IsRawInsert(),
-                  "This is not a raw insert, you should use the child plan.");
+    BUSTUB_ASSERT(IsRawInsert(), "This is not a raw insert, you should use the child plan.");
     return raw_values_[idx];
   }
 
   /** @return the raw values to be inserted */
   const std::vector<std::vector<Value>> &RawValues() const {
-    BUSTUB_ASSERT(IsRawInsert(),
-                  "This is not a raw insert, you should use the child plan.");
+    BUSTUB_ASSERT(IsRawInsert(), "This is not a raw insert, you should use the child plan.");
     return raw_values_;
   }
 
   /** @return the child plan providing tuples to be inserted */
   const AbstractPlanNode *GetChildPlan() const {
-    BUSTUB_ASSERT(!IsRawInsert(),
-                  "This is a raw insert, no child plan should be used.");
-    BUSTUB_ASSERT(GetChildren().size() == 1,
-                  "Insert should have at most one child plan.");
+    BUSTUB_ASSERT(!IsRawInsert(), "This is a raw insert, no child plan should be used.");
+    BUSTUB_ASSERT(GetChildren().size() == 1, "Insert should have at most one child plan.");
     return GetChildAt(0);
   }
 

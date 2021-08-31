@@ -66,8 +66,7 @@ TEST(BptTreeTest, DISABLED_UnitTest) {
   page_id_t page_id;
   auto header_page = bpm->NewPage(&page_id);
   // create b+ tree
-  BPlusTree<GenericKey<8>, RID, GenericComparator<8>> tree(
-      "foo_pk", bpm, comparator, leaf_max_size, internal_max_size);
+  BPlusTree<GenericKey<8>, RID, GenericComparator<8>> tree("foo_pk", bpm, comparator, leaf_max_size, internal_max_size);
   // create transaction
   Transaction *transaction = new Transaction(0);
   while (!quit) {
@@ -85,8 +84,7 @@ TEST(BptTreeTest, DISABLED_UnitTest) {
         break;
       case 'i':
         std::cin >> key;
-        rid.Set(static_cast<int32_t>(key >> 32),
-                static_cast<int>(key & 0xFFFFFFFF));
+        rid.Set(static_cast<int32_t>(key >> 32), static_cast<int>(key & 0xFFFFFFFF));
         index_key.SetFromInteger(key);
         tree.Insert(index_key, rid, transaction);
         break;

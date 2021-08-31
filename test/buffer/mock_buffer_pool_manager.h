@@ -24,11 +24,9 @@ namespace bustub {
 class MockBufferPoolManager : public BufferPoolManager {
  public:
   enum class CallbackType { BEFORE, AFTER };
-  using bufferpool_callback_fn = void (MockBufferPoolManager::*)(
-      enum CallbackType type, FuncType func_type);
+  using bufferpool_callback_fn = void (MockBufferPoolManager::*)(enum CallbackType type, FuncType func_type);
 
-  MockBufferPoolManager(size_t pool_size, DiskManager *disk_manager,
-                        LogManager *log_manager = nullptr)
+  MockBufferPoolManager(size_t pool_size, DiskManager *disk_manager, LogManager *log_manager = nullptr)
       : BufferPoolManager(pool_size, disk_manager, log_manager) {}
 
   void counter_callback(enum CallbackType type, FuncType func_type) {
@@ -59,72 +57,51 @@ class MockBufferPoolManager : public BufferPoolManager {
   }
 
   /** Grading function. Do not modify/call! */
-  Page *FetchPage(page_id_t page_id,
-                  bufferpool_callback_fn callback =
-                      &MockBufferPoolManager::counter_callback) {
-    GradingCallback(callback, CallbackType::BEFORE, FuncType::FetchPage,
-                    page_id);
+  Page *FetchPage(page_id_t page_id, bufferpool_callback_fn callback = &MockBufferPoolManager::counter_callback) {
+    GradingCallback(callback, CallbackType::BEFORE, FuncType::FetchPage, page_id);
     auto *result = FetchPageImpl(page_id);
-    GradingCallback(callback, CallbackType::AFTER, FuncType::FetchPage,
-                    page_id);
+    GradingCallback(callback, CallbackType::AFTER, FuncType::FetchPage, page_id);
     return result;
   }
 
   /** Grading function. Do not modify/call! */
   bool UnpinPage(page_id_t page_id, bool is_dirty,
-                 bufferpool_callback_fn callback =
-                     &MockBufferPoolManager::counter_callback) {
-    GradingCallback(callback, CallbackType::BEFORE, FuncType::UnpinPage,
-                    page_id);
+                 bufferpool_callback_fn callback = &MockBufferPoolManager::counter_callback) {
+    GradingCallback(callback, CallbackType::BEFORE, FuncType::UnpinPage, page_id);
     auto result = UnpinPageImpl(page_id, is_dirty);
-    GradingCallback(callback, CallbackType::AFTER, FuncType::UnpinPage,
-                    page_id);
+    GradingCallback(callback, CallbackType::AFTER, FuncType::UnpinPage, page_id);
     return result;
   }
 
   /** Grading function. Do not modify/call! */
-  bool FlushPage(page_id_t page_id,
-                 bufferpool_callback_fn callback =
-                     &MockBufferPoolManager::counter_callback) {
-    GradingCallback(callback, CallbackType::BEFORE, FuncType::FlushPage,
-                    page_id);
+  bool FlushPage(page_id_t page_id, bufferpool_callback_fn callback = &MockBufferPoolManager::counter_callback) {
+    GradingCallback(callback, CallbackType::BEFORE, FuncType::FlushPage, page_id);
     auto result = FlushPageImpl(page_id);
-    GradingCallback(callback, CallbackType::AFTER, FuncType::FlushPage,
-                    page_id);
+    GradingCallback(callback, CallbackType::AFTER, FuncType::FlushPage, page_id);
     return result;
   }
 
   /** Grading function. Do not modify/call! */
-  Page *NewPage(page_id_t *page_id,
-                bufferpool_callback_fn callback =
-                    &MockBufferPoolManager::counter_callback) {
-    GradingCallback(callback, CallbackType::BEFORE, FuncType::NewPage,
-                    INVALID_PAGE_ID);
+  Page *NewPage(page_id_t *page_id, bufferpool_callback_fn callback = &MockBufferPoolManager::counter_callback) {
+    GradingCallback(callback, CallbackType::BEFORE, FuncType::NewPage, INVALID_PAGE_ID);
     auto *result = NewPageImpl(page_id);
     GradingCallback(callback, CallbackType::AFTER, FuncType::NewPage, *page_id);
     return result;
   }
 
   /** Grading function. Do not modify/call! */
-  bool DeletePage(page_id_t page_id,
-                  bufferpool_callback_fn callback =
-                      &MockBufferPoolManager::counter_callback) {
-    GradingCallback(callback, CallbackType::BEFORE, FuncType::DeletePage,
-                    page_id);
+  bool DeletePage(page_id_t page_id, bufferpool_callback_fn callback = &MockBufferPoolManager::counter_callback) {
+    GradingCallback(callback, CallbackType::BEFORE, FuncType::DeletePage, page_id);
     auto result = DeletePageImpl(page_id);
-    GradingCallback(callback, CallbackType::AFTER, FuncType::DeletePage,
-                    page_id);
+    GradingCallback(callback, CallbackType::AFTER, FuncType::DeletePage, page_id);
     return result;
   }
 
   /** Grading function. Do not modify/call! */
-  void FlushAllPages(bufferpool_callback_fn callback =
-                         &MockBufferPoolManager::counter_callback) {
-    GradingCallback(callback, CallbackType::BEFORE, FuncType::FlushAllPages,
-                    INVALID_PAGE_ID);
+  void FlushAllPages(bufferpool_callback_fn callback = &MockBufferPoolManager::counter_callback) {
+    GradingCallback(callback, CallbackType::BEFORE, FuncType::FlushAllPages, INVALID_PAGE_ID);
     FlushAllPagesImpl();
-    GradingCallback(callback, CallbackType::AFTER, FuncType::FlushAllPages,
-                    INVALID_PAGE_ID);
+    GradingCallback(callback, CallbackType::AFTER, FuncType::FlushAllPages, INVALID_PAGE_ID);
   }
 
  private:
@@ -135,8 +112,7 @@ class MockBufferPoolManager : public BufferPoolManager {
    * @param callback_type BEFORE or AFTER
    * @param page_id the page id to invoke the callback with
    */
-  void GradingCallback(bufferpool_callback_fn callback,
-                       CallbackType callback_type, FuncType func_type,
+  void GradingCallback(bufferpool_callback_fn callback, CallbackType callback_type, FuncType func_type,
                        page_id_t page_id) {
     if (callback != nullptr) {
       (this->*callback)(callback_type, func_type);

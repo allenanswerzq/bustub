@@ -68,8 +68,7 @@ class HashTableBlockPage {
    * index is marked as occupied before the key and value can be inserted,
    * Insert returns false.
    */
-  bool Insert(slot_offset_t bucket_ind, const KeyType &key,
-              const ValueType &value);
+  bool Insert(slot_offset_t bucket_ind, const KeyType &key, const ValueType &value);
 
   /**
    * Removes a key and value at index.

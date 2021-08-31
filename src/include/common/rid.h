@@ -31,16 +31,11 @@ class RID {
    * @param page_id page identifier
    * @param slot_num slot number
    */
-  RID(page_id_t page_id, uint32_t slot_num)
-      : page_id_(page_id), slot_num_(slot_num) {}
+  RID(page_id_t page_id, uint32_t slot_num) : page_id_(page_id), slot_num_(slot_num) {}
 
-  explicit RID(int64_t rid)
-      : page_id_(static_cast<page_id_t>(rid >> 32)),
-        slot_num_(static_cast<uint32_t>(rid)) {}
+  explicit RID(int64_t rid) : page_id_(static_cast<page_id_t>(rid >> 32)), slot_num_(static_cast<uint32_t>(rid)) {}
 
-  inline int64_t Get() const {
-    return (static_cast<int64_t>(page_id_)) << 32 | slot_num_;
-  }
+  inline int64_t Get() const { return (static_cast<int64_t>(page_id_)) << 32 | slot_num_; }
 
   inline page_id_t GetPageId() const { return page_id_; }
 
@@ -64,9 +59,7 @@ class RID {
     return os;
   }
 
-  bool operator==(const RID &other) const {
-    return page_id_ == other.page_id_ && slot_num_ == other.slot_num_;
-  }
+  bool operator==(const RID &other) const { return page_id_ == other.page_id_ && slot_num_ == other.slot_num_; }
 
  private:
   page_id_t page_id_{INVALID_PAGE_ID};
@@ -78,8 +71,6 @@ class RID {
 namespace std {
 template <>
 struct hash<bustub::RID> {
-  size_t operator()(const bustub::RID &obj) const {
-    return hash<int64_t>()(obj.Get());
-  }
+  size_t operator()(const bustub::RID &obj) const { return hash<int64_t>()(obj.Get()); }
 };
 }  // namespace std

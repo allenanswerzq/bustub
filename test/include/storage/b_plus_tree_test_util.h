@@ -80,8 +80,7 @@ Schema *ParseCreateStatement(const std::string &sql_base) {
         v.emplace_back(col);
       }
     } else {
-      throw Exception(ExceptionType::UNKNOWN_TYPE,
-                      "unknown type for create table");
+      throw Exception(ExceptionType::UNKNOWN_TYPE, "unknown type for create table");
     }
   }
   Schema *schema = new Schema(v);

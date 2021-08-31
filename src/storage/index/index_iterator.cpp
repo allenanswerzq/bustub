@@ -40,8 +40,7 @@ const INDEXITERATOR_TYPE &INDEXITERATOR_TYPE::operator++() {
       buffer_pool_manager_ = nullptr;
       pos_ = 0;
     } else {
-      leaf_ = reinterpret_cast<LeafPage *>(
-          buffer_pool_manager_->FetchPage(next_page)->GetData());
+      leaf_ = reinterpret_cast<LeafPage *>(buffer_pool_manager_->FetchPage(next_page)->GetData());
       pos_ = 0;
     }
   }
