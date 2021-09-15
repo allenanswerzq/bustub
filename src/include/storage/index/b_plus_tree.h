@@ -111,6 +111,10 @@ class BPlusTree {
 
   void ToString(BPlusTreePage *page, BufferPoolManager *bpm) const;
 
+  void ReleaseAllLatch(Transaction * transaction, bool is_write);
+  BPlusTreePage* AcquireReadLatch(const KeyType &key, const ValueType &value, Transaction *transaction);
+  BPlusTreePage* AcquireWriteLatch(const KeyType &key, const ValueType &value, Transaction *transaction);
+
   // member variable
   std::string index_name_;
   std::atomic<page_id_t> root_page_id_;

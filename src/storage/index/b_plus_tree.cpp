@@ -55,7 +55,7 @@ bool BPLUSTREE_TYPE::GetValue(const KeyType &key, std::vector<ValueType> *result
     curr_page = buffer_pool_manager_->FetchPage(child);
     curr_page->RLatch();
     curr = reinterpret_cast<BPlusTreePage *>(curr_page->GetData());
-    // NOTE: Relase parent read latch once we got the read latch.
+    // NOTE: Release parent read latch once we got the child latch.
     parent_page->RUnlatch();
     buffer_pool_manager_->UnpinPage(parent_page->GetPageId(), false);
     parent_page = curr_page;
@@ -87,6 +87,7 @@ INDEX_TEMPLATE_ARGUMENTS
 bool BPLUSTREE_TYPE::Insert(const KeyType &key, const ValueType &value, Transaction *transaction) {
   if (IsEmpty()) {
     // TODO: any better way to avoid this mutex?
+    // NOTE: only one thread can start a new tree, others have to wait.
     std::lock_guard<std::mutex> guard(mutex_);
     if (!IsEmpty()) {
       // If other threads already started a new tree.
@@ -109,7 +110,6 @@ INDEX_TEMPLATE_ARGUMENTS
 void BPLUSTREE_TYPE::StartNewTree(const KeyType &key, const ValueType &value) {
   page_id_t page_id;
   Page *page = buffer_pool_manager_->NewPage(&page_id);
-  page->WLatch();
   CHECK(page_id > 0) << "Expected page id > 0";
   CHECK(page->GetPageId() == page_id);
   LOG(DEBUG) << "Starting a new tree on #page: " << page_id;
@@ -125,7 +125,74 @@ void BPLUSTREE_TYPE::StartNewTree(const KeyType &key, const ValueType &value) {
   root_page_id_ = page_id;
   UpdateRootPageId(page_id);
   LOG(DEBUG) << "root_page_id changed to: " << root_page_id_;
-  page->WUnlatch();
+}
+
+INDEX_TEMPLATE_ARGUMENTS
+void BPLUSTREE_TYPE::ReleaseAllLatch(Transaction * transaction, bool is_write) {
+  // Release all latches in reverse order
+  auto page_set = transaction->GetPageSet();
+  while (!page_set->empty()) {
+    Page * page = page_set->back();
+    page_set->pop_back();
+    // TODO: not all pages are dirty actually..
+    buffer_pool_manager_->UnpinPage(page->GetPageId(), /*is_dirty*/true);
+    if (is_write) {
+      page->WUnlatch();
+    } else {
+      page->RUnlatch();
+    }
+  }
+}
+
+INDEX_TEMPLATE_ARGUMENTS
+BPlusTreePage* BPLUSTREE_TYPE::AcquireReadLatch(const KeyType &key, const ValueType &value, Transaction *transaction) {
+  CHECK(root_page_id_ != INVALID_PAGE_ID) << "Expected root_page_id exists.";
+  Page * curr_page = buffer_pool_manager_->FetchPage(root_page_id_);
+  BPlusTreePage* curr = reinterpret_cast<BPlusTreePage *>(curr_page->GetData());
+  Page * parent_page = nullptr;
+  while (1) {
+    if (curr->IsLeafPage()) {
+      curr_page->WLatch();
+    } else {
+      curr_page->RLatch();
+    }
+    if (!parent_page) {
+      parent_page->RUnlatch();
+      transaction->RemoveLastFromPageSet();
+    }
+    transaction->AddIntoPageSet(curr_page);
+    if (curr->IsLeafPage()) {
+      break;
+    }
+    InternalPage *inner = reinterpret_cast<InternalPage *>(curr);
+    page_id_t child = inner->Lookup(key, comparator_);
+    curr_page = buffer_pool_manager_->FetchPage(child);
+    curr = reinterpret_cast<BPlusTreePage *>(curr_page->GetData());
+    CHECK(curr) << "Expected curr not a nullptr";
+    parent_page = curr_page;
+  }
+  return curr;
+}
+
+
+INDEX_TEMPLATE_ARGUMENTS
+BPlusTreePage* BPLUSTREE_TYPE::AcquireWriteLatch(const KeyType &key, const ValueType &value, Transaction *transaction) {
+  CHECK(root_page_id_ != INVALID_PAGE_ID) << "Expected root_page_id exists.";
+  Page * curr_page = buffer_pool_manager_->FetchPage(root_page_id_);
+  BPlusTreePage* curr = reinterpret_cast<BPlusTreePage *>(curr_page->GetData());
+  while (1) {
+    curr_page->WLatch();
+    transaction->AddIntoPageSet(curr_page);
+    if (curr->IsLeafPage()) {
+      break;
+    }
+    InternalPage *inner = reinterpret_cast<InternalPage *>(curr);
+    page_id_t child = inner->Lookup(key, comparator_);
+    curr_page = buffer_pool_manager_->FetchPage(child);
+    curr = reinterpret_cast<BPlusTreePage *>(curr_page->GetData());
+    CHECK(curr) << "Expected curr not a nullptr";
+  }
+  return curr;
 }
 
 /*
@@ -140,56 +207,37 @@ INDEX_TEMPLATE_ARGUMENTS
 bool BPLUSTREE_TYPE::InsertIntoLeaf(const KeyType &key, const ValueType &value, Transaction *transaction) {
   CHECK(root_page_id_ != INVALID_PAGE_ID) << "Expected root_page_id exists.";
 
-  LOG(DEBUG) << "Inserting into leaf...: " << key << " to " << root_page_id_;
-  Page * curr_page = buffer_pool_manager_->FetchPage(root_page_id_);
-  BPlusTreePage *curr = reinterpret_cast<BPlusTreePage *>(curr_page->GetData());
-  curr_page->WLatch();
-  transaction->AddIntoPageSet(curr_page);
-
-  while (!curr->IsLeafPage()) {
-    InternalPage *inner = reinterpret_cast<InternalPage *>(curr);
-    page_id_t child = inner->Lookup(key, comparator_);
-    LOG(DEBUG) << "Travsing from " << curr->GetPageId() << " to " << child;
-    curr_page = buffer_pool_manager_->FetchPage(child);
-    curr_page->WLatch();
-    curr = reinterpret_cast<BPlusTreePage *>(curr_page->GetData());
-    transaction->AddIntoPageSet(curr_page);
-    CHECK(curr) << "Expected child page exists.";
-  }
-
-  // Now this is a leaf page.
-  CHECK(curr) << "Expected to find a leaf page to insert.";
+  BPlusTreePage * curr = AcquireReadLatch(key, value, transaction);
   LeafPage *leaf = reinterpret_cast<LeafPage *>(curr);
-  LOG(DEBUG) << "Now we are at leaf page: " << curr->GetPageId();
   CHECK(leaf->IsLeafPage()) << "Expected current page to ba a leaf.";
+
   if (leaf->Lookup(key, nullptr, comparator_)) {
     // Trying to insert a duplicate key
     LOG(DEBUG) << "Find a existing key, returns.";
+    ReleaseAllLatch(transaction, /*is_write*/false);
+    return false;
   } else {
     leaf->Insert(key, value, comparator_);
     LOG(DEBUG) << "After insertion has size " << leaf->GetSize() << ", max_size: " << leaf->GetMaxSize();
-
     if (leaf->GetSize() > leaf->GetMaxSize()) {
-      // Overflow occured
+      // NOTE: Overflow occured, release all read latches, and acquire wirte latch from root
+      ReleaseAllLatch(transaction, /*is_write*/false);
+      curr = AcquireWriteLatch(key, value, transaction);
+      leaf = reinterpret_cast<LeafPage *>(curr);
+
       LeafPage *new_leaf = Split(leaf);
       new_leaf->SetPageType(IndexPageType::LEAF_PAGE);
       new_leaf->SetMaxSize(leaf_max_size_);
       LOG(DEBUG) << "Overflow: starting to split #page " << leaf->GetPageId() << " to #new page " << new_leaf->GetPageId()
                 << " insert " << new_leaf->KeyAt(0);
       InsertIntoParent(leaf, new_leaf->KeyAt(0), new_leaf);
-    }
-  }
 
-  // Relase all locks
-  auto page_set = transaction->GetPageSet();
-  while (!page_set->empty()) {
-    Page * page = page_set->back();
-    page_set->pop_back();
-    // TODO: not all pages are dirtry actually..
-    buffer_pool_manager_->UnpinPage(page->GetPageId(), /*is_diry*/true);
-    page->WUnlatch();
+      ReleaseAllLatch(transaction, /*is_write*/true);
+    } else {
+      ReleaseAllLatch(transaction, /*is_write*/false);
+    }
+    return true;
   }
-  return false;
 }
 
 /*
@@ -440,7 +488,9 @@ bool BPLUSTREE_TYPE::CoalesceOrRedistribute(N *node, Transaction *transaction) {
  */
 INDEX_TEMPLATE_ARGUMENTS
 template <typename N>
-bool BPLUSTREE_TYPE::Coalesce(N *neighbor_node, N *node, InternalPage *parent, int index, Transaction *transaction) {}
+bool BPLUSTREE_TYPE::Coalesce(N *neighbor_node, N *node, InternalPage *parent, int index, Transaction *transaction) {
+  return false;
+}
 
 /*
  * Redistribute key & value pairs from one page to its sibling page. If index ==
