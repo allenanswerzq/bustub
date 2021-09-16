@@ -214,6 +214,7 @@ class Transaction {
    * @param page page to be added
    */
   inline void AddIntoPageSet(Page *page) { page_set_->push_back(page); }
+
   inline void RemoveLastFromPageSet() { page_set_->pop_back(); }
 
   /** @return the deleted page set */

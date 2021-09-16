@@ -31,7 +31,10 @@ BPLUSTREE_TYPE::BPlusTree(std::string name, BufferPoolManager *buffer_pool_manag
  * Helper function to decide whether current b+tree is empty
  */
 INDEX_TEMPLATE_ARGUMENTS
-bool BPLUSTREE_TYPE::IsEmpty() const { return root_page_id_ == INVALID_PAGE_ID; }
+bool BPLUSTREE_TYPE::IsEmpty() const {
+  std::lock_guard<std::mutex> guard(mutex_);
+  return root_page_id_ == INVALID_PAGE_ID;
+}
 /*****************************************************************************
  * SEARCH
  *****************************************************************************/
@@ -42,34 +45,15 @@ bool BPLUSTREE_TYPE::IsEmpty() const { return root_page_id_ == INVALID_PAGE_ID; 
  */
 INDEX_TEMPLATE_ARGUMENTS
 bool BPLUSTREE_TYPE::GetValue(const KeyType &key, std::vector<ValueType> *result, Transaction *transaction) {
-  Page* curr_page = buffer_pool_manager_->FetchPage(root_page_id_);
-  curr_page->RLatch();
-
-  BPlusTreePage *curr = reinterpret_cast<BPlusTreePage *>(curr_page->GetData());
-  LOG(DEBUG) << "GetValue for key: " << key;
-  Page * parent_page = curr_page;
-  while (!curr->IsLeafPage()) {
-    InternalPage *inner = reinterpret_cast<InternalPage *>(curr);
-    page_id_t child = inner->Lookup(key, comparator_);
-    LOG(DEBUG) << "Move to child: " << child;
-    curr_page = buffer_pool_manager_->FetchPage(child);
-    curr_page->RLatch();
-    curr = reinterpret_cast<BPlusTreePage *>(curr_page->GetData());
-    // NOTE: Release parent read latch once we got the child latch.
-    parent_page->RUnlatch();
-    buffer_pool_manager_->UnpinPage(parent_page->GetPageId(), false);
-    parent_page = curr_page;
-  }
-
+  BPlusTreePage *curr = AcquireReadLatch(key, transaction);
   LeafPage *leaf = reinterpret_cast<LeafPage *>(curr);
   ValueType val;
   bool ans = leaf->Lookup(key, &val, comparator_);
-  buffer_pool_manager_->UnpinPage(leaf->GetPageId(), false);
   LOG(DEBUG) << "Lookup leaf node: " << curr->GetPageId() << " result: " << ans;
   if (result) {
     result->push_back(val);
   }
-  curr_page->RUnlatch();
+  ReleaseAllLatch(transaction, /*is_write*/ false);
   return ans;
 }
 
@@ -86,17 +70,14 @@ bool BPLUSTREE_TYPE::GetValue(const KeyType &key, std::vector<ValueType> *result
 INDEX_TEMPLATE_ARGUMENTS
 bool BPLUSTREE_TYPE::Insert(const KeyType &key, const ValueType &value, Transaction *transaction) {
   if (IsEmpty()) {
-    // TODO: any better way to avoid this mutex?
-    // NOTE: only one thread can start a new tree, others have to wait.
-    std::lock_guard<std::mutex> guard(mutex_);
-    if (!IsEmpty()) {
-      // If other threads already started a new tree.
+    if (!StartNewTree(key, value)) {
       return InsertIntoLeaf(key, value, transaction);
-    } else {
-      StartNewTree(key, value);
+    }
+    else {
       return true;
     }
-  } else {
+  }
+  else {
     return InsertIntoLeaf(key, value, transaction);
   }
 }
@@ -107,7 +88,12 @@ bool BPLUSTREE_TYPE::Insert(const KeyType &key, const ValueType &value, Transact
  * tree's root page id and insert entry directly into leaf page.
  */
 INDEX_TEMPLATE_ARGUMENTS
-void BPLUSTREE_TYPE::StartNewTree(const KeyType &key, const ValueType &value) {
+bool BPLUSTREE_TYPE::StartNewTree(const KeyType &key, const ValueType &value) {
+  std::lock_guard<std::mutex> guard(mutex_);
+  if (root_page_id_ != INVALID_PAGE_ID) {
+    // Another thread already started a new tree.
+    return false;
+  }
   page_id_t page_id;
   Page *page = buffer_pool_manager_->NewPage(&page_id);
   CHECK(page_id > 0) << "Expected page id > 0";
@@ -124,63 +110,82 @@ void BPLUSTREE_TYPE::StartNewTree(const KeyType &key, const ValueType &value) {
   CHECK(root->Insert(key, value, comparator_) == 1);
   root_page_id_ = page_id;
   UpdateRootPageId(page_id);
+  buffer_pool_manager_->UnpinPage(page_id, true);
   LOG(DEBUG) << "root_page_id changed to: " << root_page_id_;
+  return true;
 }
 
 INDEX_TEMPLATE_ARGUMENTS
-void BPLUSTREE_TYPE::ReleaseAllLatch(Transaction * transaction, bool is_write) {
+void BPLUSTREE_TYPE::ReleaseAllLatch(Transaction *transaction, bool is_write) {
   // Release all latches in reverse order
   auto page_set = transaction->GetPageSet();
   while (!page_set->empty()) {
-    Page * page = page_set->back();
+    Page *page = page_set->back();
     page_set->pop_back();
-    // TODO: not all pages are dirty actually..
-    buffer_pool_manager_->UnpinPage(page->GetPageId(), /*is_dirty*/true);
-    if (is_write) {
+    BPlusTreePage *curr = reinterpret_cast<BPlusTreePage *>(page->GetData());
+    if (curr->IsLeafPage() || is_write) {
+      LOG(DEBUG) << "Releasing write latch " << page->GetPageId();
       page->WUnlatch();
-    } else {
-      page->RUnlatch();
+      LOG(DEBUG) << "Released write latch " << page->GetPageId();
     }
+    else {
+      LOG(DEBUG) << "Releasing read latch " << page->GetPageId();
+      page->RUnlatch();
+      LOG(DEBUG) << "Released read latch " << page->GetPageId();
+    }
+    buffer_pool_manager_->UnpinPage(page->GetPageId(), /*is_dirty*/curr->IsLeafPage());
   }
+  auto delete_page_set = transaction->GetDeletedPageSet();
+  for (page_id_t page : *delete_page_set) {
+    buffer_pool_manager_->DeletePage(page);
+  }
+  transaction->GetDeletedPageSet()->clear();
 }
 
 INDEX_TEMPLATE_ARGUMENTS
-BPlusTreePage* BPLUSTREE_TYPE::AcquireReadLatch(const KeyType &key, const ValueType &value, Transaction *transaction) {
+BPlusTreePage *BPLUSTREE_TYPE::AcquireReadLatch(const KeyType &key, Transaction *transaction) {
+  LOG(DEBUG) << "Acquire read latch from root for: " << key;
   CHECK(root_page_id_ != INVALID_PAGE_ID) << "Expected root_page_id exists.";
-  Page * curr_page = buffer_pool_manager_->FetchPage(root_page_id_);
-  BPlusTreePage* curr = reinterpret_cast<BPlusTreePage *>(curr_page->GetData());
-  Page * parent_page = nullptr;
+  Page *curr_page = buffer_pool_manager_->FetchPage(root_page_id_);
+  BPlusTreePage *curr = reinterpret_cast<BPlusTreePage *>(curr_page->GetData());
+  Page *parent_page = nullptr;
   while (1) {
     if (curr->IsLeafPage()) {
+      LOG(DEBUG) << "Acquire write latch for page: " << curr->GetPageId();
       curr_page->WLatch();
-    } else {
+    }
+    else {
+      LOG(DEBUG) << "Acquire read latch for page: " << curr->GetPageId();
       curr_page->RLatch();
     }
-    if (!parent_page) {
+    if (parent_page) {
+      LOG(DEBUG) << "Releasing read latch " << parent_page->GetPageId();
       parent_page->RUnlatch();
+      LOG(DEBUG) << "Released read latch " << parent_page->GetPageId();
       transaction->RemoveLastFromPageSet();
     }
     transaction->AddIntoPageSet(curr_page);
     if (curr->IsLeafPage()) {
       break;
     }
+    parent_page = curr_page;
     InternalPage *inner = reinterpret_cast<InternalPage *>(curr);
     page_id_t child = inner->Lookup(key, comparator_);
     curr_page = buffer_pool_manager_->FetchPage(child);
     curr = reinterpret_cast<BPlusTreePage *>(curr_page->GetData());
     CHECK(curr) << "Expected curr not a nullptr";
-    parent_page = curr_page;
   }
   return curr;
 }
 
-
 INDEX_TEMPLATE_ARGUMENTS
-BPlusTreePage* BPLUSTREE_TYPE::AcquireWriteLatch(const KeyType &key, const ValueType &value, Transaction *transaction) {
+BPlusTreePage *BPLUSTREE_TYPE::AcquireWriteLatch(const KeyType &key, Transaction *transaction) {
   CHECK(root_page_id_ != INVALID_PAGE_ID) << "Expected root_page_id exists.";
-  Page * curr_page = buffer_pool_manager_->FetchPage(root_page_id_);
-  BPlusTreePage* curr = reinterpret_cast<BPlusTreePage *>(curr_page->GetData());
+  LOG(DEBUG) << "Acquire write latch from root for key: " << key;
+  Page *curr_page = buffer_pool_manager_->FetchPage(root_page_id_);
+  BPlusTreePage *curr = reinterpret_cast<BPlusTreePage *>(curr_page->GetData());
   while (1) {
+    LOG(DEBUG) << "Acquire write latch for page: " << curr->GetPageId();
     curr_page->WLatch();
     transaction->AddIntoPageSet(curr_page);
     if (curr->IsLeafPage()) {
@@ -205,36 +210,46 @@ BPlusTreePage* BPLUSTREE_TYPE::AcquireWriteLatch(const KeyType &key, const Value
  */
 INDEX_TEMPLATE_ARGUMENTS
 bool BPLUSTREE_TYPE::InsertIntoLeaf(const KeyType &key, const ValueType &value, Transaction *transaction) {
-  CHECK(root_page_id_ != INVALID_PAGE_ID) << "Expected root_page_id exists.";
-
-  BPlusTreePage * curr = AcquireReadLatch(key, value, transaction);
+  LOG(DEBUG) << "Insert key: " << key << " into " << root_page_id_;
+  BPlusTreePage *curr = AcquireReadLatch(key, transaction);
   LeafPage *leaf = reinterpret_cast<LeafPage *>(curr);
   CHECK(leaf->IsLeafPage()) << "Expected current page to ba a leaf.";
+  LOG(DEBUG) << "Standing at leaf node " << leaf->GetPageId();
 
   if (leaf->Lookup(key, nullptr, comparator_)) {
     // Trying to insert a duplicate key
     LOG(DEBUG) << "Find a existing key, returns.";
-    ReleaseAllLatch(transaction, /*is_write*/false);
+    ReleaseAllLatch(transaction, /*is_write*/ false);
     return false;
-  } else {
-    leaf->Insert(key, value, comparator_);
-    LOG(DEBUG) << "After insertion has size " << leaf->GetSize() << ", max_size: " << leaf->GetMaxSize();
-    if (leaf->GetSize() > leaf->GetMaxSize()) {
+  }
+  else {
+    if (leaf->GetSize() + 1 > leaf->GetMaxSize()) {
       // NOTE: Overflow occured, release all read latches, and acquire wirte latch from root
-      ReleaseAllLatch(transaction, /*is_write*/false);
-      curr = AcquireWriteLatch(key, value, transaction);
+      LOG(DEBUG) << "Overflow: release all read lateches...";
+      ReleaseAllLatch(transaction, /*is_write*/ false);
+
+      LOG(DEBUG) << "Overflow: acquire write lateches...";
+      curr = AcquireWriteLatch(key, transaction);
       leaf = reinterpret_cast<LeafPage *>(curr);
-
-      LeafPage *new_leaf = Split(leaf);
-      new_leaf->SetPageType(IndexPageType::LEAF_PAGE);
-      new_leaf->SetMaxSize(leaf_max_size_);
-      LOG(DEBUG) << "Overflow: starting to split #page " << leaf->GetPageId() << " to #new page " << new_leaf->GetPageId()
-                << " insert " << new_leaf->KeyAt(0);
-      InsertIntoParent(leaf, new_leaf->KeyAt(0), new_leaf);
-
-      ReleaseAllLatch(transaction, /*is_write*/true);
-    } else {
-      ReleaseAllLatch(transaction, /*is_write*/false);
+      if (leaf->GetSize() + 1 > leaf->GetMaxSize()) {
+        leaf->Insert(key, value, comparator_);
+        LeafPage *new_leaf = Split(leaf);
+        new_leaf->SetPageType(IndexPageType::LEAF_PAGE);
+        new_leaf->SetMaxSize(leaf_max_size_);
+        LOG(DEBUG) << "Overflow: starting to split #page " << leaf->GetPageId() << " to #new page "
+                  << new_leaf->GetPageId() << " insert " << new_leaf->KeyAt(0);
+        InsertIntoParent(leaf, new_leaf->KeyAt(0), new_leaf, transaction);
+        ReleaseAllLatch(transaction, /*is_write*/ true);
+      }
+      else {
+        // Another thread modified this node while we trying to get write latches.
+        leaf->Insert(key, value, comparator_);
+        ReleaseAllLatch(transaction, /*is_write*/ true);
+      }
+    }
+    else {
+      leaf->Insert(key, value, comparator_);
+      ReleaseAllLatch(transaction, /*is_write*/ false);
     }
     return true;
   }
@@ -279,6 +294,8 @@ void BPLUSTREE_TYPE::InsertIntoParent(BPlusTreePage *old_node, const KeyType &ke
     page_id_t page_id;
     Page *page = buffer_pool_manager_->NewPage(&page_id);
     LOG(DEBUG) << "Overflow all the way up to root #page " << page_id;
+
+    std::lock_guard<std::mutex> guard(mutex_);
     root_page_id_ = page_id;
     UpdateRootPageId(root_page_id_);
     InternalPage *root = reinterpret_cast<InternalPage *>(page->GetData());
@@ -289,19 +306,22 @@ void BPLUSTREE_TYPE::InsertIntoParent(BPlusTreePage *old_node, const KeyType &ke
     root->SetParentPageId(INVALID_PAGE_ID);
     old_node->SetParentPageId(root_page_id_);
     new_node->SetParentPageId(root_page_id_);
-    root->DebugOutput();
-  } else {
+    transaction->AddIntoPageSet(page);
+    // root->DebugOutput();
+  }
+  else {
     LOG(DEBUG) << "Old node is not root: " << old_node->GetPageId();
     page_id_t parent_id = old_node->GetParentPageId();
-    InternalPage *parent_node = reinterpret_cast<InternalPage *>(buffer_pool_manager_->FetchPage(parent_id)->GetData());
+    Page *page = buffer_pool_manager_->FetchPage(parent_id);
+    InternalPage *parent_node = reinterpret_cast<InternalPage *>(page->GetData());
     parent_node->Insert(key, new_node->GetPageId(), comparator_);
     LOG(DEBUG) << "Insert into #parent page " << parent_id;
     if (parent_node->GetSize() > parent_node->GetMaxSize()) {
       InternalPage *split_node = Split(parent_node);
       for (int i = 0; i < split_node->GetSize(); i++) {
         // Update the parent for the splited node.
-        BPlusTreePage *child =
-            reinterpret_cast<BPlusTreePage *>(buffer_pool_manager_->FetchPage(split_node->ValueAt(i))->GetData());
+        Page *child_page = buffer_pool_manager_->FetchPage(split_node->ValueAt(i));
+        BPlusTreePage *child = reinterpret_cast<BPlusTreePage *>(child_page->GetData());
         child->SetParentPageId(split_node->GetPageId());
         buffer_pool_manager_->UnpinPage(child->GetPageId(), true);
       }
@@ -309,7 +329,7 @@ void BPLUSTREE_TYPE::InsertIntoParent(BPlusTreePage *old_node, const KeyType &ke
       split_node->SetMaxSize(internal_max_size_);
       LOG(DEBUG) << "Starting to split parent " << parent_node->GetPageId() << " to new "
                  << split_node->GetParentPageId() << " with key: " << split_node->KeyAt(0);
-      InsertIntoParent(parent_node, split_node->KeyAt(0), split_node);
+      InsertIntoParent(parent_node, split_node->KeyAt(0), split_node, transaction);
       buffer_pool_manager_->UnpinPage(parent_node->GetPageId(), true);
     }
   }
@@ -327,43 +347,66 @@ void BPLUSTREE_TYPE::InsertIntoParent(BPlusTreePage *old_node, const KeyType &ke
  */
 INDEX_TEMPLATE_ARGUMENTS
 void BPLUSTREE_TYPE::Remove(const KeyType &key, Transaction *transaction) {
-  if (root_page_id_ == INVALID_PAGE_ID) {
-    return;
+  {
+    std::lock_guard<std::mutex> guard(mutex_);
+    if (root_page_id_ == INVALID_PAGE_ID) {
+      return;
+    }
   }
 
   LOG(DEBUG) << "Removing key from b+ tree: " << key;
-  BPlusTreePage *curr = reinterpret_cast<BPlusTreePage *>(buffer_pool_manager_->FetchPage(root_page_id_)->GetData());
+  BPlusTreePage *curr = AcquireReadLatch(key, transaction);
+  LeafPage *leaf = reinterpret_cast<LeafPage *>(curr);
+  LOG(DEBUG) << "Standing at leaf node: " << leaf->GetPageId();
 
-  while (!curr->IsLeafPage()) {
-    InternalPage *inner = reinterpret_cast<InternalPage *>(curr);
-    page_id_t child = inner->Lookup(key, comparator_);
-    LOG(DEBUG) << "Travsing from " << curr->GetPageId() << " to " << child;
-    buffer_pool_manager_->UnpinPage(inner->GetPageId(), false);
-    curr = reinterpret_cast<BPlusTreePage *>(buffer_pool_manager_->FetchPage(child)->GetData());
-    CHECK(curr) << "Expected child page exists.";
+  if (!leaf->Lookup(key, /*value*/ nullptr, comparator_)) {
+    ReleaseAllLatch(transaction, /*is_write*/ false);
+    return;
   }
 
-  LeafPage *leaf = reinterpret_cast<LeafPage *>(curr);
-  LOG(DEBUG) << "Now we are at leaf node: " << leaf->GetPageId();
-  if (leaf->Lookup(key, /*value*/ nullptr, comparator_)) {
-    // Remove key from leaf first
+  CHECK(leaf->GetSize() >= 1) << "Expected leaf node size greater than 1";
+
+  if (leaf->IsRootPage()) {
     leaf->RemoveAndDeleteRecord(key, comparator_);
-    if (!leaf->IsRootPage()) {
-      if (leaf->GetSize() < leaf->GetMinSize()) {
-        CoalesceOrRedistribute(leaf, transaction);
-      } else {
-        page_id_t parent_id = leaf->GetParentPageId();
-        InternalPage *parent = reinterpret_cast<InternalPage *>(buffer_pool_manager_->FetchPage(parent_id)->GetData());
-        int index = parent->ValueIndex(leaf->GetPageId());
-        parent->SetKeyAt(index, leaf->KeyAt(0));
-        buffer_pool_manager_->UnpinPage(parent_id, true);
-      }
-    } else if (leaf->GetSize() == 0) {
+    if (leaf->GetSize() == 0) {
       LOG(DEBUG) << "B+ tree became empty.";
+      std::lock_guard<std::mutex> guard(mutex_);
+      transaction->AddIntoDeletedPageSet(leaf->GetPageId());
       root_page_id_ = INVALID_PAGE_ID;
-    } else {
-      // Do nothing
     }
+    ReleaseAllLatch(transaction, /*is_write*/ false);
+  }
+  else if (leaf->GetSize() - 1 < leaf->GetMinSize()) {
+    LOG(DEBUG) << "Overflow: release all read lateches...";
+    ReleaseAllLatch(transaction, /*is_write*/ false);
+
+    LOG(DEBUG) << "Overflow: acquire write lateches...";
+    curr = AcquireWriteLatch(key, transaction);
+    leaf = reinterpret_cast<LeafPage *>(curr);
+
+    if (leaf->GetSize() - 1 < leaf->GetMinSize()) {
+      leaf->RemoveAndDeleteRecord(key, comparator_);
+      CoalesceOrRedistribute(leaf, transaction);
+      ReleaseAllLatch(transaction, /*is_write*/ true);
+    }
+    else {
+      leaf->RemoveAndDeleteRecord(key, comparator_);
+      page_id_t parent_id = leaf->GetParentPageId();
+      Page * page = buffer_pool_manager_->FetchPage(parent_id);
+      InternalPage *parent = reinterpret_cast<InternalPage *>(page->GetData());
+      int index = parent->ValueIndex(leaf->GetPageId());
+      parent->SetKeyAt(index, leaf->KeyAt(0));
+      ReleaseAllLatch(transaction, /*is_write*/ true);
+    }
+  }
+  else {
+    leaf->RemoveAndDeleteRecord(key, comparator_);
+    page_id_t parent_id = leaf->GetParentPageId();
+    Page * page = buffer_pool_manager_->FetchPage(parent_id);
+    InternalPage *parent = reinterpret_cast<InternalPage *>(page->GetData());
+    int index = parent->ValueIndex(leaf->GetPageId());
+    parent->SetKeyAt(index, leaf->KeyAt(0));
+    ReleaseAllLatch(transaction, /*is_write*/ false);
   }
 }
 
@@ -398,6 +441,7 @@ bool BPLUSTREE_TYPE::CoalesceOrRedistribute(N *node, Transaction *transaction) {
     LOG(DEBUG) << "right_id: " << right_id << " " << right;
   }
   CHECK(left || right) << "Expected either left or right should exist.";
+
   if (left && left->GetSize() > left->GetMinSize()) {
     // Left node has more than half of the children, borrow one from it
     KeyType middle_key = parent->KeyAt(node_index);
@@ -409,7 +453,8 @@ bool BPLUSTREE_TYPE::CoalesceOrRedistribute(N *node, Transaction *transaction) {
     buffer_pool_manager_->UnpinPage(left->GetPageId(), true);
     buffer_pool_manager_->UnpinPage(node->GetPageId(), true);
     return true;
-  } else if (right && right->GetSize() > right->GetMinSize()) {
+  }
+  else if (right && right->GetSize() > right->GetMinSize()) {
     KeyType middle_key = parent->KeyAt(node_index + 1);
     LOG(DEBUG) << "Moving first to end from: " << right->GetPageId() << " to " << node->GetPageId();
     right->MoveFirstToEndOf(node, middle_key, buffer_pool_manager_);
@@ -419,7 +464,8 @@ bool BPLUSTREE_TYPE::CoalesceOrRedistribute(N *node, Transaction *transaction) {
     buffer_pool_manager_->UnpinPage(node->GetPageId(), true);
     buffer_pool_manager_->UnpinPage(right->GetPageId(), true);
     return true;
-  } else if (left) {
+  }
+  else if (left) {
     // NOTE: in order to keep the list chain on the leaf nodes, we have to
     // notice the merge order here.
     KeyType middle_key = parent->KeyAt(node_index);
@@ -430,7 +476,8 @@ bool BPLUSTREE_TYPE::CoalesceOrRedistribute(N *node, Transaction *transaction) {
     parent->SetKeyAt(node_index - 1, left->KeyAt(0));
     parent->Remove(node_index);
     buffer_pool_manager_->DeletePage(node->GetPageId());
-  } else if (right) {
+  }
+  else if (right) {
     CHECK(node_index + 1 < parent->GetSize());
     KeyType middle_key = parent->KeyAt(node_index + 1);
     LOG(DEBUG) << "Right merge node: " << right->GetPageId() << " and " << node->GetPageId()
@@ -439,34 +486,42 @@ bool BPLUSTREE_TYPE::CoalesceOrRedistribute(N *node, Transaction *transaction) {
     parent->SetKeyAt(node_index, node->KeyAt(0));
     parent->Remove(node_index + 1);
     buffer_pool_manager_->DeletePage(right->GetPageId());
-  } else {
+  }
+  else {
     CHECK(false) << "Should not reach here.";
   }
 
   if (!parent->IsRootPage()) {
     if (parent->GetSize() < parent->GetMinSize()) {
       CoalesceOrRedistribute(parent, transaction);
-    } else {
+    }
+    else {
       // Do nothing
     }
-  } else if (parent->GetSize() == 1) {
+  }
+  else if (parent->GetSize() == 1) {
     // NOTE: for internal node, size less or equals 1 means empty.
     // Delete old root page, the height of this tree decreased by 1.
+    std::lock_guard<std::mutex> guard(mutex_);
+
     page_id_t new_root_id = parent->ValueAt(0);
     LOG(DEBUG) << "B+ tree height decreases by 1, from page " << root_page_id_ << " to " << new_root_id;
-    buffer_pool_manager_->DeletePage(root_page_id_);
+    transaction->AddIntoDeletedPageSet(root_page_id_);
 
     // Update the new root page
-    BPlusTreePage *new_root =
-        reinterpret_cast<BPlusTreePage *>(buffer_pool_manager_->FetchPage(new_root_id)->GetData());
+    Page * page = buffer_pool_manager_->FetchPage(new_root_id);
+    BPlusTreePage *new_root = reinterpret_cast<BPlusTreePage *>(page->GetData());
     new_root->SetParentPageId(INVALID_PAGE_ID);
     buffer_pool_manager_->UnpinPage(new_root_id, true);
 
     root_page_id_ = new_root_id;
     UpdateRootPageId(root_page_id_);
-  } else if (parent->GetSize() == 0) {
+  }
+  else if (parent->GetSize() == 0) {
+    std::lock_guard<std::mutex> guard(mutex_);
     root_page_id_ = INVALID_PAGE_ID;
-  } else {
+  }
+  else {
     // Do nothing
   }
 
@@ -593,7 +648,8 @@ void BPLUSTREE_TYPE::UpdateRootPageId(int insert_record) {
   if (insert_record != 0) {
     // create a new record<index_name + root_page_id> in header_page
     header_page->InsertRecord(index_name_, root_page_id_);
-  } else {
+  }
+  else {
     // update root_page_id in header_page
     header_page->UpdateRecord(index_name_, root_page_id_);
   }
@@ -679,7 +735,8 @@ void BPLUSTREE_TYPE::ToGraph(BPlusTreePage *page, BufferPoolManager *bpm, std::o
       out << internal_prefix << leaf->GetParentPageId() << ":p" << leaf->GetPageId() << " -> " << leaf_prefix
           << leaf->GetPageId() << ";\n";
     }
-  } else {
+  }
+  else {
     InternalPage *inner = reinterpret_cast<InternalPage *>(page);
     LOG(DEBUG) << "Drawing inner #page " << inner->GetPageId();
     // Print node name
@@ -748,7 +805,8 @@ void BPLUSTREE_TYPE::ToString(BPlusTreePage *page, BufferPoolManager *bpm) const
     }
     std::cout << std::endl;
     std::cout << std::endl;
-  } else {
+  }
+  else {
     InternalPage *internal = reinterpret_cast<InternalPage *>(page);
     std::cout << "Internal Page: " << internal->GetPageId() << " parent: " << internal->GetParentPageId() << std::endl;
     for (int i = 0; i < internal->GetSize(); i++) {

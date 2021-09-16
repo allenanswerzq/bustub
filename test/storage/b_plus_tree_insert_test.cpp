@@ -55,7 +55,7 @@ TEST(BPlusTreeTests, InsertTest0) {
   std::vector<int> value;
   for (int i = 0; i < 100; i++) {
     value.clear();
-    EXPECT_EQ(tree.GetValue(inserts[i].first, &value), true);
+    EXPECT_EQ(tree.GetValue(inserts[i].first, &value, transaction), true);
     EXPECT_EQ(value.size(), 1);
     EXPECT_EQ(value[0], inserts[i].second);
   }
@@ -131,7 +131,7 @@ TEST(BPlusTreeTests, InsertTest1) {
   std::vector<int> value;
   for (int i = 0; i < 30; i++) {
     value.clear();
-    tree.GetValue(i, &value);
+    tree.GetValue(i, &value, transaction);
     EXPECT_EQ(value.size(), 1);
     EXPECT_EQ(value[0], i);
   }
@@ -200,7 +200,7 @@ TEST(BPlusTreeTests, InsertTest2) {
   for (auto key : keys) {
     rids.clear();
     index_key.SetFromInteger(key);
-    tree.GetValue(index_key, &rids);
+    tree.GetValue(index_key, &rids, transaction);
     EXPECT_EQ(rids.size(), 1);
 
     int64_t value = key & 0xFFFFFFFF;
@@ -261,7 +261,7 @@ TEST(BPlusTreeTests, InsertTest3) {
   for (auto key : keys) {
     rids.clear();
     index_key.SetFromInteger(key);
-    tree.GetValue(index_key, &rids);
+    tree.GetValue(index_key, &rids, transaction);
     EXPECT_EQ(rids.size(), 1);
 
     int64_t value = key & 0xFFFFFFFF;

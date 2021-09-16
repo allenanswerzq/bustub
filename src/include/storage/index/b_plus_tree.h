@@ -47,13 +47,13 @@ class BPlusTree {
   bool IsEmpty() const;
 
   // Insert a key-value pair into this B+ tree.
-  bool Insert(const KeyType &key, const ValueType &value, Transaction *transaction = nullptr);
+  bool Insert(const KeyType &key, const ValueType &value, Transaction *transaction);
 
   // Remove a key and its value from this B+ tree.
-  void Remove(const KeyType &key, Transaction *transaction = nullptr);
+  void Remove(const KeyType &key, Transaction *transaction);
 
   // return the value associated with a given key
-  bool GetValue(const KeyType &key, std::vector<ValueType> *result, Transaction *transaction = nullptr);
+  bool GetValue(const KeyType &key, std::vector<ValueType> *result, Transaction *transaction);
 
   // index iterator
   INDEXITERATOR_TYPE begin();
@@ -75,29 +75,29 @@ class BPlusTree {
   }
 
   // read data from file and insert one by one
-  void InsertFromFile(const std::string &file_name, Transaction *transaction = nullptr);
+  void InsertFromFile(const std::string &file_name, Transaction *transaction);
 
   // read data from file and remove one by one
-  void RemoveFromFile(const std::string &file_name, Transaction *transaction = nullptr);
+  void RemoveFromFile(const std::string &file_name, Transaction *transaction);
   // expose for test purpose
   Page *FindLeafPage(const KeyType &key, bool leftMost = false);
 
  private:
-  void StartNewTree(const KeyType &key, const ValueType &value);
+  bool StartNewTree(const KeyType &key, const ValueType &value);
 
-  bool InsertIntoLeaf(const KeyType &key, const ValueType &value, Transaction *transaction = nullptr);
+  bool InsertIntoLeaf(const KeyType &key, const ValueType &value, Transaction *transaction);
 
   void InsertIntoParent(BPlusTreePage *old_node, const KeyType &key, BPlusTreePage *new_node,
-                        Transaction *transaction = nullptr);
+                        Transaction *transaction);
 
   template <typename N>
   N *Split(N *node);
 
   template <typename N>
-  bool CoalesceOrRedistribute(N *node, Transaction *transaction = nullptr);
+  bool CoalesceOrRedistribute(N *node, Transaction *transaction);
 
   template <typename N>
-  bool Coalesce(N *neighbor_node, N *node, InternalPage *parent, int index, Transaction *transaction = nullptr);
+  bool Coalesce(N *neighbor_node, N *node, InternalPage *parent, int index, Transaction *transaction);
 
   template <typename N>
   void Redistribute(N *neighbor_node, N *node, int index);
@@ -112,8 +112,8 @@ class BPlusTree {
   void ToString(BPlusTreePage *page, BufferPoolManager *bpm) const;
 
   void ReleaseAllLatch(Transaction * transaction, bool is_write);
-  BPlusTreePage* AcquireReadLatch(const KeyType &key, const ValueType &value, Transaction *transaction);
-  BPlusTreePage* AcquireWriteLatch(const KeyType &key, const ValueType &value, Transaction *transaction);
+  BPlusTreePage* AcquireReadLatch(const KeyType &key, Transaction *transaction);
+  BPlusTreePage* AcquireWriteLatch(const KeyType &key, Transaction *transaction);
 
   // member variable
   std::string index_name_;
@@ -122,7 +122,7 @@ class BPlusTree {
   KeyComparator comparator_;
   int leaf_max_size_;
   int internal_max_size_;
-  std::mutex mutex_;
+  mutable std::mutex mutex_;
 };
 
 }  // namespace bustub

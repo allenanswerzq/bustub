@@ -42,6 +42,7 @@ TEST(BPlusTreeTests, DeleteTest0) {
       key = RandomInt(0, 10000);
     }
     tree.Insert(key, i, transaction);
+    EXPECT_TRUE(transaction->GetPageSet()->empty());
     mp[key] = i;
     inserts.push_back({key, i});
   }
@@ -50,7 +51,7 @@ TEST(BPlusTreeTests, DeleteTest0) {
   for (int i = 0; i < 40; i++) {
     int j = RandomInt(0, inserts.size() - 1);
     int key = inserts[j].first;
-    tree.Remove(key);
+    tree.Remove(key, transaction);
     inserts.erase(inserts.begin() + j);
     // tree.Draw(bpm, "tree" + std::to_string(i) + "_" + std::to_string(key) +
     // ".dot");
@@ -61,7 +62,7 @@ TEST(BPlusTreeTests, DeleteTest0) {
   std::vector<int> value;
   for (size_t i = 0; i < inserts.size(); i++) {
     value.clear();
-    EXPECT_TRUE(tree.GetValue(inserts[i].first, &value));
+    EXPECT_TRUE(tree.GetValue(inserts[i].first, &value, transaction));
     EXPECT_EQ(value.size(), 1);
     EXPECT_EQ(value[0], inserts[i].second);
   }
@@ -78,7 +79,7 @@ TEST(BPlusTreeTests, DeleteTest0) {
 
   // Remove all keys
   for (auto &it : inserts) {
-    tree.Remove(it.first);
+    tree.Remove(it.first, transaction);
   }
 
   EXPECT_TRUE(tree.IsEmpty());
@@ -168,7 +169,7 @@ TEST(BPlusTreeTests, DeleteTest1) {
   for (auto key : keys) {
     rids.clear();
     index_key.SetFromInteger(key);
-    tree.GetValue(index_key, &rids);
+    tree.GetValue(index_key, &rids, transaction);
     EXPECT_EQ(rids.size(), 1);
 
     int64_t value = key & 0xFFFFFFFF;
@@ -247,7 +248,7 @@ TEST(BPlusTreeTests, DeleteTest2) {
   for (auto key : keys) {
     rids.clear();
     index_key.SetFromInteger(key);
-    tree.GetValue(index_key, &rids);
+    tree.GetValue(index_key, &rids, transaction);
     EXPECT_EQ(rids.size(), 1);
 
     int64_t value = key & 0xFFFFFFFF;
