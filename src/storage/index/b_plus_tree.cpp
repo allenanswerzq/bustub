@@ -94,6 +94,7 @@ bool BPLUSTREE_TYPE::StartNewTree(const KeyType &key, const ValueType &value) {
     // Another thread already started a new tree.
     return false;
   }
+  LOG(DEBUG) << "Starting a new tree...";
   page_id_t page_id;
   Page *page = buffer_pool_manager_->NewPage(&page_id);
   CHECK(page_id > 0) << "Expected page id > 0";
@@ -347,11 +348,8 @@ void BPLUSTREE_TYPE::InsertIntoParent(BPlusTreePage *old_node, const KeyType &ke
  */
 INDEX_TEMPLATE_ARGUMENTS
 void BPLUSTREE_TYPE::Remove(const KeyType &key, Transaction *transaction) {
-  {
-    std::lock_guard<std::mutex> guard(mutex_);
-    if (root_page_id_ == INVALID_PAGE_ID) {
-      return;
-    }
+  if (GetRootPageID() == INVALID_PAGE_ID) {
+    return;
   }
 
   LOG(DEBUG) << "Removing key from b+ tree: " << key;
@@ -582,7 +580,8 @@ bool BPLUSTREE_TYPE::AdjustRoot(BPlusTreePage *old_root_node) { return false; }
  */
 INDEX_TEMPLATE_ARGUMENTS
 INDEXITERATOR_TYPE BPLUSTREE_TYPE::begin() {
-  BPlusTreePage *curr = reinterpret_cast<BPlusTreePage *>(buffer_pool_manager_->FetchPage(root_page_id_)->GetData());
+  Page *page = buffer_pool_manager_->FetchPage(GetRootPageID());
+  BPlusTreePage *curr = reinterpret_cast<BPlusTreePage *>(page->GetData());
   while (!curr->IsLeafPage()) {
     InternalPage *inner = reinterpret_cast<InternalPage *>(curr);
     // Always go to the leafmost

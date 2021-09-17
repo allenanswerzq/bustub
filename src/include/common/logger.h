@@ -33,11 +33,13 @@
  * @author Hideaki
  */
 
+#include <sys/time.h>
 #include <ctime>
 #include <iostream>
-#include <string>
 #include <mutex>
 #include <sstream>
+#include <string>
+#include <thread>
 
 namespace bustub {
 
@@ -45,7 +47,9 @@ namespace bustub {
 using cstr = const char *;
 
 static constexpr cstr PastLastSlash(cstr a, cstr b) {
-  return *a == '\0' ? b : *b == '/' ? PastLastSlash(a + 1, a + 1) : PastLastSlash(a + 1, b);
+  return *a == '\0'  ? b
+         : *b == '/' ? PastLastSlash(a + 1, a + 1)
+                     : PastLastSlash(a + 1, b);
 }
 
 static constexpr cstr PastLastSlash(cstr a) { return PastLastSlash(a, a); }
@@ -172,7 +176,8 @@ void OutputLogHeader(const char *file, int line, const char *func, int level);
 
 // Output log message header in this format: [type] [file:line:function] time -
 // ex: [ERROR] [somefile.cpp:123:doSome()] 2008/07/06 10:00:00 -
-inline void OutputLogHeader(const char *file, int line, const char *func, int level) {
+inline void OutputLogHeader(const char *file, int line, const char *func,
+                            int level) {
   time_t t = ::time(nullptr);
   tm *curTime = localtime(&t);  // NOLINT
   char time_str[32];            // FIXME
@@ -198,7 +203,8 @@ inline void OutputLogHeader(const char *file, int line, const char *func, int le
       type = "UNKWN";
   }
   // PAVLO: DO NOT CHANGE THIS
-  ::fprintf(LOG_OUTPUT_STREAM, "%s [%s:%d:%s] %s - ", time_str, file, line, func, type);
+  ::fprintf(LOG_OUTPUT_STREAM, "%s [%s:%d:%s] %s - ", time_str, file, line,
+            func, type);
 }
 
 //------------------------------------------------------------------------------
@@ -209,10 +215,12 @@ inline bool DebugLoggingEnabled() {
     if (auto var = std::getenv("BUSTUB_LOG_DEBUG")) {
       if (std::string(var) == "1") {
         state = 1;
-      } else {
+      }
+      else {
         state = -1;
       }
-    } else {
+    }
+    else {
       // by default hide debug logging.
       state = -1;
     }
@@ -221,36 +229,56 @@ inline bool DebugLoggingEnabled() {
 }
 
 class AtomicStream {
-public:
+ public:
   template <typename T>
-  AtomicStream& operator<<(T const& t) {
+  AtomicStream &operator<<(T const &t) {
     oss << t;
     return *this;
   }
 
-  ~AtomicStream() {
-    std::cerr << oss.str();
-  }
+  std::string FinalString() { return oss.str(); }
 
-private:
+ private:
   std::ostringstream oss;
 };
 
 class LogMessage {
  public:
-  LogMessage(const char *file, int line) {
-    time_t t = ::time(nullptr);
-    tm *curTime = localtime(&t);  // NOLINT
-    char time_str[32];            // FIXME
-    ::strftime(time_str, 32, "%Y-%m-%d %H:%M:%S", curTime);
-    log_stream_ << "[" << time_str << "] " << file << ":" << line << ": ";
+  LogMessage(const char *file, int line, const std::string &prefix) {
+    // uint64_t thread =
+    // std::hash<std::thread::id>{}(std::this_thread::get_id());
+    log_stream_ << "[" << GetDateTime()
+                << "] "
+                // << "{" << thread  << "} "
+                << file << ":" << line << ":" << prefix << ": ";
   }
 
-  ~LogMessage() { log_stream_ << '\n'; }
+  ~LogMessage() {
+    log_stream_ << "\n";
+    std::cerr << log_stream_.FinalString();
+  }
+
   AtomicStream &stream() { return log_stream_; }
 
  protected:
   AtomicStream log_stream_;
+
+  std::string GetDateTime() {
+    struct tm tm_time;
+    struct timeval tval;
+    memset(&tval, 0, sizeof(tval));
+    gettimeofday(&tval, NULL);
+    localtime_r(&tval.tv_sec, &tm_time);
+
+    std::string buffer;
+    buffer.resize(100);
+    snprintf(&buffer[0], 100, "%04d-%02d-%02d %02d:%02d:%02d.%06ld",
+             tm_time.tm_year + 1900, 1 + tm_time.tm_mon, tm_time.tm_mday,
+             tm_time.tm_hour, tm_time.tm_min, tm_time.tm_sec,
+             static_cast<long>(tval.tv_usec));
+
+    return buffer;
+  }
 
  private:
   LogMessage(const LogMessage &);
@@ -259,8 +287,14 @@ class LogMessage {
 
 class LogMessageFatal : public LogMessage {
  public:
-  LogMessageFatal(const char *file, int line) : LogMessage(file, line) {}
-  ~LogMessageFatal() { abort(); }
+  LogMessageFatal(const char *file, int line, const std::string &prefix)
+      : LogMessage(file, line, prefix) {}
+
+  ~LogMessageFatal() {
+    // NOTE: Derived class deconstruts before base class..
+    LogMessage::~LogMessage();
+    abort();
+  }
 
  private:
   LogMessageFatal(const LogMessageFatal &);
@@ -280,16 +314,19 @@ class LogMessageVoidify {
 #endif
 };
 
-#define CHECK(x) \
-  if (!(x)) LogMessageFatal(__FILE__, __LINE__).stream() << "Check failed: " #x << ": "
+#define CHECK(x)                                        \
+  if (!(x))                                             \
+  LogMessageFatal(__FILE__, __LINE__, "FATAL").stream() \
+      << "Check failed: " #x << ": "
 
 #define LOG(severity) MY_LOG_##severity
-#define LOG_IF(severity, condition) !(condition) ? (void)0 : LogMessageVoidify() & LOG(severity)
+#define LOG_IF(severity, condition) \
+  !(condition) ? (void)0 : LogMessageVoidify() & LOG(severity)
 
 #define MY_LOG_DEBUG \
-  if (DebugLoggingEnabled()) LogMessage(__FILE__, __LINE__).stream()
-#define MY_LOG_INFO LogMessage(__FILE__, __LINE__).stream()
-#define MY_LOG_FATAL LogMessageFatal(__FILE__, __LINE__).stream()
+  if (DebugLoggingEnabled()) LogMessage(__FILE__, __LINE__, "DEBUG").stream()
+#define MY_LOG_INFO LogMessage(__FILE__, __LINE__, "INFO").stream()
+#define MY_LOG_FATAL LogMessageFatal(__FILE__, __LINE__, "FATAL").stream()
 
 }  // namespace bustub
 

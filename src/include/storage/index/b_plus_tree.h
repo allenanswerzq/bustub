@@ -55,6 +55,11 @@ class BPlusTree {
   // return the value associated with a given key
   bool GetValue(const KeyType &key, std::vector<ValueType> *result, Transaction *transaction);
 
+  page_id_t GetRootPageID() {
+    std::lock_guard<std::mutex> guard(mutex_);
+    return root_page_id_;
+  }
+
   // index iterator
   INDEXITERATOR_TYPE begin();
   INDEXITERATOR_TYPE Begin(const KeyType &key);
