@@ -40,6 +40,7 @@
 #include <sstream>
 #include <string>
 #include <thread>
+#include <cstring>
 
 namespace bustub {
 
@@ -251,9 +252,13 @@ class LogMessage {
                 << file << ":" << line << ":" << prefix << ": ";
   }
 
-  ~LogMessage() {
+  void Flush() {
     log_stream_ << "\n";
     std::cerr << log_stream_.FinalString() << std::flush;
+  }
+
+  ~LogMessage() {
+    Flush();
   }
 
   AtomicStream &stream() { return log_stream_; }
@@ -289,8 +294,7 @@ class LogMessageFatal : public LogMessage {
       : LogMessage(file, line, prefix) {}
 
   ~LogMessageFatal() {
-    // NOTE: Derived class deconstruts before base class..
-    LogMessage::~LogMessage();
+    Flush();
     abort();
   }
 

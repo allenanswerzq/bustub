@@ -534,6 +534,7 @@ bool BPLUSTREE_TYPE::CoalesceOrRedistribute(N *node, Transaction *transaction) {
   }
   else if (parent->GetSize() == 0) {
     std::lock_guard<std::mutex> guard(mutex_);
+    LOG(DEBUG) << "Tree become to empty.";
     root_page_id_ = INVALID_PAGE_ID;
     UpdateRootPageId(false);
   }
