@@ -87,6 +87,10 @@ class BPlusTree {
   // expose for test purpose
   Page *FindLeafPage(const KeyType &key, bool leftMost = false);
 
+  void ReleaseAllLatch(Transaction * transaction, bool is_write);
+  BPlusTreePage* AcquireReadLatch(const KeyType &key, Transaction *transaction);
+  BPlusTreePage* AcquireWriteLatch(const KeyType &key, Transaction *transaction);
+
  private:
   bool StartNewTree(const KeyType &key, const ValueType &value);
 
@@ -115,10 +119,6 @@ class BPlusTree {
   void ToGraph(BPlusTreePage *page, BufferPoolManager *bpm, std::ofstream &out) const;
 
   void ToString(BPlusTreePage *page, BufferPoolManager *bpm) const;
-
-  void ReleaseAllLatch(Transaction * transaction, bool is_write);
-  BPlusTreePage* AcquireReadLatch(const KeyType &key, Transaction *transaction);
-  BPlusTreePage* AcquireWriteLatch(const KeyType &key, Transaction *transaction);
 
   // member variable
   std::string index_name_;

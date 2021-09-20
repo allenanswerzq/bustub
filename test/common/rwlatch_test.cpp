@@ -77,6 +77,7 @@ TEST(RWLatchTest, ExtraTest) {
       writes++;
 
       // Verify only one thread touches write
+      EXPECT_TRUE(rw_lock.IsWriteLock());
       EXPECT_EQ(writes, 1);
       EXPECT_EQ(reads, 0);
 
@@ -84,10 +85,12 @@ TEST(RWLatchTest, ExtraTest) {
 
       writes--;
       rw_lock.WUnlock();
-    } else {
+    }
+    else {
       rw_lock.RLock();
       reads++;
 
+      EXPECT_FALSE(rw_lock.IsWriteLock());
       EXPECT_EQ(writes, 0);
       ASSERT_GE(reads, 1);
 

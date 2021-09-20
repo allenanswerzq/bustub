@@ -245,17 +245,15 @@ class AtomicStream {
 class LogMessage {
  public:
   LogMessage(const char *file, int line, const std::string &prefix) {
-    // uint64_t thread =
-    // std::hash<std::thread::id>{}(std::this_thread::get_id());
-    log_stream_ << "[" << GetDateTime()
-                << "] "
-                // << "{" << thread  << "} "
+    uint64_t thread = std::hash<std::thread::id>{}(std::this_thread::get_id());
+    log_stream_ << "[" << GetDateTime() << "] "
+                << "{" << thread  << "} "
                 << file << ":" << line << ":" << prefix << ": ";
   }
 
   ~LogMessage() {
     log_stream_ << "\n";
-    std::cerr << log_stream_.FinalString();
+    std::cerr << log_stream_.FinalString() << std::flush;
   }
 
   AtomicStream &stream() { return log_stream_; }

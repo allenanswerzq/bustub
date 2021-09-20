@@ -49,6 +49,7 @@ class ReaderWriterLatch {
       // Writer waits all reads finishes
       writer_.wait(latch);
     }
+    is_write_lock = true;
   }
 
   /**
@@ -59,6 +60,12 @@ class ReaderWriterLatch {
     writer_entered_ = false;
     // Notify all to let the waiting writers and readers to compete
     reader_.notify_all();
+    is_write_lock = false;
+  }
+
+  bool IsWriteLock() {
+    std::lock_guard<mutex_t> guard(mutex_);
+    return is_write_lock;
   }
 
   /**
@@ -95,6 +102,7 @@ class ReaderWriterLatch {
   cond_t reader_;
   uint32_t reader_count_{0};
   bool writer_entered_{false};
+  bool is_write_lock{false};
 };
 
 }  // namespace bustub

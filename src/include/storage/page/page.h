@@ -63,6 +63,8 @@ class Page {
   /** Release the page read latch. */
   inline void RUnlatch() { rwlatch_.RUnlock(); }
 
+  inline bool IsWriteLatch() { return rwlatch_.IsWriteLock(); }
+
   /** @return the page LSN. */
   inline lsn_t GetLSN() { return *reinterpret_cast<lsn_t *>(GetData() + OFFSET_LSN); }
 

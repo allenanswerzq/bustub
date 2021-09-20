@@ -160,6 +160,8 @@ class BufferPoolManager {
   // Whether a page already in this buffer pool
   bool Exist(page_id_t page_id);
 
+  void DebugOutput() const;
+
   /** Number of pages in the buffer pool. */
   size_t pool_size_;
   /** Array of buffer pool pages. */

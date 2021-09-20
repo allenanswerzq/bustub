@@ -81,7 +81,7 @@ ValueType B_PLUS_TREE_LEAF_PAGE_TYPE::ValueAt(int index) const {
  */
 INDEX_TEMPLATE_ARGUMENTS
 KeyType B_PLUS_TREE_LEAF_PAGE_TYPE::KeyAt(int index) const {
-  CHECK(index < (int)array_.size());
+  CHECK(index < (int)array_.size()) << index << " " << (int)array_.size() << " " << GetPageId();
   return array_[index].first;
 }
 
@@ -205,6 +205,7 @@ bool B_PLUS_TREE_LEAF_PAGE_TYPE::Lookup(const KeyType &key, ValueType *value, co
  */
 INDEX_TEMPLATE_ARGUMENTS
 int B_PLUS_TREE_LEAF_PAGE_TYPE::RemoveAndDeleteRecord(const KeyType &key, const KeyComparator &comparator) {
+  LOG(DEBUG) << "Removing " << key;
   for (size_t i = 0; i < array_.size(); i++) {
     if (comparator(KeyAt(i), key) == 0) {
       array_.erase(array_.begin() + i);

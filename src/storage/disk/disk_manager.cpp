@@ -95,6 +95,7 @@ void DiskManager::WritePage(page_id_t page_id, const char *page_data) {
  */
 void DiskManager::ReadPage(page_id_t page_id, char *page_data) {
   int offset = page_id * PAGE_SIZE;
+  CHECK(offset < GetFileSize(file_name_)) << page_id << " " << GetFileSize(file_name_) << " " << file_name_;
   // check if read beyond file length
   if (offset > GetFileSize(file_name_)) {
     LOG_DEBUG("I/O error reading past end of file");

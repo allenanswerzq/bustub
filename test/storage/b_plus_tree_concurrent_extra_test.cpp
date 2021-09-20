@@ -28,9 +28,11 @@ class BPlusTreeConcurrentTest : public ::testing::Test {
     key_schema_ = std::unique_ptr<Schema>(ParseCreateStatement("a bigint"));
     comparator_ = IntegerComparator<false>();
     disk_manager_ = std::make_unique<DiskManager>("test.db");
-    bpm_ = std::make_unique<BufferPoolManager>(50, disk_manager_.get());
-    int leaf_max_size = RandomInt(3, 10);
-    int internal_max_size = RandomInt(3, 10);
+    bpm_ = std::make_unique<BufferPoolManager>(1000, disk_manager_.get());
+    // int leaf_max_size = RandomInt(3, 10);
+    // int internal_max_size = RandomInt(3, 10);
+    int leaf_max_size = 3;
+    int internal_max_size = 3;
     tree_ = std::make_unique<Tree>("test", bpm_.get(), comparator_, leaf_max_size, internal_max_size);
 
     // create and fetch header_page
@@ -80,6 +82,21 @@ class BPlusTreeConcurrentTest : public ::testing::Test {
   }
 };
 
+TEST_F(BPlusTreeConcurrentTest, DISABLED_BasicTest) {
+  std::unique_ptr<Transaction> tran = std::make_unique<Transaction>(0);
+  for (int i = 0; i < 10; i++) {
+    tree_->Insert(i, i, tran.get());
+  }
+  EXPECT_TRUE(tran->GetPageSet()->empty());
+  EXPECT_TRUE(tran->GetDeletedPageSet()->empty());
+  tree_->Draw(bpm_.get(), "tree.dot");
+
+  tree_->AcquireReadLatch(7, tran.get());
+  tree_->ReleaseAllLatch(tran.get(), false);
+
+  tree_->AcquireWriteLatch(7, tran.get());
+}
+
 TEST_F(BPlusTreeConcurrentTest, RandomTest) {
   std::vector<std::array<int, 2>> inserts;
   for (int i = 0; i < 100; i++) {
@@ -96,6 +113,7 @@ TEST_F(BPlusTreeConcurrentTest, RandomTest) {
   for (uint64_t i = 0; i < thread_group.size(); ++i) {
     thread_group[i].join();
   }
+  tree_->Draw(bpm_.get(), "tree.dot");
 }
 
 
