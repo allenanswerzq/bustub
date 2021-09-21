@@ -107,7 +107,7 @@ TEST_F(BPlusTreeConcurrentTest, RandomTest) {
   for (uint64_t i = 0; i < 3; ++i) {
     thread_group.push_back(std::thread([&]{ this->InsertHelper(tree_.get(), inserts); }));
   }
-  for (uint64_t i = 0; i < 3; ++i) {
+  for (uint64_t i = 0; i < 0; ++i) {
     thread_group.push_back(std::thread([&]{ this->DeleteHelper(tree_.get(), inserts); }));
   }
   for (uint64_t i = 0; i < thread_group.size(); ++i) {

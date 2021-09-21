@@ -241,7 +241,6 @@ bool BPLUSTREE_TYPE::InsertIntoLeaf(const KeyType &key, const ValueType &value, 
 
       LOG(DEBUG) << "Overflow: acquire write lateches...";
       curr = AcquireWriteLatch(key, transaction);
-      if (!curr) return false;
       leaf = reinterpret_cast<LeafPage *>(curr);
       if (leaf->GetSize() + 1 > leaf->GetMaxSize()) {
         leaf->Insert(key, value, comparator_);
@@ -344,6 +343,7 @@ void BPLUSTREE_TYPE::InsertIntoParent(BPlusTreePage *old_node, const KeyType &ke
                  << split_node->GetParentPageId() << " with key: " << split_node->KeyAt(0);
       InsertIntoParent(parent_node, split_node->KeyAt(0), split_node, transaction);
       buffer_pool_manager_->UnpinPage(parent_node->GetPageId(), true);
+      buffer_pool_manager_->UnpinPage(split_node->GetPageId(), true);
     }
   }
 }
@@ -366,7 +366,6 @@ void BPLUSTREE_TYPE::Remove(const KeyType &key, Transaction *transaction) {
 
   LOG(DEBUG) << "Removing key from b+ tree: " << key;
   BPlusTreePage *curr = AcquireReadLatch(key, transaction);
-  if (!curr) return;
   LeafPage *leaf = reinterpret_cast<LeafPage *>(curr);
   LOG(DEBUG) << "Standing at leaf node: " << leaf->GetPageId();
 
@@ -393,7 +392,6 @@ void BPLUSTREE_TYPE::Remove(const KeyType &key, Transaction *transaction) {
 
     LOG(DEBUG) << "Overflow: acquire write lateches...";
     curr = AcquireWriteLatch(key, transaction);
-    if (!curr) return;
     leaf = reinterpret_cast<LeafPage *>(curr);
     leaf->RemoveAndDeleteRecord(key, comparator_);
     if (leaf->GetSize() < leaf->GetMinSize()) {
@@ -462,10 +460,9 @@ bool BPLUSTREE_TYPE::CoalesceOrRedistribute(N *node, Transaction *transaction) {
     left->MoveLastToFrontOf(node, middle_key, buffer_pool_manager_);
     parent->SetKeyAt(node_index, node->KeyAt(0));
     parent->SetKeyAt(node_index - 1, left->KeyAt(0));
-    buffer_pool_manager_->UnpinPage(parent->GetPageId(), true);
-    buffer_pool_manager_->UnpinPage(left->GetPageId(), true);
+    // buffer_pool_manager_->UnpinPage(parent->GetPageId(), true);
+    // buffer_pool_manager_->UnpinPage(left->GetPageId(), true);
     // buffer_pool_manager_->UnpinPage(node->GetPageId(), true);
-    return true;
   }
   else if (right && right->GetSize() > right->GetMinSize()) {
     KeyType middle_key = parent->KeyAt(node_index + 1);
@@ -473,10 +470,9 @@ bool BPLUSTREE_TYPE::CoalesceOrRedistribute(N *node, Transaction *transaction) {
     right->MoveFirstToEndOf(node, middle_key, buffer_pool_manager_);
     parent->SetKeyAt(node_index, node->KeyAt(0));
     parent->SetKeyAt(node_index + 1, right->KeyAt(0));
-    buffer_pool_manager_->UnpinPage(parent->GetPageId(), true);
+    // buffer_pool_manager_->UnpinPage(parent->GetPageId(), true);
     // buffer_pool_manager_->UnpinPage(node->GetPageId(), true);
-    buffer_pool_manager_->UnpinPage(right->GetPageId(), true);
-    return true;
+    // buffer_pool_manager_->UnpinPage(right->GetPageId(), true);
   }
   else if (left) {
     // NOTE: in order to keep the list chain on the leaf nodes, we have to
@@ -487,6 +483,7 @@ bool BPLUSTREE_TYPE::CoalesceOrRedistribute(N *node, Transaction *transaction) {
     node->MoveAllTo(left, middle_key, buffer_pool_manager_);
     CHECK(node_index >= 1);
     parent->SetKeyAt(node_index - 1, left->KeyAt(0));
+    LOG(DEBUG) << "Removing node: " << node->GetPageId() << " from parent: " << parent->GetPageId();
     parent->Remove(node_index);
     // buffer_pool_manager_->DeletePage(node->GetPageId());
     transaction->AddIntoDeletedPageSet(node->GetPageId());
@@ -498,8 +495,9 @@ bool BPLUSTREE_TYPE::CoalesceOrRedistribute(N *node, Transaction *transaction) {
                << " middle_key: " << middle_key << " removing parent index: " << node_index;
     right->MoveAllTo(node, middle_key, buffer_pool_manager_);
     parent->SetKeyAt(node_index, node->KeyAt(0));
+    LOG(DEBUG) << "Removing node: " << right->GetPageId() << " from parent: " << parent->GetPageId();
     parent->Remove(node_index + 1);
-    transaction->AddIntoDeletedPageSet(node->GetPageId());
+    transaction->AddIntoDeletedPageSet(right->GetPageId());
     // buffer_pool_manager_->DeletePage(right->GetPageId());
   }
   else {
@@ -542,7 +540,14 @@ bool BPLUSTREE_TYPE::CoalesceOrRedistribute(N *node, Transaction *transaction) {
     // Do nothing
   }
 
-  buffer_pool_manager_->UnpinPage(parent_id, true);
+  // TODO: make dirty flag right
+  buffer_pool_manager_->UnpinPage(parent->GetPageId(), true);
+  if (left) {
+    buffer_pool_manager_->UnpinPage(left->GetPageId(), true);
+  }
+  if (right) {
+    buffer_pool_manager_->UnpinPage(right->GetPageId(), true);
+  }
   return true;
 }
 

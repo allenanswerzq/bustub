@@ -33,14 +33,16 @@
  * @author Hideaki
  */
 
+#include <cxxabi.h>
+#include <execinfo.h>
 #include <sys/time.h>
+#include <cstring>
 #include <ctime>
 #include <iostream>
 #include <mutex>
 #include <sstream>
 #include <string>
 #include <thread>
-#include <cstring>
 
 namespace bustub {
 
@@ -48,9 +50,9 @@ namespace bustub {
 using cstr = const char *;
 
 static constexpr cstr PastLastSlash(cstr a, cstr b) {
-  return *a == '\0'  ? b
-         : *b == '/' ? PastLastSlash(a + 1, a + 1)
-                     : PastLastSlash(a + 1, b);
+  return *a == '\0' ? b
+                    : *b == '/' ? PastLastSlash(a + 1, a + 1)
+                                : PastLastSlash(a + 1, b);
 }
 
 static constexpr cstr PastLastSlash(cstr a) { return PastLastSlash(a, a); }
@@ -248,8 +250,8 @@ class LogMessage {
   LogMessage(const char *file, int line, const std::string &prefix) {
     uint64_t thread = std::hash<std::thread::id>{}(std::this_thread::get_id());
     log_stream_ << "[" << GetDateTime() << "] "
-                << "{" << thread  << "} "
-                << file << ":" << line << ":" << prefix << ": ";
+                << "{" << thread << "} " << file << ":" << line << ":" << prefix
+                << ": ";
   }
 
   void Flush() {
@@ -257,9 +259,64 @@ class LogMessage {
     std::cerr << log_stream_.FinalString() << std::flush;
   }
 
-  ~LogMessage() {
-    Flush();
+  void Stacktrace() {
+    const int stack_depth = 12;
+    void *array[stack_depth];
+    int size = backtrace(array, stack_depth);
+    char **msg = backtrace_symbols(array, size);
+    log_stream_ << "\n";
+    for (int i = 1; i < size && msg[i]; i++) {
+      log_stream_ << Demangle(msg[i]) << "\n";
+    }
+    free(msg);
   }
+
+  std::string Demangle(char *msg) {
+    // SO: how-to-automatically-generate-a-stacktrace-when-my-program-crashes
+    char *mangled_name = 0;
+    char *offset_begin = 0;
+    char *offset_end = 0;
+    // find parantheses and +address offset surrounding mangled name
+    for (char *p = msg; *p; ++p) {
+      if (*p == '(') {
+        mangled_name = p;
+      }
+      else if (*p == '+') {
+        offset_begin = p;
+      }
+      else if (*p == ')') {
+        offset_end = p;
+        break;
+      }
+    }
+    if (mangled_name && offset_begin && offset_end &&
+        mangled_name < offset_begin) {
+      // if the line could be processed, attempt to demangle the symbol
+      *mangled_name++ = '\0';
+      *offset_begin++ = '\0';
+      *offset_end++ = '\0';
+
+      int status;
+      char *real_name = abi::__cxa_demangle(mangled_name, 0, 0, &status);
+      std::string real(real_name);
+      free(real_name);
+
+      if (status == 0) {
+        // if demangling is successful, output the demangled function name
+        return real;
+      }
+      else {
+        return std::string(mangled_name);
+        // otherwise, output the mangled function name
+      }
+    }
+    else {
+      // otherwise, print the whole line
+      return msg;
+    }
+  }
+
+  ~LogMessage() { Flush(); }
 
   AtomicStream &stream() { return log_stream_; }
 
@@ -294,6 +351,7 @@ class LogMessageFatal : public LogMessage {
       : LogMessage(file, line, prefix) {}
 
   ~LogMessageFatal() {
+    Stacktrace();
     Flush();
     abort();
   }

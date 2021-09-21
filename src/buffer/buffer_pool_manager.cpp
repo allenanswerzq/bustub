@@ -76,7 +76,7 @@ Page *BufferPoolManager::FetchPageImpl(page_id_t page_id) {
     CHECK(page_id >= 0) << "Expected page id greater or equal to 0";
     LOG(DEBUG) << "Fetching a new #page " << page_id << " to frame " << frame_id;
     Page *page = &pages_[frame_id];
-    CHECK(page->page_id_ >= 0);
+    // CHECK(page->page_id_ >= 0) << page_id;
     if (page->is_dirty_) {
       // Flush the old page back to disk if dirty
       FlushPageImpl(page->page_id_);
@@ -209,7 +209,7 @@ void BufferPoolManager::FlushAllPagesImpl() {
 }
 
 bool BufferPoolManager::Exist(page_id_t page_id) {
-  DebugOutput();
+  // DebugOutput();
   return page_table_.find(page_id) != page_table_.end();
 }
 
