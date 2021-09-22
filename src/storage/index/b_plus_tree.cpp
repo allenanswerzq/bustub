@@ -186,11 +186,12 @@ BPlusTreePage *BPLUSTREE_TYPE::AcquireReadLatch(const KeyType &key, Transaction 
 
 INDEX_TEMPLATE_ARGUMENTS
 BPlusTreePage *BPLUSTREE_TYPE::AcquireWriteLatch(const KeyType &key, Transaction *transaction) {
+  // TODO: no need to acquire all locks from root to leaf, can release some
   page_id_t root_id = GetRootPageID();
   if (root_id == INVALID_PAGE_ID) {
     return nullptr;
   }
-  LOG(DEBUG) << "Acquire write latch from root for key: " << key;
+  LOG(DEBUG) << "Acquire write latch from root " << root_id << " for key: " << key;
   Page *curr_page = buffer_pool_manager_->FetchPage(root_id);
   BPlusTreePage *curr = reinterpret_cast<BPlusTreePage *>(curr_page->GetData());
   while (1) {
@@ -238,6 +239,9 @@ bool BPLUSTREE_TYPE::InsertIntoLeaf(const KeyType &key, const ValueType &value, 
       // NOTE: Overflow occured, release all read latches, and acquire wirte latch from root
       LOG(DEBUG) << "Overflow: release all read lateches...";
       ReleaseAllLatch(transaction, /*is_write*/ false);
+
+      CHECK(transaction->GetPageSet()->empty());
+      CHECK(transaction->GetDeletedPageSet()->empty());
 
       LOG(DEBUG) << "Overflow: acquire write lateches...";
       curr = AcquireWriteLatch(key, transaction);
@@ -604,7 +608,9 @@ bool BPLUSTREE_TYPE::AdjustRoot(BPlusTreePage *old_root_node) { return false; }
  */
 INDEX_TEMPLATE_ARGUMENTS
 INDEXITERATOR_TYPE BPLUSTREE_TYPE::begin() {
-  Page *page = buffer_pool_manager_->FetchPage(GetRootPageID());
+  page_id_t root_id = GetRootPageID();
+  CHECK(root_id != INVALID_PAGE_ID);
+  Page *page = buffer_pool_manager_->FetchPage(root_id);
   BPlusTreePage *curr = reinterpret_cast<BPlusTreePage *>(page->GetData());
   while (!curr->IsLeafPage()) {
     InternalPage *inner = reinterpret_cast<InternalPage *>(curr);
@@ -777,11 +783,11 @@ void BPLUSTREE_TYPE::ToGraph(BPlusTreePage *page, BufferPoolManager *bpm, std::o
     CHECK(inner->GetSize()) << "Expected have inner data to draw.";
     for (int i = 0; i < inner->GetSize(); i++) {
       out << "<TD PORT=\"p" << inner->ValueAt(i) << "\">";
-      // if (i > 0) {
-      out << inner->KeyAt(i);
-      // } else {
-      //   out << " ";
-      // }
+      if (i > 0) {
+        out << inner->KeyAt(i);
+      } else {
+        out << " ";
+      }
       out << "</TD>\n";
     }
     out << "</TR>";

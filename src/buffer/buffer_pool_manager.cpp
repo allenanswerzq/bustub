@@ -44,6 +44,7 @@ Page *BufferPoolManager::FetchPageImpl(page_id_t page_id) {
   // 3.     Delete R from the page table and insert P.
   // 4.     Update P's metadata, read in the page content from disk, and then
   // return a pointer to P.
+  std::lock_guard<std::mutex> guard(mutex_);
   LOG(DEBUG) << "Fetching #page: " << page_id;
   if (Exist(page_id)) {
     // If this page is alreay in buffer pool, simply returns it
@@ -73,7 +74,7 @@ Page *BufferPoolManager::FetchPageImpl(page_id_t page_id) {
       // No place to put this page.
       throw Exception("Out of Memory.");
     }
-    CHECK(page_id >= 0) << "Expected page id greater or equal to 0";
+    CHECK(page_id >= 0) << "Expected page id greater or equal to 0: " << page_id;
     LOG(DEBUG) << "Fetching a new #page " << page_id << " to frame " << frame_id;
     Page *page = &pages_[frame_id];
     // CHECK(page->page_id_ >= 0) << page_id;
@@ -94,6 +95,7 @@ Page *BufferPoolManager::FetchPageImpl(page_id_t page_id) {
 }
 
 bool BufferPoolManager::UnpinPageImpl(page_id_t page_id, bool is_dirty) {
+  std::lock_guard<std::mutex> guard(mutex_);
   LOG(DEBUG) << "Unpinning #page: " << page_id;
   CHECK(Exist(page_id)) << "Expected page exists: " << page_id;
   Page *page = &pages_[page_table_[page_id]];
@@ -111,6 +113,7 @@ bool BufferPoolManager::UnpinPageImpl(page_id_t page_id, bool is_dirty) {
 }
 
 bool BufferPoolManager::FlushPageImpl(page_id_t page_id) {
+  std::lock_guard<std::mutex> guard(mutex_);
   // Make sure you call DiskManager::WritePage!
   LOG(DEBUG) << "Flush #page: " << page_id;
   if (!Exist(page_id)) {
@@ -132,6 +135,7 @@ Page *BufferPoolManager::NewPageImpl(page_id_t *page_id) {
   // pick from the free list first.
   // 3.   Update P's metadata, zero out memory and add P to the page table.
   // 4.   Set the page ID output parameter. Return a pointer to P.
+  std::lock_guard<std::mutex> guard(mutex_);
   page_id_t new_page_id = disk_manager_->AllocatePage();
   CHECK(new_page_id >= 0);
   LOG(DEBUG) << "New #page: " << new_page_id;
@@ -173,6 +177,7 @@ bool BufferPoolManager::DeletePageImpl(page_id_t page_id) {
   // using the page.
   // 3.   Otherwise, P can be deleted. Remove P from the page table, reset its
   // metadata and return it to the free list.
+  std::lock_guard<std::mutex> guard(mutex_);
   LOG(DEBUG) << "Delete #page: " << page_id;
   if (!Exist(page_id)) {
     return true;
@@ -203,6 +208,7 @@ void BufferPoolManager::DebugOutput() const{
 
 void BufferPoolManager::FlushAllPagesImpl() {
   // You can do it!
+  std::lock_guard<std::mutex> guard(mutex_);
   for (auto &it : page_table_) {
     FlushPageImpl(it.first);
   }
