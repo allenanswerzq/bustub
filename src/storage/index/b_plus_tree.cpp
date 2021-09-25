@@ -94,7 +94,7 @@ bool BPLUSTREE_TYPE::StartNewTree(const KeyType &key, const ValueType &value) {
     // Another thread already started a new tree.
     return false;
   }
-  LOG(DEBUG) << "Starting a new tree...";
+  LOG(DEBUG) << "Starting a new tree with key: " << key;
   page_id_t page_id;
   Page *page = buffer_pool_manager_->NewPage(&page_id);
   CHECK(page_id > 0) << "Expected page id > 0";
@@ -163,14 +163,20 @@ BPlusTreePage *BPLUSTREE_TYPE::AcquireReadLatch(const KeyType &key, Transaction 
       LOG(DEBUG) << "Acquire read latch " << curr->GetPageId();
       curr_page->RLatch();
     }
-    if (parent_page) {
-      LOG(DEBUG) << "Releasing read latch " << parent_page->GetPageId();
-      parent_page->RUnlatch();
-      LOG(DEBUG) << "Released read latch " << parent_page->GetPageId();
-      transaction->RemoveLastFromPageSet();
-    }
+    (void)parent_page;
+    // if (parent_page) {
+    //   LOG(DEBUG) << "Releasing read latch " << parent_page->GetPageId();
+    //   parent_page->RUnlatch();
+    //   LOG(DEBUG) << "Released read latch " << parent_page->GetPageId();
+    //   transaction->RemoveLastFromPageSet();
+    // }
     transaction->AddIntoPageSet(curr_page);
     if (curr->IsLeafPage()) {
+      if (root_id != GetRootPageID()) {
+        // NOTE: If the root chagned when we waiting for the lock, restart from root.
+        ReleaseAllLatch(transaction, false);
+        return AcquireReadLatch(key, transaction);
+      }
       CHECK(curr_page->IsWriteLatch());
       break;
     }
@@ -200,6 +206,11 @@ BPlusTreePage *BPLUSTREE_TYPE::AcquireWriteLatch(const KeyType &key, Transaction
     LOG(DEBUG) << "Acquired write latch for page: " << curr->GetPageId();
     transaction->AddIntoPageSet(curr_page);
     if (curr->IsLeafPage()) {
+      if (root_id != GetRootPageID()) {
+        // NOTE: If the root chagned when we waiting for the lock, restart from root.
+        ReleaseAllLatch(transaction, true);
+        return AcquireWriteLatch(key, transaction);
+      }
       CHECK(curr_page->IsWriteLatch());
       break;
     }
@@ -234,40 +245,46 @@ bool BPLUSTREE_TYPE::InsertIntoLeaf(const KeyType &key, const ValueType &value, 
     ReleaseAllLatch(transaction, /*is_write*/ false);
     return false;
   }
-  else {
-    if (leaf->GetSize() + 1 > leaf->GetMaxSize()) {
-      // NOTE: Overflow occured, release all read latches, and acquire wirte latch from root
-      LOG(DEBUG) << "Overflow: release all read lateches...";
-      ReleaseAllLatch(transaction, /*is_write*/ false);
+  else if (leaf->GetSize() + 1 > leaf->GetMaxSize()) {
+    // NOTE: Overflow occured, release all read latches, and acquire wirte latch from root
+    LOG(DEBUG) << "Overflow: release all read lateches...";
+    ReleaseAllLatch(transaction, /*is_write*/ false);
 
-      CHECK(transaction->GetPageSet()->empty());
-      CHECK(transaction->GetDeletedPageSet()->empty());
+    CHECK(transaction->GetPageSet()->empty());
+    CHECK(transaction->GetDeletedPageSet()->empty());
 
-      LOG(DEBUG) << "Overflow: acquire write lateches...";
-      curr = AcquireWriteLatch(key, transaction);
-      leaf = reinterpret_cast<LeafPage *>(curr);
-      if (leaf->GetSize() + 1 > leaf->GetMaxSize()) {
-        leaf->Insert(key, value, comparator_);
-        LeafPage *new_leaf = Split(leaf);
-        new_leaf->SetPageType(IndexPageType::LEAF_PAGE);
-        new_leaf->SetMaxSize(leaf_max_size_);
-        LOG(DEBUG) << "Overflow: starting to split #page " << leaf->GetPageId() << " to #new page "
-                  << new_leaf->GetPageId() << " insert " << new_leaf->KeyAt(0);
-        InsertIntoParent(leaf, new_leaf->KeyAt(0), new_leaf, transaction);
-        ReleaseAllLatch(transaction, /*is_write*/ true);
-      }
-      else {
-        // Another thread modified this node while we trying to get write latches.
-        leaf->Insert(key, value, comparator_);
-        ReleaseAllLatch(transaction, /*is_write*/ true);
-      }
+    LOG(DEBUG) << "Overflow: acquire write lateches...";
+    curr = AcquireWriteLatch(key, transaction);
+    leaf = reinterpret_cast<LeafPage *>(curr);
+    if (leaf->Lookup(key, nullptr, comparator_)) {
+      // Trying to insert a duplicate key
+      LOG(DEBUG) << "Find a existing key, returns.";
+      ReleaseAllLatch(transaction, /*is_write*/ true);
+      return false;
+    }
+    else if (leaf->GetSize() + 1 > leaf->GetMaxSize()) {
+      leaf->Insert(key, value, comparator_);
+      LeafPage *new_leaf = Split(leaf);
+      new_leaf->SetPageType(IndexPageType::LEAF_PAGE);
+      new_leaf->SetMaxSize(leaf_max_size_);
+      LOG(DEBUG) << "Overflow: starting to split #page " << leaf->GetPageId() << " to #new page "
+                << new_leaf->GetPageId() << " insert " << new_leaf->KeyAt(0);
+      InsertIntoParent(leaf, new_leaf->KeyAt(0), new_leaf, transaction);
+      ReleaseAllLatch(transaction, /*is_write*/ true);
     }
     else {
+      // Another thread modified this node while we trying to get write latches.
+      LOG(DEBUG) << "Directly insert key: " << key;
       leaf->Insert(key, value, comparator_);
-      ReleaseAllLatch(transaction, /*is_write*/ false);
+      ReleaseAllLatch(transaction, /*is_write*/ true);
     }
-    return true;
   }
+  else {
+    LOG(DEBUG) << "Directly insert key: " << key;
+    leaf->Insert(key, value, comparator_);
+    ReleaseAllLatch(transaction, /*is_write*/ false);
+  }
+  return true;
 }
 
 /*
@@ -387,6 +404,7 @@ void BPLUSTREE_TYPE::Remove(const KeyType &key, Transaction *transaction) {
       std::lock_guard<std::mutex> guard(mutex_);
       transaction->AddIntoDeletedPageSet(leaf->GetPageId());
       root_page_id_ = INVALID_PAGE_ID;
+      UpdateRootPageId();
     }
     ReleaseAllLatch(transaction, /*is_write*/ false);
   }
@@ -397,6 +415,12 @@ void BPLUSTREE_TYPE::Remove(const KeyType &key, Transaction *transaction) {
     LOG(DEBUG) << "Overflow: acquire write lateches...";
     curr = AcquireWriteLatch(key, transaction);
     leaf = reinterpret_cast<LeafPage *>(curr);
+
+    if (!leaf->Lookup(key, /*value*/ nullptr, comparator_)) {
+      ReleaseAllLatch(transaction, /*is_write*/ true);
+      return;
+    }
+
     leaf->RemoveAndDeleteRecord(key, comparator_);
     if (leaf->GetSize() < leaf->GetMinSize()) {
       CoalesceOrRedistribute(leaf, transaction);

@@ -7,8 +7,9 @@
 #include <functional>
 #include <thread>                   // NOLINT
 #include <array>
-#include "b_plus_tree_test_util.h"  // NOLINT
+#include <set>
 
+#include "b_plus_tree_test_util.h"  // NOLINT
 #include "buffer/buffer_pool_manager.h"
 #include "gtest/gtest.h"
 #include "storage/index/b_plus_tree.h"
@@ -28,7 +29,7 @@ class BPlusTreeConcurrentTest : public ::testing::Test {
     key_schema_ = std::unique_ptr<Schema>(ParseCreateStatement("a bigint"));
     comparator_ = IntegerComparator<false>();
     disk_manager_ = std::make_unique<DiskManager>("test.db");
-    bpm_ = std::make_unique<BufferPoolManager>(1000, disk_manager_.get());
+    bpm_ = std::make_unique<BufferPoolManager>(100, disk_manager_.get());
     // int leaf_max_size = RandomInt(3, 10);
     // int internal_max_size = RandomInt(3, 10);
     int leaf_max_size = 3;
@@ -107,13 +108,21 @@ TEST_F(BPlusTreeConcurrentTest, RandomTest) {
   for (uint64_t i = 0; i < 3; ++i) {
     thread_group.push_back(std::thread([&]{ this->InsertHelper(tree_.get(), inserts); }));
   }
-  for (uint64_t i = 0; i < 0; ++i) {
+  for (uint64_t i = 0; i < 1; ++i) {
     thread_group.push_back(std::thread([&]{ this->DeleteHelper(tree_.get(), inserts); }));
   }
   for (uint64_t i = 0; i < thread_group.size(); ++i) {
     thread_group[i].join();
   }
   tree_->Draw(bpm_.get(), "tree.dot");
+
+  std::vector<int> scan;
+  for (auto it = tree_->begin(); it != tree_->end(); ++it) {
+    scan.push_back(it->first);
+  }
+  auto sorted = scan;
+  std::sort(sorted.begin(), sorted.end());
+  EXPECT_EQ(scan, sorted);
 }
 
 
