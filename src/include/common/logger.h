@@ -312,7 +312,8 @@ class LogMessage {
     }
     else {
       // otherwise, print the whole line
-      return msg;
+      return "XXXXXXXXXXX";
+      // return std::string(msg);
     }
   }
 
@@ -351,7 +352,7 @@ class LogMessageFatal : public LogMessage {
       : LogMessage(file, line, prefix) {}
 
   ~LogMessageFatal() {
-    Stacktrace();
+    // Stacktrace(); fix this
     Flush();
     abort();
   }
