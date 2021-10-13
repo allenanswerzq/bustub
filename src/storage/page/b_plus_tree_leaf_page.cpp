@@ -101,6 +101,8 @@ const MappingType &B_PLUS_TREE_LEAF_PAGE_TYPE::GetItem(int index) { return array
  */
 INDEX_TEMPLATE_ARGUMENTS
 int B_PLUS_TREE_LEAF_PAGE_TYPE::Insert(const KeyType &key, const ValueType &value, const KeyComparator &comparator) {
+  std::lock_guard<std::mutex> guard(mutex_);
+  LOG(DEBUG) << "INSERT: " << GetPageId()  << " " << key;
   if (array_.empty()) {
     array_.push_back({key, value});
   } else {
@@ -127,9 +129,30 @@ int B_PLUS_TREE_LEAF_PAGE_TYPE::Insert(const KeyType &key, const ValueType &valu
  *****************************************************************************/
 INDEX_TEMPLATE_ARGUMENTS
 void B_PLUS_TREE_LEAF_PAGE_TYPE::SetArray(const std::vector<MappingType> &array) {
+  // std::lock_guard<std::mutex> guard(mutex_);
   CHECK(array_.empty());
   array_ = array;
   SetSize(array_.size());
+}
+
+
+INDEX_TEMPLATE_ARGUMENTS
+std::string B_PLUS_TREE_LEAF_PAGE_TYPE::ToString() const {
+  std::vector<MappingType> array_copy;
+  {
+    std::lock_guard<std::mutex> guard(mutex_);
+    array_copy = array_;
+  }
+  std::ostringstream oss;
+  oss << "[ ";
+  for (size_t i = 0; i < array_copy.size(); i++) {
+    if (i > 0) {
+      oss << ",";
+    }
+    oss << array_copy[i].first << " -> " << array_copy[i].second;
+  }
+  oss << " ]";
+  return oss.str();
 }
 
 INDEX_TEMPLATE_ARGUMENTS
@@ -146,6 +169,7 @@ void B_PLUS_TREE_LEAF_PAGE_TYPE::DebugOutput() {
  */
 INDEX_TEMPLATE_ARGUMENTS
 void B_PLUS_TREE_LEAF_PAGE_TYPE::MoveHalfTo(BPlusTreeLeafPage *recipient) {
+  std::lock_guard<std::mutex> guard(mutex_);
   CHECK(recipient->GetSize() == 0) << "Expected recipient is empty.";
   // CHECK(GetSize() == GetMaxSize());
 
@@ -183,6 +207,7 @@ void B_PLUS_TREE_LEAF_PAGE_TYPE::CopyNFrom(MappingType *items, int size) {}
  */
 INDEX_TEMPLATE_ARGUMENTS
 bool B_PLUS_TREE_LEAF_PAGE_TYPE::Lookup(const KeyType &key, ValueType *value, const KeyComparator &comparator) const {
+  std::lock_guard<std::mutex> guard(mutex_);
   for (size_t i = 0; i < array_.size(); i++) {
     if (comparator(KeyAt(i), key) == 0) {
       if (value) {
@@ -205,7 +230,8 @@ bool B_PLUS_TREE_LEAF_PAGE_TYPE::Lookup(const KeyType &key, ValueType *value, co
  */
 INDEX_TEMPLATE_ARGUMENTS
 int B_PLUS_TREE_LEAF_PAGE_TYPE::RemoveAndDeleteRecord(const KeyType &key, const KeyComparator &comparator) {
-  LOG(DEBUG) << "Removing " << key;
+  std::lock_guard<std::mutex> guard(mutex_);
+  LOG(DEBUG) << "REMOVE " << GetPageId() << " " << key;
   for (size_t i = 0; i < array_.size(); i++) {
     if (comparator(KeyAt(i), key) == 0) {
       array_.erase(array_.begin() + i);
@@ -226,6 +252,7 @@ int B_PLUS_TREE_LEAF_PAGE_TYPE::RemoveAndDeleteRecord(const KeyType &key, const 
 INDEX_TEMPLATE_ARGUMENTS
 void B_PLUS_TREE_LEAF_PAGE_TYPE::MoveAllTo(BPlusTreeLeafPage *recipient, const KeyType & /*unused*/,
                                            BufferPoolManager * /*unused*/) {
+  std::lock_guard<std::mutex> guard(mutex_);
   for (size_t i = 0; i < array_.size(); i++) {
     recipient->CopyLastFrom(array_[i]);
   }
@@ -244,6 +271,7 @@ void B_PLUS_TREE_LEAF_PAGE_TYPE::MoveAllTo(BPlusTreeLeafPage *recipient, const K
 INDEX_TEMPLATE_ARGUMENTS
 void B_PLUS_TREE_LEAF_PAGE_TYPE::MoveFirstToEndOf(BPlusTreeLeafPage *recipient, const KeyType & /*middle_key*/,
                                                   BufferPoolManager *buffer_pool_manager) {
+  std::lock_guard<std::mutex> guard(mutex_);
   CHECK(array_.size() && recipient);
   recipient->CopyLastFrom(array_[0]);
   array_.erase(array_.begin());
@@ -265,6 +293,7 @@ void B_PLUS_TREE_LEAF_PAGE_TYPE::CopyLastFrom(const MappingType &item) {
 INDEX_TEMPLATE_ARGUMENTS
 void B_PLUS_TREE_LEAF_PAGE_TYPE::MoveLastToFrontOf(BPlusTreeLeafPage *recipient, const KeyType & /*unused*/,
                                                    BufferPoolManager * /*unused*/) {
+  std::lock_guard<std::mutex> guard(mutex_);
   CHECK(array_.size() && recipient);
   recipient->CopyFirstFrom(array_.back());
   array_.pop_back();
@@ -279,6 +308,8 @@ void B_PLUS_TREE_LEAF_PAGE_TYPE::CopyFirstFrom(const MappingType &item) {
   array_.insert(array_.begin(), item);
   SetSize(array_.size());
 }
+
+
 
 template class BPlusTreeLeafPage<GenericKey<4>, RID, GenericComparator<4>>;
 template class BPlusTreeLeafPage<GenericKey<8>, RID, GenericComparator<8>>;

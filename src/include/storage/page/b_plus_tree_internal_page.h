@@ -11,6 +11,7 @@
 #pragma once
 
 #include <queue>
+#include <mutex>
 
 #include "storage/page/b_plus_tree_page.h"
 
@@ -60,11 +61,14 @@ class BPlusTreeInternalPage : public BPlusTreePage {
                          BufferPoolManager *buffer_pool_manager);
 
   void DebugOutput();
+  std::string ToString() const;
 
  private:
   void CopyNFrom(MappingType *items, int size, BufferPoolManager *buffer_pool_manager);
   void CopyLastFrom(const MappingType &pair, BufferPoolManager *buffer_pool_manager);
   void CopyFirstFrom(const MappingType &pair, BufferPoolManager *buffer_pool_manager);
+
+  mutable std::mutex mutex_;
 
   // Internal store
   std::vector<std::pair<KeyType, ValueType>> array_;

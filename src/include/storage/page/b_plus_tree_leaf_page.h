@@ -12,6 +12,7 @@
 
 #include <utility>
 #include <vector>
+#include <mutex>
 
 #include "storage/page/b_plus_tree_page.h"
 
@@ -70,12 +71,15 @@ class BPlusTreeLeafPage : public BPlusTreePage {
   void MoveLastToFrontOf(BPlusTreeLeafPage *recipient, const KeyType &middle_key,
                          BufferPoolManager *buffer_pool_manager);
   void DebugOutput();
+  std::string ToString() const;
 
  private:
   void CopyNFrom(MappingType *items, int size);
   void CopyLastFrom(const MappingType &item);
   void CopyFirstFrom(const MappingType &item);
   page_id_t next_page_id_;
+
+  mutable std::mutex mutex_;
 
   std::vector<MappingType> array_;
 };

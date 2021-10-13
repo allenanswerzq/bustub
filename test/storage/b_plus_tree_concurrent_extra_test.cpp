@@ -101,14 +101,14 @@ TEST_F(BPlusTreeConcurrentTest, DISABLED_BasicTest) {
 TEST_F(BPlusTreeConcurrentTest, RandomTest) {
   std::vector<std::array<int, 2>> inserts;
   for (int i = 0; i < 100; i++) {
-    int key = RandomInt(0, 10000);
+    int key = RandomInt(0, 100000000);
     inserts.push_back({key, i});
   }
   std::vector<std::thread> thread_group;
   for (uint64_t i = 0; i < 3; ++i) {
     thread_group.push_back(std::thread([&]{ this->InsertHelper(tree_.get(), inserts); }));
   }
-  for (uint64_t i = 0; i < 1; ++i) {
+  for (uint64_t i = 0; i < 3; ++i) {
     thread_group.push_back(std::thread([&]{ this->DeleteHelper(tree_.get(), inserts); }));
   }
   for (uint64_t i = 0; i < thread_group.size(); ++i) {

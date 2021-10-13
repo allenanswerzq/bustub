@@ -76,6 +76,7 @@ ValueType B_PLUS_TREE_INTERNAL_PAGE_TYPE::ValueAt(int index) const { return arra
  */
 INDEX_TEMPLATE_ARGUMENTS
 ValueType B_PLUS_TREE_INTERNAL_PAGE_TYPE::Lookup(const KeyType &key, const KeyComparator &comparator) const {
+  // std::lock_guard<std::mutex> guard(mutex_);
   for (size_t i = 1; i < array_.size(); i++) {
     // k[i] <= key < k[i + 1]
     if (comparator(key, KeyAt(i)) < 0) {
@@ -97,6 +98,7 @@ ValueType B_PLUS_TREE_INTERNAL_PAGE_TYPE::Lookup(const KeyType &key, const KeyCo
 INDEX_TEMPLATE_ARGUMENTS
 void B_PLUS_TREE_INTERNAL_PAGE_TYPE::PopulateNewRoot(const ValueType &old_value, const KeyType &new_key,
                                                      const ValueType &new_value) {
+  // std::lock_guard<std::mutex> guard(mutex_);
   CHECK(array_.empty());
   // TODO: check this
   array_.push_back({/*dummy*/ new_key, old_value});
@@ -106,16 +108,30 @@ void B_PLUS_TREE_INTERNAL_PAGE_TYPE::PopulateNewRoot(const ValueType &old_value,
 
 INDEX_TEMPLATE_ARGUMENTS
 void B_PLUS_TREE_INTERNAL_PAGE_TYPE::DebugOutput() {
-  LOG(DEBUG) << ">>>>>>>>>>>>> internal page " << GetPageId() << " has size: " << array_.size();
-  for (size_t i = 0; i < array_.size(); i++) {
-    LOG(DEBUG) << i << " "
-               << "key: " << KeyAt(i) << " value: " << ValueAt(i);
-  }
+  LOG(DEBUG) << ToString();
 }
+
+INDEX_TEMPLATE_ARGUMENTS
+std::string B_PLUS_TREE_INTERNAL_PAGE_TYPE::ToString() const {
+  std::lock_guard<std::mutex> guard(mutex_);
+  std::ostringstream oss;
+  oss << "[ ";
+  for (size_t i = 0; i < array_.size(); i++) {
+    if (i > 0) {
+      oss << ",";
+    }
+    oss << KeyAt(i) << " -> " << ValueAt(i);
+  }
+  oss << " ]";
+  return oss.str();
+}
+
 
 INDEX_TEMPLATE_ARGUMENTS
 int B_PLUS_TREE_INTERNAL_PAGE_TYPE::Insert(const KeyType &key, const ValueType &value,
                                            const KeyComparator &comparator) {
+  // std::lock_guard<std::mutex> guard(mutex_);
+  LOG(DEBUG) << "INSERT: " << GetPageId()  << " " << key;
   if (array_.empty()) {
     array_.push_back({/*invaild*/ key, value});
     array_.push_back({key, value});
@@ -145,6 +161,7 @@ int B_PLUS_TREE_INTERNAL_PAGE_TYPE::Insert(const KeyType &key, const ValueType &
 INDEX_TEMPLATE_ARGUMENTS
 int B_PLUS_TREE_INTERNAL_PAGE_TYPE::InsertNodeAfter(const ValueType &old_value, const KeyType &new_key,
                                                     const ValueType &new_value) {
+  // // std::lock_guard<std::mutex> guard(mutex_);
   int index = ValueIndex(old_value);
   array_.insert(array_.begin() + index + 1, {new_key, new_value});
   return array_.size();
@@ -155,6 +172,7 @@ int B_PLUS_TREE_INTERNAL_PAGE_TYPE::InsertNodeAfter(const ValueType &old_value, 
  *****************************************************************************/
 INDEX_TEMPLATE_ARGUMENTS
 void B_PLUS_TREE_INTERNAL_PAGE_TYPE::SetArray(const std::vector<MappingType> &array) {
+  // // std::lock_guard<std::mutex> guard(mutex_);
   CHECK(array_.empty());
   array_ = array;
   SetSize(array_.size());
@@ -165,6 +183,7 @@ void B_PLUS_TREE_INTERNAL_PAGE_TYPE::SetArray(const std::vector<MappingType> &ar
  */
 INDEX_TEMPLATE_ARGUMENTS
 void B_PLUS_TREE_INTERNAL_PAGE_TYPE::MoveHalfTo(BPlusTreeInternalPage *recipient) {
+  // std::lock_guard<std::mutex> guard(mutex_);
   CHECK(recipient->GetSize() == 0) << "Expected recipient is empty.";
 
   size_t half = GetSize() / 2;
@@ -208,6 +227,7 @@ void B_PLUS_TREE_INTERNAL_PAGE_TYPE::Remove(int index) {
  */
 INDEX_TEMPLATE_ARGUMENTS
 ValueType B_PLUS_TREE_INTERNAL_PAGE_TYPE::RemoveAndReturnOnlyChild() {
+  // std::lock_guard<std::mutex> guard(mutex_);
   CHECK(array_.size() == 1);
   ValueType ans = ValueAt(0);
   array_.clear();
@@ -227,6 +247,7 @@ ValueType B_PLUS_TREE_INTERNAL_PAGE_TYPE::RemoveAndReturnOnlyChild() {
 INDEX_TEMPLATE_ARGUMENTS
 void B_PLUS_TREE_INTERNAL_PAGE_TYPE::MoveAllTo(BPlusTreeInternalPage *recipient, const KeyType &middle_key,
                                                BufferPoolManager *buffer_pool_manager) {
+  // std::lock_guard<std::mutex> guard(mutex_);
   CHECK(!IsRootPage() && recipient);
   CHECK(recipient->GetSize() >= 1 && GetSize() >= 1);
 
@@ -253,6 +274,7 @@ void B_PLUS_TREE_INTERNAL_PAGE_TYPE::MoveAllTo(BPlusTreeInternalPage *recipient,
 INDEX_TEMPLATE_ARGUMENTS
 void B_PLUS_TREE_INTERNAL_PAGE_TYPE::MoveFirstToEndOf(BPlusTreeInternalPage *recipient, const KeyType &middle_key,
                                                       BufferPoolManager *buffer_pool_manager) {
+  // std::lock_guard<std::mutex> guard(mutex_);
   CHECK(array_.size());
   // TODO: write more comments
   recipient->CopyLastFrom(array_[0], buffer_pool_manager);
@@ -296,6 +318,7 @@ void B_PLUS_TREE_INTERNAL_PAGE_TYPE::CopyLastFrom(const MappingType &pair, Buffe
 INDEX_TEMPLATE_ARGUMENTS
 void B_PLUS_TREE_INTERNAL_PAGE_TYPE::MoveLastToFrontOf(BPlusTreeInternalPage *recipient, const KeyType &middle_key,
                                                        BufferPoolManager *buffer_pool_manager) {
+  // std::lock_guard<std::mutex> guard(mutex_);
   CHECK(array_.size());
   CHECK(!IsRootPage());
 
