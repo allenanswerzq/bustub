@@ -281,13 +281,13 @@ void B_PLUS_TREE_INTERNAL_PAGE_TYPE::MoveFirstToEndOf(BPlusTreeInternalPage *rec
   recipient->SetKeyAt(recipient->GetSize() - 1, middle_key);
   Remove(0);
 
-  page_id_t parent_id = GetParentPageId();
-  BPlusTreeInternalPage *parent =
-      reinterpret_cast<BPlusTreeInternalPage *>(buffer_pool_manager->FetchPage(parent_id)->GetData());
-  int index = parent->ValueIndex(GetPageId());
-  // TODO: DOULBE CHECK
-  parent->SetKeyAt(index, KeyAt(0));
-  buffer_pool_manager->UnpinPage(parent_id, true);
+  // page_id_t parent_id = GetParentPageId();
+  // BPlusTreeInternalPage *parent =
+  //     reinterpret_cast<BPlusTreeInternalPage *>(buffer_pool_manager->FetchPage(parent_id)->GetData());
+  // int index = parent->ValueIndex(GetPageId());
+  // // TODO: DOULBE CHECK
+  // parent->SetKeyAt(index, KeyAt(0));
+  // buffer_pool_manager->UnpinPage(parent_id, true);
 }
 
 /* Append an entry at the end.
@@ -327,13 +327,13 @@ void B_PLUS_TREE_INTERNAL_PAGE_TYPE::MoveLastToFrontOf(BPlusTreeInternalPage *re
   recipient->CopyFirstFrom(array_[last], buffer_pool_manager);
   Remove(last);
 
-  page_id_t parent_id = GetParentPageId();
-  BPlusTreeInternalPage *parent =
-      reinterpret_cast<BPlusTreeInternalPage *>(buffer_pool_manager->FetchPage(parent_id)->GetData());
-  int index = parent->ValueIndex(GetPageId());
-  // TODO: DOULBE CHECK
-  parent->SetKeyAt(index, KeyAt(0));
-  buffer_pool_manager->UnpinPage(parent_id, true);
+  // page_id_t parent_id = GetParentPageId();
+  // BPlusTreeInternalPage *parent =
+  //     reinterpret_cast<BPlusTreeInternalPage *>(buffer_pool_manager->FetchPage(parent_id)->GetData());
+  // int index = parent->ValueIndex(GetPageId());
+  // // TODO: DOULBE CHECK
+  // parent->SetKeyAt(index, KeyAt(0));
+  // buffer_pool_manager->UnpinPage(parent_id, true);
 }
 
 /* Append an entry at the beginning.

@@ -550,20 +550,25 @@ bool BPLUSTREE_TYPE::CoalesceOrRedistribute(N *node, Transaction *transaction) {
   CHECK(left || right) << "Expected either left or right should exist.";
 
   if (left && left->GetSize() > left->GetMinSize()) {
+    // TODO: write more comments, some of these are very subtle, you can easiler get it wrong.
     // Left node has more than half of the children, borrow one from it
     KeyType middle_key = parent->KeyAt(node_index);
     LOG(DEBUG) << "Moving last to front from: " << left->GetPageId() << " to " << node->GetPageId();
+    int m = left->GetSize();
+    CHECK(m >= 1) << m;
+    auto key = left->KeyAt(m - 1);
     left->MoveLastToFrontOf(node, middle_key, buffer_pool_manager_);
-    parent->SetKeyAt(node_index, node->KeyAt(0));
-    parent->SetKeyAt(node_index - 1, left->KeyAt(0));
+    parent->SetKeyAt(node_index, key);
     LOG(DEBUG) << "After Moving parent became: " << parent->ToString();
   }
   else if (right && right->GetSize() > right->GetMinSize()) {
     KeyType middle_key = parent->KeyAt(node_index + 1);
     LOG(DEBUG) << "Moving first to end from: " << right->GetPageId() << " to " << node->GetPageId();
+    int m = right->GetSize();
+    CHECK(m >= 1) << m;
+    auto key = right->KeyAt(1);
     right->MoveFirstToEndOf(node, middle_key, buffer_pool_manager_);
-    parent->SetKeyAt(node_index, node->KeyAt(0));
-    parent->SetKeyAt(node_index + 1, right->KeyAt(0));
+    parent->SetKeyAt(node_index + 1, key);
     LOG(DEBUG) << "After Moving parent became: " << parent->ToString();
   }
   else if (left) {

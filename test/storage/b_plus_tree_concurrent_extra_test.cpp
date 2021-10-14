@@ -29,11 +29,9 @@ class BPlusTreeConcurrentTest : public ::testing::Test {
     key_schema_ = std::unique_ptr<Schema>(ParseCreateStatement("a bigint"));
     comparator_ = IntegerComparator<false>();
     disk_manager_ = std::make_unique<DiskManager>("test.db");
-    bpm_ = std::make_unique<BufferPoolManager>(100, disk_manager_.get());
-    // int leaf_max_size = RandomInt(3, 10);
-    // int internal_max_size = RandomInt(3, 10);
-    int leaf_max_size = 3;
-    int internal_max_size = 3;
+    bpm_ = std::make_unique<BufferPoolManager>(1024, disk_manager_.get());
+    int leaf_max_size = RandomInt(3, 10);
+    int internal_max_size = RandomInt(3, 10);
     tree_ = std::make_unique<Tree>("test", bpm_.get(), comparator_, leaf_max_size, internal_max_size);
 
     // create and fetch header_page
@@ -100,7 +98,7 @@ TEST_F(BPlusTreeConcurrentTest, DISABLED_BasicTest) {
 
 TEST_F(BPlusTreeConcurrentTest, RandomTest) {
   std::vector<std::array<int, 2>> inserts;
-  for (int i = 0; i < 100; i++) {
+  for (int i = 0; i < 1000; i++) {
     int key = RandomInt(0, 100000000);
     inserts.push_back({key, i});
   }
@@ -114,7 +112,7 @@ TEST_F(BPlusTreeConcurrentTest, RandomTest) {
   for (uint64_t i = 0; i < thread_group.size(); ++i) {
     thread_group[i].join();
   }
-  tree_->Draw(bpm_.get(), "tree.dot");
+  // tree_->Draw(bpm_.get(), "tree.dot");
 
   std::vector<int> scan;
   for (auto it = tree_->begin(); it != tree_->end(); ++it) {
