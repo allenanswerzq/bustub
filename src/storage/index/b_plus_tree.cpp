@@ -176,13 +176,13 @@ BPlusTreePage *BPLUSTREE_TYPE::AcquireReadLatch(const KeyType &key, Transaction 
       curr_page->RLatch();
       // LOG(DEBUG) << "Acquired read latch " << curr->GetPageId();
     }
-    (void)parent_page;
-    // if (parent_page) {
-    //   LOG(DEBUG) << "Releasing read latch " << parent_page->GetPageId();
-    //   parent_page->RUnlatch();
-    //   LOG(DEBUG) << "Released read latch " << parent_page->GetPageId();
-    //   transaction->RemoveLastFromPageSet();
-    // }
+    // (void)parent_page;
+    if (parent_page) {
+      LOG(DEBUG) << "Releasing read latch " << parent_page->GetPageId();
+      parent_page->RUnlatch();
+      LOG(DEBUG) << "Released read latch " << parent_page->GetPageId();
+      transaction->RemoveLastFromPageSet();
+    }
     transaction->AddIntoPageSet(curr_page);
     if (root_id != GetRootPageID()) {
       // NOTE: If the root chagned when we waiting for the lock, restart from root.
