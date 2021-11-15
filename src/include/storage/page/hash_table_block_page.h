@@ -15,6 +15,7 @@
 #include <atomic>
 #include <utility>
 #include <vector>
+#include <memory>
 
 #include "common/config.h"
 #include "storage/index/int_comparator.h"

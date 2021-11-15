@@ -36,6 +36,7 @@ namespace bustub {
 template <typename KeyType, typename ValueType, typename KeyComparator>
 class LinearProbeHashTable : public HashTable<KeyType, ValueType, KeyComparator> {
  public:
+  using HashBlockPage = HashTableBlockPage<KeyType, ValueType, KeyComparator>;
   /**
    * Creates a new LinearProbeHashTable
    *
@@ -74,6 +75,9 @@ class LinearProbeHashTable : public HashTable<KeyType, ValueType, KeyComparator>
    */
   bool GetValue(Transaction *transaction, const KeyType &key, std::vector<ValueType> *result) override;
 
+
+  HashBlockPage * GetPage(const KeyType &key, int* bucket_id, int* block_page_id);
+
   /**
    * Resizes the table to at least twice the initial size provided.
    * @param initial_size the initial size of the hash table
@@ -87,10 +91,16 @@ class LinearProbeHashTable : public HashTable<KeyType, ValueType, KeyComparator>
   size_t GetSize();
 
  private:
+  void UpdateHeaderPageId(int insert_record = 0);
+
   // member variable
+  const std::string index_name_;
   page_id_t header_page_id_;
   BufferPoolManager *buffer_pool_manager_;
   KeyComparator comparator_;
+  HashTableHeaderPage* header_page_;
+  constexpr static int kDefaultBlockSize_ = 2;
+  int block_size_;
 
   // Readers includes inserts and removes, writer is only resize
   ReaderWriterLatch table_latch_;

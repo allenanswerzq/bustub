@@ -16,6 +16,7 @@
 
 #include "storage/table/tuple.h"
 #include "type/value.h"
+#include "fmt/format.h"
 
 namespace bustub {
 
@@ -116,4 +117,18 @@ class IntegerComparator {
     }
   }
 };
+
+
 }  // namespace bustub
+
+template <size_t KeySize> struct fmt::formatter<bustub::GenericKey<KeySize>> {
+  constexpr auto parse(format_parse_context& ctx) -> decltype(ctx.begin()) {
+    return ctx.begin();
+  }
+
+  template <typename FormatContext>
+  auto format(const bustub::GenericKey<KeySize>& p, FormatContext& ctx) -> decltype(ctx.out()) {
+    // ctx.out() is an output iterator to write to.
+    return format_to(ctx.out(), "{}", p.ToString());
+  }
+};
