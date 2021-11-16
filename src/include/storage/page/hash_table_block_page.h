@@ -95,6 +95,7 @@ class HashTableBlockPage {
   bool IsReadable(slot_offset_t bucket_ind) const;
 
  private:
+  // (0,0) (0,1) (illegal), (1, 0) (1, 1)
   std::atomic_char occupied_[(BLOCK_ARRAY_SIZE - 1) / 8 + 1];
 
   // 0 if tombstone/brand new (never occupied), 1 otherwise.

@@ -76,7 +76,7 @@ class LinearProbeHashTable : public HashTable<KeyType, ValueType, KeyComparator>
   bool GetValue(Transaction *transaction, const KeyType &key, std::vector<ValueType> *result) override;
 
 
-  HashBlockPage * GetPage(const KeyType &key, int* bucket_id, int* block_page_id);
+  int GetPage(const KeyType &key, int& bucket_id, int& block_page_id);
 
   /**
    * Resizes the table to at least twice the initial size provided.

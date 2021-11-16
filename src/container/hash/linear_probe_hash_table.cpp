@@ -47,6 +47,7 @@ HASH_TABLE_TYPE::LinearProbeHashTable(const std::string &name, BufferPoolManager
       header_page_->AddBlockPageId(block_page_id);
       buffer_pool_manager_->UnpinPage(block_page_id, /*is_dirty*/true);
     }
+    header_page_->SetSize(kDefaultBlockSize_);
   }
   block_size_ = header_page_->GetSize();
 }
@@ -56,39 +57,76 @@ HASH_TABLE_TYPE::LinearProbeHashTable(const std::string &name, BufferPoolManager
  *****************************************************************************/
 template <typename KeyType, typename ValueType, typename KeyComparator>
 bool HASH_TABLE_TYPE::GetValue(Transaction *transaction, const KeyType &key, std::vector<ValueType> *result) {
+  int bucket_id;
+  int block_page_id;
+  int block_index = GetPage(key, bucket_id, block_page_id);
+  int curr_block = block_index;
+  do {
+    Page * page =  buffer_pool_manager_->FetchPage(block_page_id);
+    HashBlockPage * hash_block_page =  reinterpret_cast<HashBlockPage*>(page->GetData());
+    for (size_t i = bucket_id; i < BLOCK_ARRAY_SIZE; i++) {
+      if (hash_block_page->IsReadable(i)) {
+        if (result && comparator_(hash_block_page->KeyAt(i), key) == 0) {
+          result->push_back(hash_block_page->ValueAt(i));
+        }
+      }
+      else {
+        buffer_pool_manager_->UnpinPage(block_page_id, /*is_dirty*/false);
+        return false;
+      }
+    }
+    buffer_pool_manager_->UnpinPage(block_page_id, /*is_dirty*/false);
+    curr_block = (curr_block + 1) % block_size_;
+    bucket_id = 0;
+    block_page_id = header_page_->GetBlockPageId(curr_block);
+  } while (curr_block != block_index);
   return false;
 }
+
 /*****************************************************************************
  * INSERTION
  *****************************************************************************/
 template <typename KeyType, typename ValueType, typename KeyComparator>
 bool HASH_TABLE_TYPE::Insert(Transaction *transaction, const KeyType &key, const ValueType &value) {
-  fmt::print("Inserting {}\n", key);
+  fmt::print("Hash inserting {}\n", key);
+  table_latch_.RLock();
   int bucket_id;
   int block_page_id;
-  HashBlockPage * hash_block_page = GetPage(key, &bucket_id, &block_page_id);
-  // Inserts and remove can occur concurrently.
-  table_latch_.RLock();
-  bool res = hash_block_page->Insert(bucket_id, key, value);
+  int block_index = GetPage(key, bucket_id, block_page_id);
+  int curr_block = block_index;
+  bool succ = false;
+  do {
+    Page * page =  buffer_pool_manager_->FetchPage(block_page_id);
+    HashBlockPage * hash_block_page =  reinterpret_cast<HashBlockPage*>(page->GetData());
+    for (size_t i = bucket_id; i < BLOCK_ARRAY_SIZE; i++) {
+      if (hash_block_page->IsOccupied(i)) {
+        if (comparator_(hash_block_page->KeyAt(i), key) == 0 && hash_block_page->ValueAt(i) == value) {
+          buffer_pool_manager_->UnpinPage(block_page_id, /*is_dirty*/false);
+          table_latch_.RUnlock();
+          return false;
+        }
+      }
+      else {
+        CHECK(hash_block_page->Insert(bucket_id, key, value));
+        succ = true;
+      }
+    }
+    buffer_pool_manager_->UnpinPage(block_page_id, /*is_dirty*/false);
+    curr_block = (curr_block + 1) % block_size_;
+    bucket_id = 0;
+    block_page_id = header_page_->GetBlockPageId(curr_block);
+  } while (!succ && curr_block != block_index);
   table_latch_.RUnlock();
-  buffer_pool_manager_ ->UnpinPage(block_page_id, /*is_dirty*/true);
-  return res;
+  return true;
 }
 
 template <typename KeyType, typename ValueType, typename KeyComparator>
-HashTableBlockPage<KeyType, ValueType, KeyComparator> *
-HASH_TABLE_TYPE::GetPage(const KeyType &key, int* bucket_id, int * block_page_id) {
+int HASH_TABLE_TYPE::GetPage(const KeyType &key, int& bucket_index, int& block_page_id) {
   uint64_t h = hash_fn_.GetHash(key);
   int block_index = (h / BLOCK_ARRAY_SIZE) % block_size_;
-  page_id_t page_id = header_page_->GetBlockPageId(block_index);
-  if (bucket_id) {
-    *bucket_id = h % BLOCK_ARRAY_SIZE;
-  }
-  if (block_page_id) {
-    *block_page_id = page_id;
-  }
-  Page * page =  buffer_pool_manager_->FetchPage(page_id);
-  return reinterpret_cast<HashBlockPage*>(page->GetData());
+  block_page_id = header_page_->GetBlockPageId(block_index);
+  bucket_index = h % BLOCK_ARRAY_SIZE;
+  return block_index;
 }
 
 /*****************************************************************************

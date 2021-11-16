@@ -44,6 +44,7 @@ bool HASH_TABLE_BLOCK_TYPE::Insert(slot_offset_t bucket_ind, const KeyType &key,
 
 template <typename KeyType, typename ValueType, typename KeyComparator>
 void HASH_TABLE_BLOCK_TYPE::Remove(slot_offset_t bucket_ind) {
+  readable_[bucket_ind] = 0;
 }
 
 template <typename KeyType, typename ValueType, typename KeyComparator>

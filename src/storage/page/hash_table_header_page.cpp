@@ -36,11 +36,11 @@ void HashTableHeaderPage::SetLSN(lsn_t lsn) {
 }
 
 void HashTableHeaderPage::AddBlockPageId(page_id_t page_id) {
-    block_page_ids_[page_id_++] = page_id;
+    block_page_ids_[next_ind_++] = page_id;
 }
 
 size_t HashTableHeaderPage::NumBlocks() {
-    return page_id_;
+    return next_ind_;
 }
 
 void HashTableHeaderPage::SetSize(size_t size) {
