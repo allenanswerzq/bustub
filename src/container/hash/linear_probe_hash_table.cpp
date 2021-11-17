@@ -65,14 +65,22 @@ bool HASH_TABLE_TYPE::GetValue(Transaction *transaction, const KeyType &key, std
     Page * page =  buffer_pool_manager_->FetchPage(block_page_id);
     HashBlockPage * hash_block_page =  reinterpret_cast<HashBlockPage*>(page->GetData());
     for (size_t i = bucket_id; i < BLOCK_ARRAY_SIZE; i++) {
-      if (hash_block_page->IsReadable(i)) {
+      bool occupied = hash_block_page->IsOccupied(i);
+      bool readable = hash_block_page->IsReadable(i);
+      if (occupied && readable) {
         if (result && comparator_(hash_block_page->KeyAt(i), key) == 0) {
           result->push_back(hash_block_page->ValueAt(i));
         }
       }
-      else {
+      else if (occupied && !readable) {
+        // tombstore place
+      }
+      else if (!occupied && !readable) {
         buffer_pool_manager_->UnpinPage(block_page_id, /*is_dirty*/false);
         return false;
+      }
+      else {
+        CHECK(false) << "Should not happen.";
       }
     }
     buffer_pool_manager_->UnpinPage(block_page_id, /*is_dirty*/false);
@@ -99,16 +107,25 @@ bool HASH_TABLE_TYPE::Insert(Transaction *transaction, const KeyType &key, const
     Page * page =  buffer_pool_manager_->FetchPage(block_page_id);
     HashBlockPage * hash_block_page =  reinterpret_cast<HashBlockPage*>(page->GetData());
     for (size_t i = bucket_id; i < BLOCK_ARRAY_SIZE; i++) {
-      if (hash_block_page->IsOccupied(i)) {
+      bool occupied = hash_block_page->IsOccupied(i);
+      bool readable = hash_block_page->IsReadable(i);
+      if (occupied && readable) {
         if (comparator_(hash_block_page->KeyAt(i), key) == 0 && hash_block_page->ValueAt(i) == value) {
           buffer_pool_manager_->UnpinPage(block_page_id, /*is_dirty*/false);
           table_latch_.RUnlock();
+          fmt::print("Key value pair already exist. {} {}\n", key, value);
           return false;
         }
       }
+      else if ((occupied && !readable) || (!occupied && !readable)) {
+        CHECK(hash_block_page->Insert(i, key, value));
+        fmt::print("Succ inserted key {}\n", key);
+        buffer_pool_manager_->UnpinPage(block_page_id, /*is_dirty*/true);
+        table_latch_.RUnlock();
+        return true;
+      }
       else {
-        CHECK(hash_block_page->Insert(bucket_id, key, value));
-        succ = true;
+        CHECK(false) << "Should not happen";
       }
     }
     buffer_pool_manager_->UnpinPage(block_page_id, /*is_dirty*/false);
@@ -117,7 +134,7 @@ bool HASH_TABLE_TYPE::Insert(Transaction *transaction, const KeyType &key, const
     block_page_id = header_page_->GetBlockPageId(curr_block);
   } while (!succ && curr_block != block_index);
   table_latch_.RUnlock();
-  return true;
+  return false;
 }
 
 template <typename KeyType, typename ValueType, typename KeyComparator>
@@ -181,7 +198,6 @@ void HASH_TABLE_TYPE::UpdateHeaderPageId(int insert_record) {
 
 
 template class LinearProbeHashTable<int, int, IntComparator>;
-
 template class LinearProbeHashTable<GenericKey<4>, RID, GenericComparator<4>>;
 template class LinearProbeHashTable<GenericKey<8>, RID, GenericComparator<8>>;
 template class LinearProbeHashTable<GenericKey<16>, RID, GenericComparator<16>>;

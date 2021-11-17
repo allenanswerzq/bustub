@@ -15,6 +15,7 @@
 #include <cstdint>
 #include <sstream>
 #include <string>
+#include "fmt/format.h"
 
 #include "common/config.h"
 
@@ -74,3 +75,20 @@ struct hash<bustub::RID> {
   size_t operator()(const bustub::RID &obj) const { return hash<int64_t>()(obj.Get()); }
 };
 }  // namespace std
+
+
+namespace fmt
+{
+template <> struct formatter<bustub::RID> {
+  constexpr auto parse(format_parse_context& ctx) -> decltype(ctx.begin()) {
+    return ctx.begin();
+  }
+
+  template <typename FormatContext>
+  auto format(const bustub::RID& p, FormatContext& ctx) -> decltype(ctx.out()) {
+    // ctx.out() is an output iterator to write to.
+    return format_to(ctx.out(), "{}", p.ToString());
+  }
+};
+
+} // namespace fmt
