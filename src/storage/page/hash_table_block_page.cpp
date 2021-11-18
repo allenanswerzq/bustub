@@ -39,12 +39,15 @@ bool HASH_TABLE_BLOCK_TYPE::Insert(slot_offset_t bucket_ind, const KeyType &key,
   }
   array_[bucket_ind] = std::make_pair(key, value);
   readable_[bucket_ind] = 1;
+  CHECK(occupied_[bucket_ind] && readable_[bucket_ind]);
   return true;
 }
 
 template <typename KeyType, typename ValueType, typename KeyComparator>
 void HASH_TABLE_BLOCK_TYPE::Remove(slot_offset_t bucket_ind) {
+  fmt::print("Removing {}\n", bucket_ind);
   readable_[bucket_ind] = 0;
+  CHECK(occupied_[bucket_ind] && !readable_[bucket_ind]);
 }
 
 template <typename KeyType, typename ValueType, typename KeyComparator>

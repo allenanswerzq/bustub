@@ -75,9 +75,6 @@ class LinearProbeHashTable : public HashTable<KeyType, ValueType, KeyComparator>
    */
   bool GetValue(Transaction *transaction, const KeyType &key, std::vector<ValueType> *result) override;
 
-
-  int GetPage(const KeyType &key, int& bucket_id, int& block_page_id);
-
   /**
    * Resizes the table to at least twice the initial size provided.
    * @param initial_size the initial size of the hash table
@@ -91,6 +88,8 @@ class LinearProbeHashTable : public HashTable<KeyType, ValueType, KeyComparator>
   size_t GetSize();
 
  private:
+  int ComputePosition(const KeyType &key, int& bucket_id, int& block_page_id);
+
   void UpdateHeaderPageId(int insert_record = 0);
 
   // member variable
@@ -99,8 +98,9 @@ class LinearProbeHashTable : public HashTable<KeyType, ValueType, KeyComparator>
   BufferPoolManager *buffer_pool_manager_;
   KeyComparator comparator_;
   HashTableHeaderPage* header_page_;
-  constexpr static int kDefaultBlockSize_ = 2;
-  int block_size_;
+  constexpr static int kDefaultBlockSize_ = 1;
+  size_t block_size_;
+  std::atomic<int> count_;
 
   // Readers includes inserts and removes, writer is only resize
   ReaderWriterLatch table_latch_;

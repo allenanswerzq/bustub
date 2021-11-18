@@ -23,44 +23,6 @@
 namespace bustub {
 
 // NOLINTNEXTLINE
-TEST(HashTablePageTest, HeaderPageSampleTest) {
-  DiskManager *disk_manager = new DiskManager("test.db");
-  auto *bpm = new BufferPoolManager(5, disk_manager);
-
-  // get a header page from the BufferPoolManager
-  page_id_t header_page_id = INVALID_PAGE_ID;
-  auto header_page = reinterpret_cast<HashTableHeaderPage *>(bpm->NewPage(&header_page_id, nullptr)->GetData());
-
-  // set some fields
-  for (int i = 0; i < 11; i++) {
-    header_page->SetSize(i);
-    EXPECT_EQ(i, header_page->GetSize());
-    header_page->SetPageId(i);
-    EXPECT_EQ(i, header_page->GetPageId());
-    header_page->SetLSN(i);
-    EXPECT_EQ(i, header_page->GetLSN());
-  }
-
-  // add a few hypothetical block pages
-  for (unsigned i = 0; i < 10; i++) {
-    header_page->AddBlockPageId(i);
-    EXPECT_EQ(i + 1, header_page->NumBlocks());
-  }
-
-  // check for correct block page IDs
-  for (int i = 0; i < 10; i++) {
-    EXPECT_EQ(i, header_page->GetBlockPageId(i));
-  }
-
-  // unpin the header page now that we are done
-  bpm->UnpinPage(header_page_id, true, nullptr);
-  disk_manager->ShutDown();
-  remove("test.db");
-  delete disk_manager;
-  delete bpm;
-}
-
-// NOLINTNEXTLINE
 TEST(HashTablePageTest, BlockPageSampleTest) {
   DiskManager *disk_manager = new DiskManager("test.db");
   auto *bpm = new BufferPoolManager(5, disk_manager);

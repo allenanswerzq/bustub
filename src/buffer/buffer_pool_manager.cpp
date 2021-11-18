@@ -97,7 +97,7 @@ Page *BufferPoolManager::FetchPageImpl(page_id_t page_id) {
 
 bool BufferPoolManager::UnpinPageImpl(page_id_t page_id, bool is_dirty) {
   std::lock_guard<std::mutex> guard(mutex_);
-  // LOG(DEBUG) << "Unpinning #page: " << page_id;
+  LOG(DEBUG) << "Unpinning #page: " << page_id;
   CHECK(Exist(page_id)) << "Expected page exists: " << page_id;
   Page *page = &pages_[page_table_[page_id]];
   CHECK(page->GetPageId() == page_id) << page_id << " " << page->GetPageId();
@@ -116,11 +116,11 @@ bool BufferPoolManager::UnpinPageImpl(page_id_t page_id, bool is_dirty) {
 bool BufferPoolManager::FlushPageImpl(page_id_t page_id) {
   // std::lock_guard<std::mutex> guard(mutex_);
   // Make sure you call DiskManager::WritePage!
-  // LOG(DEBUG) << "Flush #page: " << page_id;
+  LOG(DEBUG) << "Flush #page: " << page_id;
   if (!Exist(page_id)) {
     return false;
   } else {
-    // LOG(DEBUG) << "Flusing # page: " << page_id;
+    LOG(DEBUG) << "Flusing # page: " << page_id;
     Page *page = &pages_[page_table_[page_id]];
     CHECK(page->GetPageId() == page_id) << page_id << " " << page->GetPageId();
     disk_manager_->WritePage(page_id, page->GetData());
