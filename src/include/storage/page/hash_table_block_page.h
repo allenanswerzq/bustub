@@ -96,10 +96,9 @@ class HashTableBlockPage {
 
  private:
   // (0,0) (0,1) (illegal), (1, 0) (1, 1)
-  std::atomic_char occupied_[(BLOCK_ARRAY_SIZE - 1) / 8 + 1];
-
+  std::atomic_char occupied_[BLOCK_ARRAY_SIZE];
   // 0 if tombstone/brand new (never occupied), 1 otherwise.
-  std::atomic_char readable_[(BLOCK_ARRAY_SIZE - 1) / 8 + 1];
+  std::atomic_char readable_[BLOCK_ARRAY_SIZE];
   MappingType array_[0];
 };
 

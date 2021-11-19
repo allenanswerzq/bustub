@@ -88,7 +88,7 @@ class LinearProbeHashTable : public HashTable<KeyType, ValueType, KeyComparator>
   size_t GetSize();
 
  private:
-  int ComputePosition(const KeyType &key, int& bucket_id, int& block_page_id);
+  size_t ComputePosition(const KeyType &key, size_t& bucket_id, size_t& block_page_id);
 
   void UpdateHeaderPageId(int insert_record = 0);
 

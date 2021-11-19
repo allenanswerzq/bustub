@@ -49,12 +49,6 @@ HASH_TABLE_TYPE::LinearProbeHashTable(const std::string &name, BufferPoolManager
       Page * page = buffer_pool_manager_->NewPage(&block_page_id);
       CHECK(page);
       fmt::print("Allocating new page...{}\n", block_page_id);
-      // HashBlockPage * hash_block_page =  reinterpret_cast<HashBlockPage*>(page->GetData());
-      // for (size_t i = 0; i < BLOCK_ARRAY_SIZE; i++) {
-      //   int occupied = hash_block_page->IsOccupied(i);
-      //   int readable = hash_block_page->IsReadable(i);
-      //   CHECK(!occupied && !readable);
-      // }
       header_page_->AddBlockPageId(block_page_id);
       buffer_pool_manager_->UnpinPage(block_page_id, /*is_dirty*/false);
     }
@@ -68,18 +62,23 @@ HASH_TABLE_TYPE::LinearProbeHashTable(const std::string &name, BufferPoolManager
  *****************************************************************************/
 template <typename KeyType, typename ValueType, typename KeyComparator>
 bool HASH_TABLE_TYPE::GetValue(Transaction *transaction, const KeyType &key, std::vector<ValueType> *result) {
-  int bucket_id;
-  int block_page_id;
-  int block_index = ComputePosition(key, bucket_id, block_page_id);
-  int curr_block = block_index;
-  do {
+  size_t bucket_id;
+  size_t block_page_id;
+  size_t block_index = ComputePosition(key, bucket_id, block_page_id);
+  size_t curr_block = block_index;
+  size_t curr_bucket = bucket_id;
+  bool first = true;
+  while (true) {
     Page * page =  buffer_pool_manager_->FetchPage(block_page_id);
     HashBlockPage * hash_block_page =  reinterpret_cast<HashBlockPage*>(page->GetData());
-    for (size_t i = bucket_id; i < BLOCK_ARRAY_SIZE; i++) {
+    for (size_t i = curr_bucket; i < BLOCK_ARRAY_SIZE; i++) {
+      if (i == bucket_id && curr_block == block_index && !first) {
+        buffer_pool_manager_->UnpinPage(block_page_id, /*is_dirty*/false);
+        return false;
+      }
+      first = false;
       int occupied = hash_block_page->IsOccupied(i);
       int readable = hash_block_page->IsReadable(i);
-      fmt::print("block_id {} {} {} {}\n", block_page_id, i, hash_block_page->IsOccupied(320), hash_block_page->IsReadable(320));
-      // fmt::print("GetValue {} {} {}, {}, {}\n", i, occupied, readable, hash_block_page->KeyAt(i), hash_block_page->ValueAt(i));
       if (occupied && readable) {
         if (result && comparator_(hash_block_page->KeyAt(i), key) == 0) {
           result->push_back(hash_block_page->ValueAt(i));
@@ -98,9 +97,9 @@ bool HASH_TABLE_TYPE::GetValue(Transaction *transaction, const KeyType &key, std
     }
     buffer_pool_manager_->UnpinPage(block_page_id, /*is_dirty*/false);
     curr_block = (curr_block + 1) % block_size_;
-    bucket_id = 0;
+    curr_bucket = 0;
     block_page_id = header_page_->GetBlockPageId(curr_block);
-  } while (curr_block != block_index);
+  }
   return false;
 }
 
@@ -111,18 +110,30 @@ template <typename KeyType, typename ValueType, typename KeyComparator>
 bool HASH_TABLE_TYPE::Insert(Transaction *transaction, const KeyType &key, const ValueType &value) {
   fmt::print("Hash inserting {}\n", key);
   table_latch_.RLock();
-  int bucket_id;
-  int block_page_id;
-  int block_index = ComputePosition(key, bucket_id, block_page_id);
-  int curr_block = block_index;
-  bool succ = false;
-  do {
+  size_t bucket_id;
+  size_t block_page_id;
+  size_t block_index = ComputePosition(key, bucket_id, block_page_id);
+  size_t curr_block = block_index;
+  size_t curr_bucket = bucket_id;
+  bool first = true;
+  while (true) {
     Page * page =  buffer_pool_manager_->FetchPage(block_page_id);
     HashBlockPage * hash_block_page =  reinterpret_cast<HashBlockPage*>(page->GetData());
-    for (size_t i = bucket_id; i < BLOCK_ARRAY_SIZE; i++) {
+    for (size_t i = curr_bucket; i < BLOCK_ARRAY_SIZE; i++) {
+      if (i == bucket_id && curr_block == block_index && !first) {
+        // Alreay tried all buckets, but not find a place to insert.
+        // Table is full at here, resize first, then insert again.
+        buffer_pool_manager_->UnpinPage(block_page_id, /*is_dirty*/false);
+        table_latch_.RUnlock();
+        if (block_size_ > 100) {
+          throw Exception("Too many data to inserts.");
+        }
+        Resize(GetSize());
+        return Insert(transaction, key, value);
+      }
+      first = false;
       bool occupied = hash_block_page->IsOccupied(i);
       bool readable = hash_block_page->IsReadable(i);
-      fmt::print("block_id {} {} {}\n", block_page_id, hash_block_page->IsOccupied(320), hash_block_page->IsReadable(320));
       if (occupied && readable) {
         if (comparator_(hash_block_page->KeyAt(i), key) == 0 && hash_block_page->ValueAt(i) == value) {
           buffer_pool_manager_->UnpinPage(block_page_id, /*is_dirty*/false);
@@ -145,19 +156,18 @@ bool HASH_TABLE_TYPE::Insert(Transaction *transaction, const KeyType &key, const
     }
     buffer_pool_manager_->UnpinPage(block_page_id, /*is_dirty*/false);
     curr_block = (curr_block + 1) % block_size_;
-    bucket_id = 0;
+    curr_bucket = 0;
     block_page_id = header_page_->GetBlockPageId(curr_block);
-  } while (!succ && curr_block != block_index);
+  }
   table_latch_.RUnlock();
-  // Table is full at here
-  Resize(GetSize());
+  CHECK(false) << "Should not reach here.";
   return false;
 }
 
 template <typename KeyType, typename ValueType, typename KeyComparator>
-int HASH_TABLE_TYPE::ComputePosition(const KeyType &key, int& bucket_index, int& block_page_id) {
+size_t HASH_TABLE_TYPE::ComputePosition(const KeyType &key, size_t& bucket_index, size_t& block_page_id) {
   uint64_t h = hash_fn_.GetHash(key);
-  int block_index = (h / BLOCK_ARRAY_SIZE) % block_size_;
+  size_t block_index = (h / BLOCK_ARRAY_SIZE) % block_size_;
   block_page_id = header_page_->GetBlockPageId(block_index);
   bucket_index = h % BLOCK_ARRAY_SIZE;
   return block_index;
@@ -169,20 +179,21 @@ int HASH_TABLE_TYPE::ComputePosition(const KeyType &key, int& bucket_index, int&
 template <typename KeyType, typename ValueType, typename KeyComparator>
 bool HASH_TABLE_TYPE::Remove(Transaction *transaction, const KeyType &key, const ValueType &value) {
   table_latch_.RLock();
-  int bucket_id;
-  int block_page_id;
-  int block_index = ComputePosition(key, bucket_id, block_page_id);
-  int curr_block = block_index;
+  size_t bucket_id;
+  size_t block_page_id;
+  size_t block_index = ComputePosition(key, bucket_id, block_page_id);
+  size_t curr_block = block_index;
+  size_t curr_bucket = bucket_id;
   do {
     Page * page =  buffer_pool_manager_->FetchPage(block_page_id);
     HashBlockPage * hash_block_page =  reinterpret_cast<HashBlockPage*>(page->GetData());
-    for (size_t i = bucket_id; i < BLOCK_ARRAY_SIZE; i++) {
+    for (size_t i = curr_bucket; i < BLOCK_ARRAY_SIZE; i++) {
       bool occupied = hash_block_page->IsOccupied(i);
       bool readable = hash_block_page->IsReadable(i);
       if (occupied && readable) {
         if (comparator_(hash_block_page->KeyAt(i), key) == 0 && hash_block_page->ValueAt(i) == value) {
           hash_block_page->Remove(i);
-          count_++;
+          count_--;
           buffer_pool_manager_->UnpinPage(block_page_id, /*is_dirty*/false);
           table_latch_.RUnlock();
           return true;
@@ -202,9 +213,9 @@ bool HASH_TABLE_TYPE::Remove(Transaction *transaction, const KeyType &key, const
     }
     buffer_pool_manager_->UnpinPage(block_page_id, /*is_dirty*/false);
     curr_block = (curr_block + 1) % block_size_;
-    bucket_id = 0;
+    curr_bucket = 0;
     block_page_id = header_page_->GetBlockPageId(curr_block);
-  } while (curr_block != block_index);
+  } while (true);
   table_latch_.RUnlock();
   return false;
 }
@@ -215,7 +226,8 @@ bool HASH_TABLE_TYPE::Remove(Transaction *transaction, const KeyType &key, const
 template <typename KeyType, typename ValueType, typename KeyComparator>
 void HASH_TABLE_TYPE::Resize(size_t initial_size) {
   table_latch_.WLock();
-  size_t new_block = std::min(initial_size / BLOCK_ARRAY_SIZE * 2, size_t(1));
+  size_t new_block = (initial_size + BLOCK_ARRAY_SIZE - 1) / BLOCK_ARRAY_SIZE * 2;
+  fmt::print("resize: {} {} {} {}\n", new_block, block_size_, initial_size, BLOCK_ARRAY_SIZE);
   if (new_block > block_size_) {
     for (size_t i = header_page_->GetSize(); i < new_block; i++) {
       page_id_t block_page_id;
