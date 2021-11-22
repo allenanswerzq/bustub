@@ -31,34 +31,28 @@ ValueType HASH_TABLE_BLOCK_TYPE::ValueAt(slot_offset_t bucket_ind) const {
 
 template <typename KeyType, typename ValueType, typename KeyComparator>
 bool HASH_TABLE_BLOCK_TYPE::Insert(slot_offset_t bucket_ind, const KeyType &key, const ValueType &value) {
-  // char expected = 0;
-  // char desired = 1;
-  // if (!occupied_[bucket_ind].compare_exchange_strong(expected, desired)) {
-  //   // Returns if this bucket already been occupied.
-  //   return false;
-  // }
-  for (size_t i = 0; i < BLOCK_ARRAY_SIZE; i++) {
-    CHECK(!(!occupied_[i] && readable_[i]));
-  }
-  occupied_[bucket_ind] = 1;
+  CHECK(bucket_ind < BLOCK_ARRAY_SIZE);
+  int x = bucket_ind / 8;
+  int h = bucket_ind % 8;
+  occupied_[x] |= (1 << h);
   array_[bucket_ind] = std::make_pair(key, value);
-  readable_[bucket_ind] = 1;
-  for (size_t i = 0; i < BLOCK_ARRAY_SIZE; i++) {
-    CHECK(!(!occupied_[i] && readable_[i]));
-  }
+  readable_[x] |= (1 << h);
   return true;
 }
 
 template <typename KeyType, typename ValueType, typename KeyComparator>
 void HASH_TABLE_BLOCK_TYPE::Remove(slot_offset_t bucket_ind) {
-  for (size_t i = 0; i < BLOCK_ARRAY_SIZE; i++) {
-    CHECK(!(!occupied_[i] && readable_[i]));
-  }
-  readable_[bucket_ind] = 0;
-  CHECK(occupied_[bucket_ind] && !readable_[bucket_ind]);
-  for (size_t i = 0; i < BLOCK_ARRAY_SIZE; i++) {
-    CHECK(!(!occupied_[i] && readable_[i]));
-  }
+  // CHECK(false);
+  // for (size_t i = 0; i < BLOCK_ARRAY_SIZE; i++) {
+  //   CHECK(!(!occupied_[i] && readable_[i]));
+  // }
+  int x = bucket_ind / 8;
+  int h = bucket_ind % 8;
+  readable_[x] &= ~(1 << h);
+  // CHECK(occupied_[bucket_ind] && !readable_[bucket_ind]);
+  // for (size_t i = 0; i < BLOCK_ARRAY_SIZE; i++) {
+  //   CHECK(!(!occupied_[i] && readable_[i]));
+  // }
 }
 
 template <typename KeyType, typename ValueType, typename KeyComparator>
@@ -66,7 +60,9 @@ bool HASH_TABLE_BLOCK_TYPE::IsOccupied(slot_offset_t bucket_ind) const {
   // for (size_t i = 0; i < BLOCK_ARRAY_SIZE; i++) {
   //   CHECK(!(!occupied_[i] && readable_[i]));
   // }
-  return occupied_[bucket_ind];
+  int x = bucket_ind / 8;
+  int h = bucket_ind % 8;
+  return occupied_[x] & (1 << h);
 }
 
 template <typename KeyType, typename ValueType, typename KeyComparator>
@@ -74,7 +70,9 @@ bool HASH_TABLE_BLOCK_TYPE::IsReadable(slot_offset_t bucket_ind) const {
   // for (size_t i = 0; i < BLOCK_ARRAY_SIZE; i++) {
   //   CHECK(!(!occupied_[i] && readable_[i]));
   // }
-  return readable_[bucket_ind];
+  int x = bucket_ind / 8;
+  int h = bucket_ind % 8;
+  return readable_[x] & (1 << h);
 }
 
 // DO NOT REMOVE ANYTHING BELOW THIS LINE

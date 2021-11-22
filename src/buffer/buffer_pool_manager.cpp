@@ -45,13 +45,13 @@ Page *BufferPoolManager::FetchPageImpl(page_id_t page_id) {
   // 4.     Update P's metadata, read in the page content from disk, and then
   // return a pointer to P.
   std::lock_guard<std::mutex> guard(mutex_);
-  // LOG(DEBUG) << "Fetching #page: " << page_id;
+  LOG(DEBUG) << "Fetching #page: " << page_id;
   if (Exist(page_id)) {
     // If this page is alreay in buffer pool, simply returns it
     Page *page = &pages_[page_table_[page_id]];
     CHECK(page->GetPageId() == page_id) << page_id << " " << page->GetPageId();
     page->pin_count_++;
-    // LOG(DEBUG) << "Fetching from the exising #page " << page_id << " pin_count: " << page->pin_count_;
+    LOG(DEBUG) << "Fetching from the exising #page " << page_id << " pin_count: " << page->pin_count_;
     return page;
   } else {
     // Otherwise found a new place and read that page from disk.
@@ -68,7 +68,7 @@ Page *BufferPoolManager::FetchPageImpl(page_id_t page_id) {
       // Remove this frame from the replacer_
       replacer_->Pin(page_id);
       frame_id = page_table_[page_id];
-      // LOG(DEBUG) << "Erasing page_id: " << page_id;
+      LOG(DEBUG) << "Erasing page_id: " << page_id;
       page_table_.erase(page_id);
     } else {
       // No place to put this page.
@@ -76,14 +76,14 @@ Page *BufferPoolManager::FetchPageImpl(page_id_t page_id) {
       return nullptr;
     }
     CHECK(page_id >= 0) << "Expected page id greater or equal to 0: " << page_id;
-    // LOG(DEBUG) << "Fetching a new #page " << page_id << " to frame " << frame_id;
+    LOG(DEBUG) << "Fetching a new #page " << page_id << " to frame " << frame_id;
     Page *page = &pages_[frame_id];
     // CHECK(page->page_id_ >= 0) << page_id;
     if (page->is_dirty_) {
       // Flush the old page back to disk if dirty
       FlushPageImpl(page->page_id_);
     }
-    // LOG(DEBUG) << "Erasing page_id: " << page->page_id_;
+    LOG(DEBUG) << "Erasing page_id: " << page->page_id_;
     page_table_.erase(page->page_id_);
     page_table_[page_id] = frame_id;
     page->page_id_ = page_id;

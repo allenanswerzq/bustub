@@ -97,7 +97,6 @@ class LinearProbeHashTable : public HashTable<KeyType, ValueType, KeyComparator>
   page_id_t header_page_id_;
   BufferPoolManager *buffer_pool_manager_;
   KeyComparator comparator_;
-  HashTableHeaderPage* header_page_;
   constexpr static int kDefaultBlockSize_ = 1;
   size_t block_size_;
   std::atomic<int> count_;
