@@ -127,7 +127,7 @@ namespace bustub {
 
 TEST(HashTableTest, ResizeTest) {
   auto *disk_manager = new DiskManager("test.db");
-  auto *bpm = new BufferPoolManager(50, disk_manager);
+  auto *bpm = new BufferPoolManager(3, disk_manager);
 
   page_id_t page_id;
   auto header_page = bpm->NewPage(&page_id);
@@ -137,8 +137,16 @@ TEST(HashTableTest, ResizeTest) {
   LinearProbeHashTable<int, int, IntComparator> ht("blah", bpm, IntComparator(), 1000, HashFunction<int>());
 
   // insert a few values
-  for (int i = 0; i < 100000; i++) {
+  for (int i = 0; i < 1000; i++) {
     ht.Insert(nullptr, i, i);
+    std::vector<int> res;
+    ht.GetValue(nullptr, i, &res);
+    EXPECT_EQ(1, res.size()) << "Failed to insert " << i << std::endl;
+    EXPECT_EQ(i, res[0]);
+  }
+
+  for (int i = 0; i < 1000; i++) {
+    // ht.Insert(nullptr, i, i);
     std::vector<int> res;
     ht.GetValue(nullptr, i, &res);
     EXPECT_EQ(1, res.size()) << "Failed to insert " << i << std::endl;

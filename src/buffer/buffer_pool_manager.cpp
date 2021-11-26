@@ -116,7 +116,6 @@ bool BufferPoolManager::UnpinPageImpl(page_id_t page_id, bool is_dirty) {
 bool BufferPoolManager::FlushPageImpl(page_id_t page_id) {
   // std::lock_guard<std::mutex> guard(mutex_);
   // Make sure you call DiskManager::WritePage!
-  LOG(DEBUG) << "Flush #page: " << page_id;
   if (!Exist(page_id)) {
     return false;
   } else {

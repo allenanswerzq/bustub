@@ -46,8 +46,8 @@ HASH_TABLE_TYPE::LinearProbeHashTable(const std::string &name, BufferPoolManager
   CHECK(hash_header_page) << "Can not create or get header page";
   hash_header_page->SetPageId(header_page_id_);
   // Make room for this hash table
-  if (hash_header_page->GetSize() < kDefaultBlockSize_) {
-    for (size_t i = hash_header_page->GetSize(); i < kDefaultBlockSize_; i++) {
+  if (hash_header_page->NumBlocks() < kDefaultBlockSize_) {
+    for (size_t i = hash_header_page->NumBlocks(); i < kDefaultBlockSize_; i++) {
       page_id_t block_page_id;
       Page * page = buffer_pool_manager_->NewPage(&block_page_id);
       CHECK(page);
@@ -58,9 +58,10 @@ HASH_TABLE_TYPE::LinearProbeHashTable(const std::string &name, BufferPoolManager
       hash_header_page->AddBlockPageId(block_page_id);
       buffer_pool_manager_->UnpinPage(block_page_id, /*is_dirty*/true);
     }
-    hash_header_page->SetSize(kDefaultBlockSize_);
+    hash_header_page->SetSize(kDefaultBlockSize_ * BLOCK_ARRAY_SIZE);
   }
-  block_size_ = hash_header_page->GetSize();
+  // block_size_ = hash_header_page->GetSize();
+  block_size_ = hash_header_page->NumBlocks();
   buffer_pool_manager_->UnpinPage(header_page_id_, true);
 }
 
@@ -255,7 +256,7 @@ void HASH_TABLE_TYPE::Resize(size_t initial_size) {
   auto hash_header_page = reinterpret_cast<HashTableHeaderPage*>(
       buffer_pool_manager_->FetchPage(header_page_id_)->GetData());
   if (new_block > block_size_) {
-    for (size_t i = hash_header_page->GetSize(); i < new_block; i++) {
+    for (size_t i = hash_header_page->NumBlocks(); i < new_block; i++) {
       page_id_t block_page_id;
       Page * page = buffer_pool_manager_->NewPage(&block_page_id);
       CHECK(page);
@@ -267,11 +268,17 @@ void HASH_TABLE_TYPE::Resize(size_t initial_size) {
       hash_header_page->AddBlockPageId(block_page_id);
       buffer_pool_manager_->UnpinPage(block_page_id, /*is_dirty*/true);
     }
-    hash_header_page->SetSize(new_block);
-    block_size_ = hash_header_page->GetSize();
+    hash_header_page->SetSize(new_block * BLOCK_ARRAY_SIZE);
+    block_size_ = hash_header_page->NumBlocks();
   }
   CHECK(hash_header_page->GetPageId() == header_page_id_) << hash_header_page->GetPageId() << " " << header_page_id_;
   buffer_pool_manager_->UnpinPage(header_page_id_, /*is_dirty*/true);
+
+  hash_header_page = reinterpret_cast<HashTableHeaderPage*>(
+      buffer_pool_manager_->FetchPage(header_page_id_)->GetData());
+  CHECK(hash_header_page->NumBlocks() == new_block);
+  buffer_pool_manager_->UnpinPage(header_page_id_, /*is_dirty*/false);
+
   table_latch_.WUnlock();
 }
 
