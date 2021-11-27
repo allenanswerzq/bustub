@@ -10,19 +10,17 @@
 //===----------------------------------------------------------------------===//
 #pragma once
 
+#include <mutex>
 #include <utility>
 #include <vector>
-#include <mutex>
 
 #include "storage/page/b_plus_tree_page.h"
 
 namespace bustub {
 
-// clang-format off
 #define B_PLUS_TREE_LEAF_PAGE_TYPE BPlusTreeLeafPage<KeyType, ValueType, KeyComparator>
 #define LEAF_PAGE_HEADER_SIZE 28
 #define LEAF_PAGE_SIZE ((PAGE_SIZE - LEAF_PAGE_HEADER_SIZE) / sizeof(MappingType))
-// clang-format on
 
 /**
  * Store indexed key and record id(record id = page id combined with slot id,

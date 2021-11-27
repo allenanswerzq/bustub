@@ -12,7 +12,6 @@
 
 #pragma once
 
-// clang-format off
 #define MappingType std::pair<KeyType, ValueType>
 
 /** BLOCK_ARRAY_SIZE is the number of (key, value) pairs that can be stored in
@@ -24,4 +23,3 @@
  * occupied and readable flags for a key value pair.*/
 #define BLOCK_ARRAY_SIZE (4 * PAGE_SIZE / (4 * sizeof(MappingType) + 1))
 #define HASH_TABLE_BLOCK_TYPE HashTableBlockPage<KeyType, ValueType, KeyComparator>
-// clang-format on

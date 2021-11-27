@@ -107,9 +107,7 @@ void B_PLUS_TREE_INTERNAL_PAGE_TYPE::PopulateNewRoot(const ValueType &old_value,
 }
 
 INDEX_TEMPLATE_ARGUMENTS
-void B_PLUS_TREE_INTERNAL_PAGE_TYPE::DebugOutput() {
-  LOG(DEBUG) << ToString();
-}
+void B_PLUS_TREE_INTERNAL_PAGE_TYPE::DebugOutput() { LOG(DEBUG) << ToString(); }
 
 INDEX_TEMPLATE_ARGUMENTS
 std::string B_PLUS_TREE_INTERNAL_PAGE_TYPE::ToString() const {
@@ -126,12 +124,11 @@ std::string B_PLUS_TREE_INTERNAL_PAGE_TYPE::ToString() const {
   return oss.str();
 }
 
-
 INDEX_TEMPLATE_ARGUMENTS
 int B_PLUS_TREE_INTERNAL_PAGE_TYPE::Insert(const KeyType &key, const ValueType &value,
                                            const KeyComparator &comparator) {
   // std::lock_guard<std::mutex> guard(mutex_);
-  LOG(DEBUG) << "INSERT: " << GetPageId()  << " " << key;
+  LOG(DEBUG) << "INSERT: " << GetPageId() << " " << key;
   if (array_.empty()) {
     array_.push_back({/*invaild*/ key, value});
     array_.push_back({key, value});

@@ -85,8 +85,7 @@ TEST(RWLatchTest, ExtraTest) {
 
       writes--;
       rw_lock.WUnlock();
-    }
-    else {
+    } else {
       rw_lock.RLock();
       reads++;
 

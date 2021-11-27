@@ -2,12 +2,12 @@
  * b_plus_tree_test.cpp
  */
 
+#include <array>
 #include <chrono>  // NOLINT
 #include <cstdio>
 #include <functional>
-#include <thread>                   // NOLINT
-#include <array>
 #include <set>
+#include <thread>  // NOLINT
 
 #include "b_plus_tree_test_util.h"  // NOLINT
 #include "buffer/buffer_pool_manager.h"
@@ -46,7 +46,7 @@ class BPlusTreeConcurrentTest : public ::testing::Test {
   };
 
   template <typename... Args>
-  void LaunchParallelTest(uint64_t num_threads, Args &&...args) {
+  void LaunchParallelTest(uint64_t num_threads, Args &&... args) {
     std::vector<std::thread> thread_group;
 
     for (uint64_t i = 0; i < num_threads; ++i) {
@@ -58,7 +58,7 @@ class BPlusTreeConcurrentTest : public ::testing::Test {
     }
   }
 
-  void InsertHelper(Tree *tree, const std::vector<std::array<int, 2>> & inserts) {
+  void InsertHelper(Tree *tree, const std::vector<std::array<int, 2>> &inserts) {
     Transaction *transaction = new Transaction(0);
     int n = inserts.size();
     for (int cnt = RandomInt(0, n + 10); cnt > 0; cnt--) {
@@ -69,7 +69,7 @@ class BPlusTreeConcurrentTest : public ::testing::Test {
     delete transaction;
   }
 
-  void DeleteHelper(Tree *tree, const std::vector<std::array<int, 2>> & inserts) {
+  void DeleteHelper(Tree *tree, const std::vector<std::array<int, 2>> &inserts) {
     Transaction *transaction = new Transaction(0);
     int n = inserts.size();
     for (int cnt = RandomInt(0, n + 10); cnt > 0; cnt--) {
@@ -104,10 +104,10 @@ TEST_F(BPlusTreeConcurrentTest, RandomTest) {
   }
   std::vector<std::thread> thread_group;
   for (uint64_t i = 0; i < 3; ++i) {
-    thread_group.push_back(std::thread([&]{ this->InsertHelper(tree_.get(), inserts); }));
+    thread_group.push_back(std::thread([&] { this->InsertHelper(tree_.get(), inserts); }));
   }
   for (uint64_t i = 0; i < 3; ++i) {
-    thread_group.push_back(std::thread([&]{ this->DeleteHelper(tree_.get(), inserts); }));
+    thread_group.push_back(std::thread([&] { this->DeleteHelper(tree_.get(), inserts); }));
   }
   for (uint64_t i = 0; i < thread_group.size(); ++i) {
     thread_group[i].join();
@@ -122,6 +122,5 @@ TEST_F(BPlusTreeConcurrentTest, RandomTest) {
   std::sort(sorted.begin(), sorted.end());
   EXPECT_EQ(scan, sorted);
 }
-
 
 }  // namespace bustub

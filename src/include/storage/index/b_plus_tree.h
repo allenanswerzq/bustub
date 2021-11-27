@@ -87,17 +87,16 @@ class BPlusTree {
   // expose for test purpose
   Page *FindLeafPage(const KeyType &key, bool leftMost = false);
 
-  void ReleaseAllLatch(Transaction * transaction, bool is_write);
-  BPlusTreePage* AcquireReadLatch(const KeyType &key, Transaction *transaction);
-  BPlusTreePage* AcquireWriteLatch(const KeyType &key, Transaction *transaction);
+  void ReleaseAllLatch(Transaction *transaction, bool is_write);
+  BPlusTreePage *AcquireReadLatch(const KeyType &key, Transaction *transaction);
+  BPlusTreePage *AcquireWriteLatch(const KeyType &key, Transaction *transaction);
 
  private:
   bool StartNewTree(const KeyType &key, const ValueType &value);
 
   bool InsertIntoLeaf(const KeyType &key, const ValueType &value, Transaction *transaction);
 
-  void InsertIntoParent(BPlusTreePage *old_node, const KeyType &key, BPlusTreePage *new_node,
-                        Transaction *transaction);
+  void InsertIntoParent(BPlusTreePage *old_node, const KeyType &key, BPlusTreePage *new_node, Transaction *transaction);
 
   template <typename N>
   N *Split(N *node);

@@ -201,12 +201,11 @@ bool BufferPoolManager::DeletePageImpl(page_id_t page_id) {
   }
 }
 
-void BufferPoolManager::DebugOutput() const{
+void BufferPoolManager::DebugOutput() const {
   for (auto it : page_table_) {
     LOG(DEBUG) << "#page: " << it.first << " --> " << it.second << " count: " << pages_[it.second].pin_count_;
   }
 }
-
 
 void BufferPoolManager::FlushAllPagesImpl() {
   // You can do it!

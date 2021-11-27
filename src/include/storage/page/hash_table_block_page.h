@@ -13,9 +13,9 @@
 #pragma once
 
 #include <atomic>
+#include <memory>
 #include <utility>
 #include <vector>
-#include <memory>
 
 #include "common/config.h"
 #include "storage/index/int_comparator.h"

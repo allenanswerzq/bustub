@@ -74,7 +74,7 @@ class Page {
 
   std::string ToString() {
     std::string ans;
-    const char * p = reinterpret_cast<const char*>(data_);
+    const char *p = reinterpret_cast<const char *>(data_);
     for (size_t i = 0; i < PAGE_SIZE; i++) {
       std::stringstream iss;
       iss << std::hex << int(p[i]);

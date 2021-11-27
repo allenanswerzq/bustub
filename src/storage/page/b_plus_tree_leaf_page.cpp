@@ -102,7 +102,7 @@ const MappingType &B_PLUS_TREE_LEAF_PAGE_TYPE::GetItem(int index) { return array
 INDEX_TEMPLATE_ARGUMENTS
 int B_PLUS_TREE_LEAF_PAGE_TYPE::Insert(const KeyType &key, const ValueType &value, const KeyComparator &comparator) {
   std::lock_guard<std::mutex> guard(mutex_);
-  LOG(DEBUG) << "INSERT: " << GetPageId()  << " " << key;
+  LOG(DEBUG) << "INSERT: " << GetPageId() << " " << key;
   if (array_.empty()) {
     array_.push_back({key, value});
   } else {
@@ -134,7 +134,6 @@ void B_PLUS_TREE_LEAF_PAGE_TYPE::SetArray(const std::vector<MappingType> &array)
   array_ = array;
   SetSize(array_.size());
 }
-
 
 INDEX_TEMPLATE_ARGUMENTS
 std::string B_PLUS_TREE_LEAF_PAGE_TYPE::ToString() const {
@@ -308,8 +307,6 @@ void B_PLUS_TREE_LEAF_PAGE_TYPE::CopyFirstFrom(const MappingType &item) {
   array_.insert(array_.begin(), item);
   SetSize(array_.size());
 }
-
-
 
 template class BPlusTreeLeafPage<GenericKey<4>, RID, GenericComparator<4>>;
 template class BPlusTreeLeafPage<GenericKey<8>, RID, GenericComparator<8>>;

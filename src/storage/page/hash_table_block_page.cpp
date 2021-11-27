@@ -11,8 +11,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "storage/page/hash_table_block_page.h"
-#include "storage/index/generic_key.h"
 #include "common/logger.h"
+#include "storage/index/generic_key.h"
 
 namespace bustub {
 
@@ -27,7 +27,6 @@ ValueType HASH_TABLE_BLOCK_TYPE::ValueAt(slot_offset_t bucket_ind) const {
   CHECK(bucket_ind < BLOCK_ARRAY_SIZE);
   return array_[bucket_ind].second;
 }
-
 
 template <typename KeyType, typename ValueType, typename KeyComparator>
 bool HASH_TABLE_BLOCK_TYPE::Insert(slot_offset_t bucket_ind, const KeyType &key, const ValueType &value) {

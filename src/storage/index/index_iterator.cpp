@@ -12,8 +12,7 @@ INDEX_TEMPLATE_ARGUMENTS
 bool INDEXITERATOR_TYPE::IsEnd() {
   if (!leaf_) {
     return true;
-  }
-  else if (leaf_->GetNextPageId() == INVALID_PAGE_ID) {
+  } else if (leaf_->GetNextPageId() == INVALID_PAGE_ID) {
     return pos_ >= leaf_->GetSize();
   } else {
     return false;

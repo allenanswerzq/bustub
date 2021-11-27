@@ -168,7 +168,7 @@ TEST(BufferPoolManagerTest, FlushTest) {
   // Replace the frame with a new page.
   page_id_t page_id;
   auto *page1 = bpm->NewPage(&page_id);
-  (void) page1;
+  (void)page1;
   bpm->UnpinPage(page_id, true);
 
   // Scenario: We should be able to fetch the data we wrote a while ago.

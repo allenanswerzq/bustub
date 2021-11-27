@@ -22,9 +22,7 @@
 
 namespace bustub {
 
-// clang-format off
 #define HASH_TABLE_INDEX_TYPE LinearProbeHashTableIndex<KeyType, ValueType, KeyComparator>
-// clang-format on
 
 template <typename KeyType, typename ValueType, typename KeyComparator>
 class LinearProbeHashTableIndex : public Index {

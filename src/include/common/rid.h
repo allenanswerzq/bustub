@@ -76,19 +76,16 @@ struct hash<bustub::RID> {
 };
 }  // namespace std
 
-
-namespace fmt
-{
-template <> struct formatter<bustub::RID> {
-  constexpr auto parse(format_parse_context& ctx) -> decltype(ctx.begin()) {
-    return ctx.begin();
-  }
+namespace fmt {
+template <>
+struct formatter<bustub::RID> {
+  constexpr auto parse(format_parse_context &ctx) -> decltype(ctx.begin()) { return ctx.begin(); }
 
   template <typename FormatContext>
-  auto format(const bustub::RID& p, FormatContext& ctx) -> decltype(ctx.out()) {
+  auto format(const bustub::RID &p, FormatContext &ctx) -> decltype(ctx.out()) {
     // ctx.out() is an output iterator to write to.
     return format_to(ctx.out(), "{}", p.ToString());
   }
 };
 
-} // namespace fmt
+}  // namespace fmt
