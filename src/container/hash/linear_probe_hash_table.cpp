@@ -131,6 +131,11 @@ bool HASH_TABLE_TYPE::Insert(Transaction *transaction, const KeyType &key, const
   while (true) {
     Page * page =  buffer_pool_manager_->FetchPage(block_page_id);
     HashBlockPage * hash_block_page =  reinterpret_cast<HashBlockPage*>(page->GetData());
+    for (size_t i = 0; i < BLOCK_ARRAY_SIZE; i++) {
+      bool occupied = hash_block_page->IsOccupied(i);
+      bool readable = hash_block_page->IsReadable(i);
+      LOG(DEBUG) << "AAAAAAA: " << curr_block << " " << block_page_id << " " << i << " " << occupied << " " << readable;
+    }
     for (size_t i = curr_bucket; i < BLOCK_ARRAY_SIZE; i++) {
       if (i == bucket_id && curr_block == block_index && !first) {
         // Alreay tried all buckets, but not find a place to insert.
@@ -251,33 +256,36 @@ bool HASH_TABLE_TYPE::Remove(Transaction *transaction, const KeyType &key, const
 template <typename KeyType, typename ValueType, typename KeyComparator>
 void HASH_TABLE_TYPE::Resize(size_t initial_size) {
   table_latch_.WLock();
-  size_t new_block = (initial_size + BLOCK_ARRAY_SIZE - 1) / BLOCK_ARRAY_SIZE * 2;
-  fmt::print("resize: {} {} {} {}\n", new_block, block_size_, initial_size, BLOCK_ARRAY_SIZE);
-  auto hash_header_page = reinterpret_cast<HashTableHeaderPage*>(
-      buffer_pool_manager_->FetchPage(header_page_id_)->GetData());
-  if (new_block > block_size_) {
-    for (size_t i = hash_header_page->NumBlocks(); i < new_block; i++) {
-      page_id_t block_page_id;
-      Page * page = buffer_pool_manager_->NewPage(&block_page_id);
-      CHECK(page);
-      HashBlockPage * hash_block_page =  reinterpret_cast<HashBlockPage*>(page->GetData());
-      for (size_t i = 0; i < BLOCK_ARRAY_SIZE; i++) {
-        CHECK(!hash_block_page->IsOccupied(i) && !hash_block_page->IsReadable(i));
-      }
-      LOG(DEBUG) << "Adding a new page into hash table: " << block_page_id;
-      hash_header_page->AddBlockPageId(block_page_id);
-      buffer_pool_manager_->UnpinPage(block_page_id, /*is_dirty*/true);
-    }
-    hash_header_page->SetSize(new_block * BLOCK_ARRAY_SIZE);
-    block_size_ = hash_header_page->NumBlocks();
-  }
-  CHECK(hash_header_page->GetPageId() == header_page_id_) << hash_header_page->GetPageId() << " " << header_page_id_;
-  buffer_pool_manager_->UnpinPage(header_page_id_, /*is_dirty*/true);
 
-  hash_header_page = reinterpret_cast<HashTableHeaderPage*>(
-      buffer_pool_manager_->FetchPage(header_page_id_)->GetData());
-  CHECK(hash_header_page->NumBlocks() == new_block);
-  buffer_pool_manager_->UnpinPage(header_page_id_, /*is_dirty*/false);
+  Page * page =  buffer_pool_manager_->FetchPage(2);
+  HashBlockPage * hash_block_page =  reinterpret_cast<HashBlockPage*>(page->GetData());
+  for (size_t i = 0; i < BLOCK_ARRAY_SIZE; i++) {
+    bool occupied = hash_block_page->IsOccupied(i);
+    bool readable = hash_block_page->IsReadable(i);
+    LOG(DEBUG) << "BEFORE: " << 2 << " " << 2 << " " << i << " " << occupied << " " << readable;
+  }
+  LOG(DEBUG) << page->ToString();
+  buffer_pool_manager_->UnpinPage(2, true);
+
+  page_id_t block_page_id;
+  page = buffer_pool_manager_->NewPage(&block_page_id);
+  CHECK(page);
+  hash_block_page =  reinterpret_cast<HashBlockPage*>(page->GetData());
+  for (size_t i = 0; i < BLOCK_ARRAY_SIZE; i++) {
+    CHECK(!hash_block_page->IsOccupied(i) && !hash_block_page->IsReadable(i));
+  }
+  buffer_pool_manager_->UnpinPage(block_page_id, /*is_dirty*/true);
+
+  page =  buffer_pool_manager_->FetchPage(2);
+  hash_block_page =  reinterpret_cast<HashBlockPage*>(page->GetData());
+  for (size_t i = 0; i < BLOCK_ARRAY_SIZE; i++) {
+    bool occupied = hash_block_page->IsOccupied(i);
+    bool readable = hash_block_page->IsReadable(i);
+    LOG(DEBUG) << "AFTER: " << 2 << " " << 2 << " " << i << " " << occupied << " " << readable;
+  }
+  LOG(DEBUG) << page->ToString();
+  buffer_pool_manager_->UnpinPage(2, false);
+  CHECK(false);
 
   table_latch_.WUnlock();
 }

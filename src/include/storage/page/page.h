@@ -14,6 +14,7 @@
 
 #include <cstring>
 #include <iostream>
+#include <sstream>
 
 #include "common/config.h"
 #include "common/rwlatch.h"
@@ -70,6 +71,17 @@ class Page {
 
   /** Sets the page LSN. */
   inline void SetLSN(lsn_t lsn) { memcpy(GetData() + OFFSET_LSN, &lsn, sizeof(lsn_t)); }
+
+  std::string ToString() {
+    std::string ans;
+    const char * p = reinterpret_cast<const char*>(data_);
+    for (size_t i = 0; i < PAGE_SIZE; i++) {
+      std::stringstream iss;
+      iss << std::hex << int(p[i]);
+      ans += iss.str();
+    }
+    return ans;
+  }
 
  protected:
   static_assert(sizeof(page_id_t) == 4);
