@@ -137,7 +137,7 @@ Page *BufferPoolManager::NewPageImpl(page_id_t *page_id) {
   // 3.   Update P's metadata, zero out memory and add P to the page table.
   // 4.   Set the page ID output parameter. Return a pointer to P.
   std::lock_guard<std::mutex> guard(mutex_);
-  page_id_t new_page_id = disk_manager_->AllocatePage();
+  page_id_t new_page_id = page_id_++;
   CHECK(new_page_id >= 0);
   LOG(DEBUG) << "New #page: " << new_page_id;
   int frame_id = -1;
@@ -184,7 +184,7 @@ bool BufferPoolManager::DeletePageImpl(page_id_t page_id) {
   if (!Exist(page_id)) {
     return true;
   } else {
-    disk_manager_->DeallocatePage(page_id);
+    // disk_manager_->DeallocatePage(page_id);
     Page *page = &pages_[page_table_[page_id]];
     CHECK(page->GetPageId() == page_id) << page_id << " " << page->GetPageId();
     if (page->pin_count_ > 0) {

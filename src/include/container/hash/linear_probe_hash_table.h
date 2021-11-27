@@ -99,7 +99,7 @@ class LinearProbeHashTable : public HashTable<KeyType, ValueType, KeyComparator>
   KeyComparator comparator_;
   constexpr static int kDefaultBlockSize_ = 1;
   size_t block_size_;
-  std::atomic<int> count_;
+  std::atomic<int> count_{0};
 
   // Readers includes inserts and removes, writer is only resize
   ReaderWriterLatch table_latch_;

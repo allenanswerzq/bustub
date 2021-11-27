@@ -179,5 +179,6 @@ class BufferPoolManager {
   /** This latch protects shared data structures. We recommend updating this
    * comment to describe what it protects. */
   std::mutex mutex_;
+  size_t page_id_{0};
 };
 }  // namespace bustub

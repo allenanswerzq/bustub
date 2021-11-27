@@ -15,6 +15,7 @@
 #include <atomic>
 #include <fstream>
 #include <future>  // NOLINT
+#include <mutex>   // NOLINT
 #include <string>
 
 #include "common/config.h"
@@ -22,10 +23,8 @@
 namespace bustub {
 
 /**
- * DiskManager takes care of the allocation and deallocation of pages within a
- * database. It performs the reading and writing of pages to and from disk,
- * providing a logical file layer within the context of a database management
- * system.
+ * DiskManager takes care of the allocation and deallocation of pages within a database. It performs the reading and
+ * writing of pages to and from disk, providing a logical file layer within the context of a database management system.
  */
 class DiskManager {
  public:
@@ -72,18 +71,6 @@ class DiskManager {
    */
   bool ReadLog(char *log_data, int size, int offset);
 
-  /**
-   * Allocate a page on disk.
-   * @return the id of the allocated page
-   */
-  page_id_t AllocatePage();
-
-  /**
-   * Deallocate a page on disk.
-   * @param page_id id of the page to deallocate
-   */
-  void DeallocatePage(page_id_t page_id);
-
   /** @return the number of disk flushes */
   int GetNumFlushes() const;
 
@@ -104,20 +91,18 @@ class DiskManager {
 
  private:
   int GetFileSize(const std::string &file_name);
-
-  bool OpenOrCreateFile(const std::string &file_name, std::fstream &fs);
-
   // stream to write log file
   std::fstream log_io_;
   std::string log_name_;
   // stream to write db file
   std::fstream db_io_;
   std::string file_name_;
-  std::atomic<page_id_t> next_page_id_;
   int num_flushes_;
   int num_writes_;
   bool flush_log_;
   std::future<void> *flush_log_f_;
+  // With multiple buffer pool instances, need to protect file access
+  std::mutex db_io_latch_;
 };
 
 }  // namespace bustub

@@ -256,37 +256,29 @@ bool HASH_TABLE_TYPE::Remove(Transaction *transaction, const KeyType &key, const
 template <typename KeyType, typename ValueType, typename KeyComparator>
 void HASH_TABLE_TYPE::Resize(size_t initial_size) {
   table_latch_.WLock();
+  size_t new_block = (initial_size + BLOCK_ARRAY_SIZE - 1) / BLOCK_ARRAY_SIZE * 2;
 
-  Page * page =  buffer_pool_manager_->FetchPage(2);
-  HashBlockPage * hash_block_page =  reinterpret_cast<HashBlockPage*>(page->GetData());
-  for (size_t i = 0; i < BLOCK_ARRAY_SIZE; i++) {
-    bool occupied = hash_block_page->IsOccupied(i);
-    bool readable = hash_block_page->IsReadable(i);
-    LOG(DEBUG) << "BEFORE: " << 2 << " " << 2 << " " << i << " " << occupied << " " << readable;
-  }
-  LOG(DEBUG) << page->ToString();
-  buffer_pool_manager_->UnpinPage(2, true);
+  // TODO: allocate new_block size page, and get all values from old page insert into the new
+  // allocated.
 
-  page_id_t block_page_id;
-  page = buffer_pool_manager_->NewPage(&block_page_id);
-  CHECK(page);
-  hash_block_page =  reinterpret_cast<HashBlockPage*>(page->GetData());
-  for (size_t i = 0; i < BLOCK_ARRAY_SIZE; i++) {
-    CHECK(!hash_block_page->IsOccupied(i) && !hash_block_page->IsReadable(i));
-  }
-  buffer_pool_manager_->UnpinPage(block_page_id, /*is_dirty*/true);
-
-  page =  buffer_pool_manager_->FetchPage(2);
-  hash_block_page =  reinterpret_cast<HashBlockPage*>(page->GetData());
-  for (size_t i = 0; i < BLOCK_ARRAY_SIZE; i++) {
-    bool occupied = hash_block_page->IsOccupied(i);
-    bool readable = hash_block_page->IsReadable(i);
-    LOG(DEBUG) << "AFTER: " << 2 << " " << 2 << " " << i << " " << occupied << " " << readable;
-  }
-  LOG(DEBUG) << page->ToString();
-  buffer_pool_manager_->UnpinPage(2, false);
-  CHECK(false);
-
+  // auto hash_header_page = reinterpret_cast<HashTableHeaderPage*>(
+  //     buffer_pool_manager_->FetchPage(header_page_id_)->GetData());
+  // if (new_block > block_size_) {
+  //   for (size_t i = hash_header_page->NumBlocks(); i < new_block; i++) {
+  //     page_id_t block_page_id;
+  //     Page * page = buffer_pool_manager_->NewPage(&block_page_id);
+  //     CHECK(page);
+  //     HashBlockPage * hash_block_page =  reinterpret_cast<HashBlockPage*>(page->GetData());
+  //     for (size_t i = 0; i < BLOCK_ARRAY_SIZE; i++) {
+  //       CHECK(!hash_block_page->IsOccupied(i) && !hash_block_page->IsReadable(i));
+  //     }
+  //     LOG(DEBUG) << "Adding a new page into hash table: " << block_page_id;
+  //     hash_header_page->AddBlockPageId(block_page_id);
+  //     buffer_pool_manager_->UnpinPage(block_page_id, /*is_dirty*/true);
+  //   }
+  //   hash_header_page->SetSize(new_block * BLOCK_ARRAY_SIZE);
+  //   block_size_ = hash_header_page->NumBlocks();
+  // }
   table_latch_.WUnlock();
 }
 
