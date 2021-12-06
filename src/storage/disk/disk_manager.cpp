@@ -53,7 +53,7 @@ DiskManager::DiskManager(const std::string &db_file)
     }
   }
 
-  std::scoped_lock scoped_db_io_latch(db_io_latch_);
+  // std::scoped_lock scoped_db_io_latch(db_io_latch_);
   db_io_.open(db_file, std::ios::binary | std::ios::in | std::ios::out);
   // directory or file does not exist
   if (!db_io_.is_open()) {
@@ -75,7 +75,7 @@ DiskManager::DiskManager(const std::string &db_file)
  */
 void DiskManager::ShutDown() {
   {
-    std::scoped_lock scoped_db_io_latch(db_io_latch_);
+    // std::scoped_lock scoped_db_io_latch(db_io_latch_);
     db_io_.close();
   }
   log_io_.close();
@@ -85,7 +85,7 @@ void DiskManager::ShutDown() {
  * Write the contents of the specified page into disk file
  */
 void DiskManager::WritePage(page_id_t page_id, const char *page_data) {
-  std::scoped_lock scoped_db_io_latch(db_io_latch_);
+  // std::scoped_lock scoped_db_io_latch(db_io_latch_);
   size_t offset = static_cast<size_t>(page_id) * PAGE_SIZE;
   // set write cursor to offset
   num_writes_ += 1;
@@ -104,7 +104,7 @@ void DiskManager::WritePage(page_id_t page_id, const char *page_data) {
  * Read the contents of the specified page into the given memory area
  */
 void DiskManager::ReadPage(page_id_t page_id, char *page_data) {
-  std::scoped_lock scoped_db_io_latch(db_io_latch_);
+  // std::scoped_lock scoped_db_io_latch(db_io_latch_);
   int offset = page_id * PAGE_SIZE;
   // check if read beyond file length
   if (offset > GetFileSize(file_name_)) {

@@ -21,113 +21,127 @@
 namespace bustub {
 
 // NOLINTNEXTLINE
-// TEST(HashTableTest, SimpleTest) {
-//   auto *disk_manager = new DiskManager("test.db");
-//   auto *bpm = new BufferPoolManager(50, disk_manager);
+TEST(HashTableTest, SimpleTest) {
+  auto *disk_manager = new DiskManager("test.db");
+  auto *bpm = new BufferPoolManager(50, disk_manager);
 
-//   LinearProbeHashTable<int, int, IntComparator> ht("blah", bpm, IntComparator(), 1000, HashFunction<int>());
+  page_id_t page_id;
+  auto header_page = bpm->NewPage(&page_id);
+  (void)header_page;
+  EXPECT_EQ(page_id, 0);
 
-//   // insert a few values
-//   for (int i = 0; i < 5; i++) {
-//     ht.Insert(nullptr, i, i);
-//     std::vector<int> res;
-//     ht.GetValue(nullptr, i, &res);
-//     EXPECT_EQ(1, res.size()) << "Failed to insert " << i << std::endl;
-//     EXPECT_EQ(i, res[0]);
-//   }
+  LinearProbeHashTable<int, int, IntComparator> ht("blah", bpm, IntComparator(), 1000, HashFunction<int>());
 
-//   disk_manager->ShutDown();
-//   remove("test.db");
-//   delete disk_manager;
-//   delete bpm;
-// }
+  // insert a few values
+  for (int i = 0; i < 5; i++) {
+    ht.Insert(nullptr, i, i);
+    std::vector<int> res;
+    ht.GetValue(nullptr, i, &res);
+    EXPECT_EQ(1, res.size()) << "Failed to insert " << i << std::endl;
+    EXPECT_EQ(i, res[0]);
+  }
 
-// TEST(HashTableTest, SampleTest) {
-//   auto *disk_manager = new DiskManager("test.db");
-//   auto *bpm = new BufferPoolManager(50, disk_manager);
+  EXPECT_EQ(ht.GetSize(), 5);
 
-//   LinearProbeHashTable<int, int, IntComparator> ht("blah", bpm, IntComparator(), 1000, HashFunction<int>());
+  disk_manager->ShutDown();
+  remove("test.db");
+  delete disk_manager;
+  delete bpm;
+}
 
-//   // insert a few values
-//   for (int i = 0; i < 5; i++) {
-//     ht.Insert(nullptr, i, i);
-//     std::vector<int> res;
-//     ht.GetValue(nullptr, i, &res);
-//     EXPECT_EQ(1, res.size()) << "Failed to insert " << i << std::endl;
-//     EXPECT_EQ(i, res[0]);
-//   }
+TEST(HashTableTest, SampleTest) {
+  auto *disk_manager = new DiskManager("test.db");
+  auto *bpm = new BufferPoolManager(50, disk_manager);
 
-//   // check if the inserted values are all there
-//   for (int i = 0; i < 5; i++) {
-//     std::vector<int> res;
-//     ht.GetValue(nullptr, i, &res);
-//     EXPECT_EQ(1, res.size()) << "Failed to keep " << i << std::endl;
-//     EXPECT_EQ(i, res[0]);
-//   }
+  page_id_t page_id;
+  auto header_page = bpm->NewPage(&page_id);
+  (void)header_page;
+  EXPECT_EQ(page_id, 0);
+  LinearProbeHashTable<int, int, IntComparator> ht("blah", bpm, IntComparator(), 1000, HashFunction<int>());
 
-//   // insert one more value for each key
-//   for (int i = 0; i < 5; i++) {
-//     if (i == 0) {
-//       // duplicate values for the same key are not allowed
-//       EXPECT_FALSE(ht.Insert(nullptr, i, 2 * i));
-//     } else {
-//       EXPECT_TRUE(ht.Insert(nullptr, i, 2 * i));
-//     }
-//     // ht.Insert(nullptr, i, 2 * i);
-//     std::vector<int> res;
-//     ht.GetValue(nullptr, i, &res);
-//     if (i == 0) {
-//       // duplicate values for the same key are not allowed
-//       EXPECT_EQ(1, res.size());
-//       EXPECT_EQ(i, res[0]);
-//     } else {
-//       EXPECT_EQ(2, res.size());
-//       if (res[0] == i) {
-//         EXPECT_EQ(2 * i, res[1]);
-//       } else {
-//         EXPECT_EQ(2 * i, res[0]);
-//         EXPECT_EQ(i, res[1]);
-//       }
-//     }
-//   }
+  // insert a few values
+  for (int i = 0; i < 5; i++) {
+    ht.Insert(nullptr, i, i);
+    std::vector<int> res;
+    ht.GetValue(nullptr, i, &res);
+    EXPECT_EQ(1, res.size()) << "Failed to insert " << i << std::endl;
+    EXPECT_EQ(i, res[0]);
+  }
 
-//   // look for a key that does not exist
-//   std::vector<int> res;
-//   ht.GetValue(nullptr, 20, &res);
-//   EXPECT_EQ(0, res.size());
+  // check if the inserted values are all there
+  for (int i = 0; i < 5; i++) {
+    std::vector<int> res;
+    ht.GetValue(nullptr, i, &res);
+    EXPECT_EQ(1, res.size()) << "Failed to keep " << i << std::endl;
+    EXPECT_EQ(i, res[0]);
+  }
 
-//   // delete some values
-//   for (int i = 0; i < 5; i++) {
-//     EXPECT_TRUE(ht.Remove(nullptr, i, i));
-//     std::vector<int> res;
-//     ht.GetValue(nullptr, i, &res);
-//     if (i == 0) {
-//       // (0, 0) is the only pair with key 0
-//       EXPECT_EQ(0, res.size());
-//     } else {
-//       EXPECT_EQ(1, res.size());
-//       EXPECT_EQ(2 * i, res[0]);
-//     }
-//   }
+  // insert one more value for each key
+  for (int i = 0; i < 5; i++) {
+    if (i == 0) {
+      // duplicate values for the same key are not allowed
+      EXPECT_FALSE(ht.Insert(nullptr, i, 2 * i));
+    } else {
+      EXPECT_TRUE(ht.Insert(nullptr, i, 2 * i));
+    }
+    // ht.Insert(nullptr, i, 2 * i);
+    std::vector<int> res;
+    ht.GetValue(nullptr, i, &res);
+    if (i == 0) {
+      // duplicate values for the same key are not allowed
+      EXPECT_EQ(1, res.size());
+      EXPECT_EQ(i, res[0]);
+    } else {
+      EXPECT_EQ(2, res.size());
+      if (res[0] == i) {
+        EXPECT_EQ(2 * i, res[1]);
+      } else {
+        EXPECT_EQ(2 * i, res[0]);
+        EXPECT_EQ(i, res[1]);
+      }
+    }
+  }
 
-//   // delete all values
-//   for (int i = 0; i < 5; i++) {
-//     if (i == 0) {
-//       // (0, 0) has been deleted
-//       EXPECT_FALSE(ht.Remove(nullptr, i, 2 * i));
-//     } else {
-//       EXPECT_TRUE(ht.Remove(nullptr, i, 2 * i));
-//     }
-//   }
-//   disk_manager->ShutDown();
-//   remove("test.db");
-//   delete disk_manager;
-//   delete bpm;
-// }
+  // look for a key that does not exist
+  std::vector<int> res;
+  ht.GetValue(nullptr, 20, &res);
+  EXPECT_EQ(0, res.size());
+
+  // delete some values
+  for (int i = 0; i < 5; i++) {
+    EXPECT_TRUE(ht.Remove(nullptr, i, i));
+    std::vector<int> res;
+    ht.GetValue(nullptr, i, &res);
+    if (i == 0) {
+      // (0, 0) is the only pair with key 0
+      EXPECT_EQ(0, res.size());
+    } else {
+      EXPECT_EQ(1, res.size());
+      EXPECT_EQ(2 * i, res[0]);
+    }
+  }
+
+  // delete all values
+  for (int i = 0; i < 5; i++) {
+    if (i == 0) {
+      // (0, 0) has been deleted
+      EXPECT_FALSE(ht.Remove(nullptr, i, 2 * i));
+    } else {
+      EXPECT_TRUE(ht.Remove(nullptr, i, 2 * i));
+    }
+  }
+
+  EXPECT_EQ(ht.GetSize(), 0);
+
+  disk_manager->ShutDown();
+  remove("test.db");
+  delete disk_manager;
+  delete bpm;
+}
 
 TEST(HashTableTest, ResizeTest) {
   auto *disk_manager = new DiskManager("test.db");
-  auto *bpm = new BufferPoolManager(3, disk_manager);
+  auto *bpm = new BufferPoolManager(50, disk_manager);
 
   page_id_t page_id;
   auto header_page = bpm->NewPage(&page_id);
@@ -146,12 +160,13 @@ TEST(HashTableTest, ResizeTest) {
   }
 
   for (int i = 0; i < 1000; i++) {
-    // ht.Insert(nullptr, i, i);
     std::vector<int> res;
     ht.GetValue(nullptr, i, &res);
     EXPECT_EQ(1, res.size()) << "Failed to insert " << i << std::endl;
     EXPECT_EQ(i, res[0]);
   }
+
+  EXPECT_EQ(ht.GetSize(), 1000);
 
   disk_manager->ShutDown();
   bpm->UnpinPage(page_id, true);

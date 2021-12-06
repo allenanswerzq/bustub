@@ -102,7 +102,7 @@ class DiskManager {
   bool flush_log_;
   std::future<void> *flush_log_f_;
   // With multiple buffer pool instances, need to protect file access
-  std::mutex db_io_latch_;
+  // std::mutex db_io_latch_;
 };
 
 }  // namespace bustub

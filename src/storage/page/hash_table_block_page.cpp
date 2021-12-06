@@ -41,24 +41,13 @@ bool HASH_TABLE_BLOCK_TYPE::Insert(slot_offset_t bucket_ind, const KeyType &key,
 
 template <typename KeyType, typename ValueType, typename KeyComparator>
 void HASH_TABLE_BLOCK_TYPE::Remove(slot_offset_t bucket_ind) {
-  // CHECK(false);
-  // for (size_t i = 0; i < BLOCK_ARRAY_SIZE; i++) {
-  //   CHECK(!(!occupied_[i] && readable_[i]));
-  // }
   int x = bucket_ind / 8;
   int h = bucket_ind % 8;
   readable_[x] &= ~(1 << h);
-  // CHECK(occupied_[bucket_ind] && !readable_[bucket_ind]);
-  // for (size_t i = 0; i < BLOCK_ARRAY_SIZE; i++) {
-  //   CHECK(!(!occupied_[i] && readable_[i]));
-  // }
 }
 
 template <typename KeyType, typename ValueType, typename KeyComparator>
 bool HASH_TABLE_BLOCK_TYPE::IsOccupied(slot_offset_t bucket_ind) const {
-  // for (size_t i = 0; i < BLOCK_ARRAY_SIZE; i++) {
-  //   CHECK(!(!occupied_[i] && readable_[i]));
-  // }
   int x = bucket_ind / 8;
   int h = bucket_ind % 8;
   return occupied_[x] & (1 << h);
@@ -66,9 +55,6 @@ bool HASH_TABLE_BLOCK_TYPE::IsOccupied(slot_offset_t bucket_ind) const {
 
 template <typename KeyType, typename ValueType, typename KeyComparator>
 bool HASH_TABLE_BLOCK_TYPE::IsReadable(slot_offset_t bucket_ind) const {
-  // for (size_t i = 0; i < BLOCK_ARRAY_SIZE; i++) {
-  //   CHECK(!(!occupied_[i] && readable_[i]));
-  // }
   int x = bucket_ind / 8;
   int h = bucket_ind % 8;
   return readable_[x] & (1 << h);
