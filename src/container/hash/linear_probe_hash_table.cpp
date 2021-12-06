@@ -38,7 +38,6 @@ HASH_TABLE_TYPE::LinearProbeHashTable(const std::string &name, BufferPoolManager
   if (first_page && !first_page->GetRootId(index_name_, &header_page_id_)) {
     hash_header_page =
         reinterpret_cast<HashTableHeaderPage *>(buffer_pool_manager_->NewPage(&header_page_id_)->GetData());
-    // fmt::print("Creating header page...{} {}\n", header_page_id_, index_name_);
     UpdateHeaderPageId(header_page_id_);
     buffer_pool_manager_->UnpinPage(HEADER_PAGE_ID, true);
   } else {
@@ -62,7 +61,6 @@ HASH_TABLE_TYPE::LinearProbeHashTable(const std::string &name, BufferPoolManager
     }
     hash_header_page->SetSize(kDefaultBlockSize_ * BLOCK_ARRAY_SIZE);
   }
-  // block_size_ = hash_header_page->GetSize();
   block_size_ = hash_header_page->NumBlocks();
   buffer_pool_manager_->UnpinPage(header_page_id_, true);
 }
@@ -119,7 +117,6 @@ bool HASH_TABLE_TYPE::GetValue(Transaction *transaction, const KeyType &key, std
  *****************************************************************************/
 template <typename KeyType, typename ValueType, typename KeyComparator>
 bool HASH_TABLE_TYPE::Insert(Transaction *transaction, const KeyType &key, const ValueType &value) {
-  // fmt::print("Hash inserting {}\n", key);
   // table_latch_.RLock();
   size_t bucket_id;
   size_t block_page_id;
@@ -149,15 +146,11 @@ bool HASH_TABLE_TYPE::Insert(Transaction *transaction, const KeyType &key, const
         if (comparator_(hash_block_page->KeyAt(i), key) == 0 && hash_block_page->ValueAt(i) == value) {
           buffer_pool_manager_->UnpinPage(block_page_id, /*is_dirty*/ true);
           table_latch_.RUnlock();
-          fmt::print("Key value pair already exist. {} {}\n", key, value);
+          // Key value pair already exists.
           return false;
         }
       } else if ((occupied && !readable) || (!occupied && !readable)) {
-        // fmt::print("Succ inserted key {} {} {} {} {} {}\n", curr_block, block_page_id, i, occupied, readable,
-        //            BLOCK_ARRAY_SIZE);
         CHECK(hash_block_page->Insert(i, key, value));
-        // fmt::print("Succ inserted key {} {} {} {} {} {}\n", curr_block, block_page_id, i,
-        //            hash_block_page->IsOccupied(i), hash_block_page->IsReadable(i), BLOCK_ARRAY_SIZE);
         count_++;
         buffer_pool_manager_->UnpinPage(block_page_id, /*is_dirty*/ true);
         table_latch_.RUnlock();
@@ -250,14 +243,13 @@ void HASH_TABLE_TYPE::Resize(size_t initial_size) {
   // table_latch_.WLock();
 
   size_t new_block = (initial_size + BLOCK_ARRAY_SIZE - 1) / BLOCK_ARRAY_SIZE * 2;
-  // LOG(DEBUG) << "Resizing ";
-  fmt::print("Resizing {}\n", new_block);
+  // fmt::print("Resizing {}\n", new_block);
   page_id_t new_header_page_id;
-  auto new_header_page = reinterpret_cast<HashTableHeaderPage*>(
-      buffer_pool_manager_->NewPage(&new_header_page_id)->GetData());
+  auto new_header_page =
+      reinterpret_cast<HashTableHeaderPage *>(buffer_pool_manager_->NewPage(&new_header_page_id)->GetData());
   for (size_t i = 0; i < new_block; i++) {
     page_id_t new_page_id;
-    Page * new_page = buffer_pool_manager_->NewPage(&new_page_id);
+    Page *new_page = buffer_pool_manager_->NewPage(&new_page_id);
     CHECK(new_page);
     new_header_page->AddBlockPageId(new_page_id);
     buffer_pool_manager_->UnpinPage(new_page_id, false);
@@ -271,17 +263,17 @@ void HASH_TABLE_TYPE::Resize(size_t initial_size) {
   block_size_ = new_block;
 
   size_t old_count = count_;
-  auto old_header_page = reinterpret_cast<HashTableHeaderPage*>(
-      buffer_pool_manager_->FetchPage(old_header_page_id)->GetData());
+  auto old_header_page =
+      reinterpret_cast<HashTableHeaderPage *>(buffer_pool_manager_->FetchPage(old_header_page_id)->GetData());
   for (size_t i = 0; i < old_header_page->NumBlocks(); i++) {
     page_id_t old_page_id = old_header_page->GetBlockPageId(i);
-    Page * old_page = buffer_pool_manager_->FetchPage(old_page_id);
-    HashBlockPage * old_block_page =  reinterpret_cast<HashBlockPage*>(old_page->GetData());
+    Page *old_page = buffer_pool_manager_->FetchPage(old_page_id);
+    HashBlockPage *old_block_page = reinterpret_cast<HashBlockPage *>(old_page->GetData());
     for (size_t j = 0; j < BLOCK_ARRAY_SIZE; j++) {
       auto key = old_block_page->KeyAt(j);
       auto value = old_block_page->ValueAt(j);
       // TOOD: check the nullptr passed here.
-      Insert(/*transaction*/nullptr, key, value);
+      Insert(/*transaction*/ nullptr, key, value);
     }
     buffer_pool_manager_->UnpinPage(old_page_id, false);
   }

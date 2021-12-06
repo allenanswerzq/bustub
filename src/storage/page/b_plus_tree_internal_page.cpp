@@ -271,20 +271,11 @@ void B_PLUS_TREE_INTERNAL_PAGE_TYPE::MoveAllTo(BPlusTreeInternalPage *recipient,
 INDEX_TEMPLATE_ARGUMENTS
 void B_PLUS_TREE_INTERNAL_PAGE_TYPE::MoveFirstToEndOf(BPlusTreeInternalPage *recipient, const KeyType &middle_key,
                                                       BufferPoolManager *buffer_pool_manager) {
-  // std::lock_guard<std::mutex> guard(mutex_);
   CHECK(array_.size());
   // TODO: write more comments
   recipient->CopyLastFrom(array_[0], buffer_pool_manager);
   recipient->SetKeyAt(recipient->GetSize() - 1, middle_key);
   Remove(0);
-
-  // page_id_t parent_id = GetParentPageId();
-  // BPlusTreeInternalPage *parent =
-  //     reinterpret_cast<BPlusTreeInternalPage *>(buffer_pool_manager->FetchPage(parent_id)->GetData());
-  // int index = parent->ValueIndex(GetPageId());
-  // // TODO: DOULBE CHECK
-  // parent->SetKeyAt(index, KeyAt(0));
-  // buffer_pool_manager->UnpinPage(parent_id, true);
 }
 
 /* Append an entry at the end.
@@ -323,14 +314,6 @@ void B_PLUS_TREE_INTERNAL_PAGE_TYPE::MoveLastToFrontOf(BPlusTreeInternalPage *re
   recipient->SetKeyAt(0, middle_key);
   recipient->CopyFirstFrom(array_[last], buffer_pool_manager);
   Remove(last);
-
-  // page_id_t parent_id = GetParentPageId();
-  // BPlusTreeInternalPage *parent =
-  //     reinterpret_cast<BPlusTreeInternalPage *>(buffer_pool_manager->FetchPage(parent_id)->GetData());
-  // int index = parent->ValueIndex(GetPageId());
-  // // TODO: DOULBE CHECK
-  // parent->SetKeyAt(index, KeyAt(0));
-  // buffer_pool_manager->UnpinPage(parent_id, true);
 }
 
 /* Append an entry at the beginning.
