@@ -175,4 +175,123 @@ TEST(HashTableTest, ResizeTest) {
   delete bpm;
 }
 
+TEST(HashTableTest, RemoveTest) {
+  auto *disk_manager = new DiskManager("test.db");
+  auto *bpm = new BufferPoolManager(50, disk_manager);
+
+  page_id_t page_id;
+  auto header_page = bpm->NewPage(&page_id);
+  (void)header_page;
+  EXPECT_EQ(page_id, 0);
+
+  LinearProbeHashTable<int, int, IntComparator> ht("blah", bpm, IntComparator(), 1000, HashFunction<int>());
+
+  // insert a few values
+  for (int i = 0; i < 1000; i++) {
+    ht.Insert(nullptr, i, i);
+    std::vector<int> res;
+    ht.GetValue(nullptr, i, &res);
+    EXPECT_EQ(1, res.size()) << "Failed to insert " << i << std::endl;
+    EXPECT_EQ(i, res[0]);
+  }
+
+  for (int i = 0; i < 1000; i++) {
+    if (i % 2 == 0) {
+      EXPECT_EQ(ht.Remove(nullptr, i, i), true);
+    }
+  }
+
+  EXPECT_EQ(ht.GetSize(), 500);
+  for (int i = 0; i < 1000; i++) {
+    std::vector<int> res;
+    ht.GetValue(nullptr, i, &res);
+    if (i % 2 == 0) {
+      EXPECT_EQ(0, res.size()) << "Failed to remove " << i << std::endl;
+    } else {
+      EXPECT_EQ(1, res.size()) << "Failed to insert " << i << std::endl;
+      EXPECT_EQ(i, res[0]);
+    }
+  }
+
+  disk_manager->ShutDown();
+  bpm->UnpinPage(page_id, true);
+  remove("test.db");
+  delete disk_manager;
+  delete bpm;
+}
+
+class HashTableConcurrentTest : public ::testing::Test {
+ protected:
+  using HashTable = LinearProbeHashTable<int, int, IntComparator>;
+  std::unique_ptr<DiskManager> disk_manager_;
+  std::unique_ptr<BufferPoolManager> bpm_;
+  std::unique_ptr<HashTable> ht_;
+  page_id_t page_id_;
+
+  void SetUp() override {
+    disk_manager_ = std::make_unique<DiskManager>("test.db");
+    bpm_ = std::make_unique<BufferPoolManager>(1024, disk_manager_.get());
+    ht_ = std::make_unique<HashTable>("blah", bpm_.get(), IntComparator(), 1000, HashFunction<int>());
+
+    // create and fetch header_page
+    bpm_->NewPage(&page_id_);
+    (void)page_id_;
+  }
+
+  void TearDown() override {
+    disk_manager_->ShutDown();
+    bpm_->UnpinPage(page_id_, true);
+    remove("test.db");
+    remove("test.log");
+  };
+
+  template <typename... Args>
+  void LaunchParallelTest(uint64_t num_threads, Args &&... args) {
+    std::vector<std::thread> thread_group;
+
+    for (uint64_t i = 0; i < num_threads; ++i) {
+      thread_group.push_back(std::thread(args..., i));
+    }
+
+    for (uint64_t i = 0; i < num_threads; ++i) {
+      thread_group[i].join();
+    }
+  }
+
+  void InsertHelper(HashTable *ht, const std::vector<std::array<int, 2>> &inserts) {
+    auto txn = std::make_unique<Transaction>(0);
+    for (size_t i = 0; i < inserts.size(); i++) {
+      int k = inserts[i][0];
+      int v = inserts[i][1];
+      ht->Insert(txn.get(), k, v);
+    }
+  }
+
+  void DeleteHelper(HashTable *ht, const std::vector<std::array<int, 2>> &inserts) {
+    auto txn = std::make_unique<Transaction>(0);
+    for (size_t i = 0; i < inserts.size(); i++) {
+      int k = inserts[i][0];
+      int v = inserts[i][1];
+      ht->Remove(txn.get(), k, v);
+    }
+  }
+};
+
+TEST_F(HashTableConcurrentTest, ConcurrentTest) {
+  std::vector<std::array<int, 2>> inserts;
+  for (int i = 0; i < 1000; i++) {
+    inserts.push_back({i, i});
+  }
+  std::vector<std::thread> thread_group;
+  for (uint64_t i = 0; i < 3; ++i) {
+    thread_group.push_back(std::thread([&] { this->InsertHelper(ht_.get(), inserts); }));
+  }
+  for (uint64_t i = 0; i < 3; ++i) {
+    thread_group.push_back(std::thread([&] { this->DeleteHelper(ht_.get(), inserts); }));
+  }
+  for (uint64_t i = 0; i < thread_group.size(); ++i) {
+    thread_group[i].join();
+  }
+}
+
 }  // namespace bustub
