@@ -53,7 +53,7 @@ class Page {
   inline bool IsDirty() { return is_dirty_; }
 
   /** Acquire the page write latch. */
-  inline void WLatch() { rwlatch_.WLock(); }
+  inline void WLatch() { rwlatch_.WLock(true); }
 
   /** Release the page write latch. */
   inline void WUnlatch() { rwlatch_.WUnlock(); }

@@ -45,13 +45,13 @@ Page *BufferPoolManager::FetchPageImpl(page_id_t page_id) {
   // 4.     Update P's metadata, read in the page content from disk, and then
   // return a pointer to P.
   std::lock_guard<std::mutex> guard(mutex_);
-  LOG(DEBUG) << "Fetching #page: " << page_id;
+  // LOG(DEBUG) << "Fetching #page: " << page_id;
   if (Exist(page_id)) {
     // If this page is alreay in buffer pool, simply returns it
     Page *page = &pages_[page_table_[page_id]];
     CHECK(page->GetPageId() == page_id) << page_id << " " << page->GetPageId();
     page->pin_count_++;
-    LOG(DEBUG) << "Fetching from the exising #page " << page_id << " pin_count: " << page->pin_count_;
+    // LOG(DEBUG) << "Fetching from the exising #page " << page_id << " pin_count: " << page->pin_count_;
     return page;
   } else {
     // Otherwise found a new place and read that page from disk.
@@ -76,14 +76,14 @@ Page *BufferPoolManager::FetchPageImpl(page_id_t page_id) {
       return nullptr;
     }
     CHECK(page_id >= 0) << "Expected page id greater or equal to 0: " << page_id;
-    LOG(DEBUG) << "Fetching a new #page " << page_id << " to frame " << frame_id;
+    // LOG(DEBUG) << "Fetching a new #page " << page_id << " to frame " << frame_id;
     Page *page = &pages_[frame_id];
     // CHECK(page->page_id_ >= 0) << page_id;
     if (page->is_dirty_) {
       // Flush the old page back to disk if dirty
       FlushPageImpl(page->page_id_);
     }
-    LOG(DEBUG) << "Erasing page_id: " << page->page_id_;
+    // LOG(DEBUG) << "Erasing page_id: " << page->page_id_;
     page_table_.erase(page->page_id_);
     page_table_[page_id] = frame_id;
     page->page_id_ = page_id;
@@ -97,7 +97,7 @@ Page *BufferPoolManager::FetchPageImpl(page_id_t page_id) {
 
 bool BufferPoolManager::UnpinPageImpl(page_id_t page_id, bool is_dirty) {
   std::lock_guard<std::mutex> guard(mutex_);
-  LOG(DEBUG) << "Unpinning #page: " << page_id;
+  // LOG(DEBUG) << "Unpinning #page: " << page_id;
   CHECK(Exist(page_id)) << "Expected page exists: " << page_id;
   Page *page = &pages_[page_table_[page_id]];
   CHECK(page->GetPageId() == page_id) << page_id << " " << page->GetPageId();
@@ -119,12 +119,12 @@ bool BufferPoolManager::FlushPageImpl(page_id_t page_id) {
   if (!Exist(page_id)) {
     return false;
   } else {
-    LOG(DEBUG) << "Flusing # page: " << page_id;
+    // LOG(DEBUG) << "Flusing # page: " << page_id;
     Page *page = &pages_[page_table_[page_id]];
     CHECK(page->GetPageId() == page_id) << page_id << " " << page->GetPageId();
     disk_manager_->WritePage(page_id, page->GetData());
     page->is_dirty_ = false;
-    LOG(DEBUG) << "Flushed # page: " << page_id;
+    // LOG(DEBUG) << "Flushed # page: " << page_id;
     return true;
   }
 }
@@ -139,7 +139,7 @@ Page *BufferPoolManager::NewPageImpl(page_id_t *page_id) {
   std::lock_guard<std::mutex> guard(mutex_);
   page_id_t new_page_id = page_id_++;
   CHECK(new_page_id >= 0);
-  LOG(DEBUG) << "New #page: " << new_page_id;
+  // LOG(DEBUG) << "New #page: " << new_page_id;
   int frame_id = -1;
   if (!free_list_.empty()) {
     // If we can get a frame from free_list_
@@ -151,7 +151,7 @@ Page *BufferPoolManager::NewPageImpl(page_id_t *page_id) {
     // Remove this frame from the replacer_
     replacer_->Pin(page_id);
     frame_id = page_table_[page_id];
-    LOG(DEBUG) << "Erasing page_id: " << page_id;
+    // LOG(DEBUG) << "Erasing page_id: " << page_id;
     page_table_.erase(page_id);
   } else {
     // throw Exception("Out of Memory.");
@@ -180,7 +180,7 @@ bool BufferPoolManager::DeletePageImpl(page_id_t page_id) {
   // 3.   Otherwise, P can be deleted. Remove P from the page table, reset its
   // metadata and return it to the free list.
   std::lock_guard<std::mutex> guard(mutex_);
-  LOG(DEBUG) << "Delete #page: " << page_id;
+  // LOG(DEBUG) << "Delete #page: " << page_id;
   if (!Exist(page_id)) {
     return true;
   } else {
@@ -202,9 +202,9 @@ bool BufferPoolManager::DeletePageImpl(page_id_t page_id) {
 }
 
 void BufferPoolManager::DebugOutput() const {
-  for (auto it : page_table_) {
-    LOG(DEBUG) << "#page: " << it.first << " --> " << it.second << " count: " << pages_[it.second].pin_count_;
-  }
+  // for (auto it : page_table_) {
+  //   // LOG(DEBUG) << "#page: " << it.first << " --> " << it.second << " count: " << pages_[it.second].pin_count_;
+  // }
 }
 
 void BufferPoolManager::FlushAllPagesImpl() {

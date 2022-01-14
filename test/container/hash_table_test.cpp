@@ -231,11 +231,11 @@ class HashTableConcurrentTest : public ::testing::Test {
   void SetUp() override {
     disk_manager_ = std::make_unique<DiskManager>("test.db");
     bpm_ = std::make_unique<BufferPoolManager>(1024, disk_manager_.get());
-    ht_ = std::make_unique<HashTable>("blah", bpm_.get(), IntComparator(), 1000, HashFunction<int>());
-
     // create and fetch header_page
     bpm_->NewPage(&page_id_);
     (void)page_id_;
+
+    ht_ = std::make_unique<HashTable>("blah", bpm_.get(), IntComparator(), 1000, HashFunction<int>());
   }
 
   void TearDown() override {
@@ -275,9 +275,23 @@ class HashTableConcurrentTest : public ::testing::Test {
       ht->Remove(txn.get(), k, v);
     }
   }
+
+  void ReadHelper(HashTable *ht, const std::vector<std::array<int, 2>> &inserts) {
+    auto txn = std::make_unique<Transaction>(0);
+    for (size_t i = 0; i < inserts.size(); i++) {
+      int k = inserts[i][0];
+      // int v = inserts[i][1];
+      std::vector<int> res;
+      ht->GetValue(nullptr, k, &res);
+      // EXPECT_EQ(1, res.size()) << "Failed to insert " << i << std::endl;
+      // EXPECT_EQ(i, res[0]);
+      // ht->Remove(txn.get(), k, v);
+    }
+  }
 };
 
 TEST_F(HashTableConcurrentTest, ConcurrentTest) {
+  // NOTE: this only tests that there are no any deadlock problems.
   std::vector<std::array<int, 2>> inserts;
   for (int i = 0; i < 1000; i++) {
     inserts.push_back({i, i});
@@ -288,6 +302,9 @@ TEST_F(HashTableConcurrentTest, ConcurrentTest) {
   }
   for (uint64_t i = 0; i < 3; ++i) {
     thread_group.push_back(std::thread([&] { this->DeleteHelper(ht_.get(), inserts); }));
+  }
+  for (uint64_t i = 0; i < 3; ++i) {
+    thread_group.push_back(std::thread([&] { this->ReadHelper(ht_.get(), inserts); }));
   }
   for (uint64_t i = 0; i < thread_group.size(); ++i) {
     thread_group[i].join();

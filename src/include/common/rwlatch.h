@@ -16,6 +16,7 @@
 #include <condition_variable>  // NOLINT
 #include <mutex>               // NOLINT
 
+#include "common/logger.h"
 #include "common/macros.h"
 
 namespace bustub {
@@ -37,7 +38,8 @@ class ReaderWriterLatch {
   /**
    * Acquire a write latch.
    */
-  void WLock() {
+  void WLock(bool page_latch = false) {
+    LOG(DEBUG) << "Waiting for writer " << (page_latch ? "page_latch" : "lock");
     std::unique_lock<mutex_t> latch(mutex_);
     while (writer_entered_) {
       // Wait the last write finishes.
@@ -72,6 +74,7 @@ class ReaderWriterLatch {
    * Acquire a read latch.
    */
   void RLock() {
+    LOG(DEBUG) << "Waiting for read lock...";
     std::unique_lock<mutex_t> latch(mutex_);
     while (writer_entered_ || reader_count_ == MAX_READERS) {
       reader_.wait(latch);

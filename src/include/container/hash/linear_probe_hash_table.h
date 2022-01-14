@@ -92,6 +92,8 @@ class LinearProbeHashTable : public HashTable<KeyType, ValueType, KeyComparator>
 
   void UpdateHeaderPageId(int insert_record = 0);
 
+  bool InsertImpl(Transaction *transaction, const KeyType &key, const ValueType &value, bool acquire_lock);
+
   // member variable
   const std::string index_name_;
   page_id_t header_page_id_;
@@ -99,7 +101,7 @@ class LinearProbeHashTable : public HashTable<KeyType, ValueType, KeyComparator>
   KeyComparator comparator_;
   constexpr static int kDefaultBlockSize_ = 1;
   size_t block_size_;
-  std::atomic<int> count_{0};
+  std::atomic<size_t> count_{0};
 
   // Readers includes inserts and removes, writer is only resize
   ReaderWriterLatch table_latch_;
