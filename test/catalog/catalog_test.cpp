@@ -22,14 +22,14 @@
 namespace bustub {
 
 // NOLINTNEXTLINE
-TEST(CatalogTest, DISABLED_CreateTableTest) {
+TEST(CatalogTest, CreateTableTest) {
   auto disk_manager = new DiskManager("catalog_test.db");
   auto bpm = new BufferPoolManager(32, disk_manager);
   auto catalog = new Catalog(bpm, nullptr, nullptr);
   std::string table_name = "potato";
 
   // The table shouldn't exist in the catalog yet.
-  EXPECT_THROW(catalog->GetTable(table_name), std::out_of_range);
+  EXPECT_FALSE(catalog->GetTable(table_name));
 
   // Put the table into the catalog.
   std::vector<Column> columns;
