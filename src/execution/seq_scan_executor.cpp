@@ -27,7 +27,7 @@ bool SeqScanExecutor::Next(Tuple *tuple, RID *rid) {
   auto predicate = plan_->GetPredicate();
   for (; it_ != table->End(); it_++) {
     Tuple tmp = *it_;
-    if (predicate->Evaluate(&tmp, GetOutputSchema()).GetAs<bool>()) {
+    if (!predicate || predicate->Evaluate(&tmp, GetOutputSchema()).GetAs<bool>()) {
       if (tuple) {
         *tuple = tmp;
       }
