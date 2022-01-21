@@ -77,8 +77,9 @@ class Catalog {
    */
   TableMetadata *CreateTable(Transaction *txn, const std::string &table_name, const Schema &schema) {
     BUSTUB_ASSERT(names_.count(table_name) == 0, "Table names should be unique!");
+    auto table_heap = std::make_unique<TableHeap>(bpm_, lock_manager_, log_manager_, txn);
     auto table_id = next_table_oid_++;
-    auto table_meta = std::make_unique<TableMetadata>(schema, table_name, /*table_heap*/nullptr, table_id);
+    auto table_meta = std::make_unique<TableMetadata>(schema, table_name, std::move(table_heap), table_id);
     names_[table_name] = table_id;
     tables_[table_id] = std::move(table_meta);
     return GetTable(table_name);
