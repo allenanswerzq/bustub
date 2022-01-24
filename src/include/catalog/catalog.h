@@ -119,7 +119,10 @@ class Catalog {
                          const Schema &schema, const Schema &key_schema, const std::vector<uint32_t> &key_attrs,
                          size_t keysize) {
     auto index_id = next_index_oid_++;
-    auto index_info = std::make_unique<IndexInfo>(key_schema, index_name, /*index*/nullptr, index_id, table_name, keysize);
+    auto index_metadata = std::make_unique<IndexMetadata>(index_name, table_name, &schema, key_attrs);
+    using BPlusIndexType = BPlusTreeIndex<KeyType, ValueType, KeyComparator>;
+    auto index = std::make_unique<BPlusIndexType>(std::move(index_metadata), bpm_);
+    auto index_info = std::make_unique<IndexInfo>(key_schema, index_name, std::move(index), index_id, table_name, keysize);
     indexes_[index_id] = std::move(index_info);
     index_names_[table_name][index_name] = index_id;
     return GetIndex(index_name, table_name);

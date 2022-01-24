@@ -102,12 +102,12 @@ class IndexMetadata {
  */
 class Index {
  public:
-  explicit Index(IndexMetadata *metadata) : metadata_(metadata) {}
+  explicit Index(std::unique_ptr<IndexMetadata>&& metadata) : metadata_(std::move(metadata)) {}
 
-  virtual ~Index() { delete metadata_; }
+  virtual ~Index() {}
 
   // Return the metadata object associated with the index
-  IndexMetadata *GetMetadata() const { return metadata_; }
+  IndexMetadata *GetMetadata() const { return metadata_.get(); }
 
   int GetIndexColumnCount() const { return metadata_->GetIndexColumnCount(); }
 
@@ -141,7 +141,7 @@ class Index {
   //===--------------------------------------------------------------------===//
   //  Data members
   //===--------------------------------------------------------------------===//
-  IndexMetadata *metadata_;
+ std::unique_ptr<IndexMetadata> metadata_;
 };
 
 }  // namespace bustub
