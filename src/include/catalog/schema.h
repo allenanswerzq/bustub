@@ -71,6 +71,15 @@ class Schema {
     UNREACHABLE("Column does not exist");
   }
 
+  bool hasColumn(const std::string &col_name) const {
+    for (uint32_t i = 0; i < columns_.size(); ++i) {
+      if (columns_[i].GetName() == col_name) {
+        return true;
+      }
+    }
+    return false;
+  };
+
   /** @return the indices of non-inlined columns */
   const std::vector<uint32_t> &GetUnlinedColumns() const { return uninlined_columns_; }
 

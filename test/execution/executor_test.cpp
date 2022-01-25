@@ -337,25 +337,32 @@ TEST_F(ExecutorTest, SimpleRawInsertWithIndexTest) {
 }
 
 // NOLINTNEXTLINE
-TEST_F(ExecutorTest, DISABLED_SimpleDeleteTest) {
-  // SELECT colA FROM test_1 WHERE colA == 50
-  // DELETE FROM test_1 WHERE colA == 50
-  // SELECT colA FROM test_1 WHERE colA == 50
+TEST_F(ExecutorTest, SimpleDeleteTest) {
+  // INSERT INTO empty_table2 VALUES (100, 10), (101, 11), (102, 12)
+  // Create Values to insert
+  std::vector<Value> val1{ValueFactory::GetIntegerValue(100), ValueFactory::GetIntegerValue(10)};
+  std::vector<Value> val2{ValueFactory::GetIntegerValue(101), ValueFactory::GetIntegerValue(11)};
+  std::vector<Value> val3{ValueFactory::GetIntegerValue(102), ValueFactory::GetIntegerValue(12)};
+  std::vector<std::vector<Value>> raw_vals{val1, val2, val3};
+  // Create insert plan node
+  auto table_info = GetExecutorContext()->GetCatalog()->GetTable("empty_table2");
+  InsertPlanNode insert_plan{std::move(raw_vals), table_info->oid_};
 
-  // Construct query plan
-  auto table_info = GetExecutorContext()->GetCatalog()->GetTable("test_1");
-  auto &schema = table_info->schema_;
-  auto colA = MakeColumnValueExpression(schema, 0, "colA");
-  auto const50 = MakeConstantValueExpression(ValueFactory::GetIntegerValue(50));
-  auto predicate = MakeComparisonExpression(colA, const50, ComparisonType::Equal);
-  auto out_schema1 = MakeOutputSchema({{"colA", colA}});
-  auto scan_plan1 = std::make_unique<SeqScanPlanNode>(out_schema1, predicate, table_info->oid_);
-  // index
   Schema *key_schema = ParseCreateStatement("a bigint");
   GenericComparator<8> comparator(key_schema);
   auto index_info = GetExecutorContext()->GetCatalog()->CreateIndex<GenericKey<8>, RID, GenericComparator<8>>(
-      GetTxn(), "index1", "test_1", GetExecutorContext()->GetCatalog()->GetTable("test_1")->schema_, *key_schema, {0},
-      8);
+      GetTxn(), "index1", "empty_table2", table_info->schema_, *key_schema, {0}, 8);
+
+  GetExecutionEngine()->Execute(&insert_plan, nullptr, GetTxn(), GetExecutorContext());
+
+  // Construct query plan
+  // auto table_info = GetExecutorContext()->GetCatalog()->GetTable("empty_table2");
+  auto &schema = table_info->schema_;
+  auto colA = MakeColumnValueExpression(schema, 0, "colA");
+  auto const50 = MakeConstantValueExpression(ValueFactory::GetIntegerValue(100));
+  auto predicate = MakeComparisonExpression(colA, const50, ComparisonType::Equal);
+  auto out_schema1 = MakeOutputSchema({{"colA", colA}});
+  auto scan_plan1 = std::make_unique<SeqScanPlanNode>(out_schema1, predicate, table_info->oid_);
 
   // Execute
   std::vector<Tuple> result_set;
@@ -365,13 +372,12 @@ TEST_F(ExecutorTest, DISABLED_SimpleDeleteTest) {
   std::cout << "colA" << std::endl;
   for (const auto &tuple : result_set) {
     std::cout << tuple.GetValue(out_schema1, out_schema1->GetColIdx("colA")).GetAs<int32_t>() << std::endl;
-    ASSERT_TRUE(tuple.GetValue(out_schema1, out_schema1->GetColIdx("colA")).GetAs<int32_t>() == 50);
+    ASSERT_TRUE(tuple.GetValue(out_schema1, out_schema1->GetColIdx("colA")).GetAs<int32_t>() == 100);
   }
   ASSERT_EQ(result_set.size(), 1);
   Tuple index_key = Tuple(result_set[0]);
 
-  std::unique_ptr<AbstractPlanNode> delete_plan;
-  { delete_plan = std::make_unique<DeletePlanNode>(scan_plan1.get(), table_info->oid_); }
+  std::unique_ptr<AbstractPlanNode> delete_plan = std::make_unique<DeletePlanNode>(scan_plan1.get(), table_info->oid_);
   GetExecutionEngine()->Execute(delete_plan.get(), nullptr, GetTxn(), GetExecutorContext());
 
   result_set.clear();
@@ -387,7 +393,7 @@ TEST_F(ExecutorTest, DISABLED_SimpleDeleteTest) {
 }
 
 // NOLINTNEXTLINE
-TEST_F(ExecutorTest, DISABLED_SimpleNestedLoopJoinTest) {
+TEST_F(ExecutorTest, SimpleNestedLoopJoinTest) {
   // SELECT test_1.colA, test_1.colB, test_2.col1, test_2.col3 FROM test_1 JOIN
   // test_2 ON test_1.colA = test_2.col1
   std::unique_ptr<AbstractPlanNode> scan_plan1;

@@ -46,11 +46,14 @@ bool BPLUSTREE_TYPE::IsEmpty() const {
 INDEX_TEMPLATE_ARGUMENTS
 bool BPLUSTREE_TYPE::GetValue(const KeyType &key, std::vector<ValueType> *result, Transaction *transaction) {
   BPlusTreePage *curr = AcquireReadLatch(key, transaction);
+  if (!curr) {
+    return false;
+  }
   LeafPage *leaf = reinterpret_cast<LeafPage *>(curr);
   ValueType val;
   bool ans = leaf->Lookup(key, &val, comparator_);
   LOG(DEBUG) << "Lookup leaf node: " << curr->GetPageId() << " result: " << ans;
-  if (result) {
+  if (ans && result) {
     result->push_back(val);
   }
   ReleaseAllLatch(transaction, /*is_write*/ false);
