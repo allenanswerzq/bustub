@@ -34,8 +34,6 @@ void AggregationExecutor::Init() {
 bool AggregationExecutor::Next(Tuple *tuple, RID *rid) {
   Tuple cur_tuple;
   RID cur_rid;
-  std::vector<Value> group_bys;
-  std::vector<Value> aggregates;
   if (!first) {
     first = true;
     // Executor breaker
@@ -48,17 +46,30 @@ bool AggregationExecutor::Next(Tuple *tuple, RID *rid) {
   for (; aht_iterator_ != aht_.End(); ) {
     // For each group specified using group by clause
     AggregateKey key = aht_iterator_.Key();
-    AggregateValue aggs = aht_iterator_.Val();
-    cur_tuple = Tuple(aggs.aggregates_, plan_->OutputSchema());
-    if (tuple) {
-      *tuple = cur_tuple;
+    AggregateValue val = aht_iterator_.Val();
+    const AbstractExpression * having = plan_->GetHaving();
+    if (!having || having->EvaluateAggregate(key.group_bys_, val.aggregates_).GetAs<bool>()) {
+      std::vector<Value> value;
+      for (const Column& column : plan_->OutputSchema()->GetColumns()) {
+        auto expr = column.GetExpr();
+        auto v = expr->EvaluateAggregate(key.group_bys_, val.aggregates_);
+        value.push_back(v);
+      }
+      cur_tuple = Tuple(value, plan_->OutputSchema());
+      if (tuple) {
+        *tuple = cur_tuple;
+      }
+      if (rid) {
+        *rid = RID();
+      }
+      ++aht_iterator_;
+      // Returns if we get a tuple for any group
+      return true;
     }
-    if (rid) {
-      *rid = RID();
+    else {
+      // This tuple is filtered, try next one
+      ++aht_iterator_;
     }
-    ++aht_iterator_;
-    // Returns if we get a tuple for any group
-    return true;
   }
   return false;
 }

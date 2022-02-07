@@ -41,14 +41,8 @@ bool NestedLoopJoinExecutor::Next(Tuple *tuple, RID *rid) {
       if (result.GetAs<bool>()) {
         std::vector<Value> values;
         for (const Column& column : out_final->GetColumns()) {
-          auto column_name = column.GetName();
           auto expr = column.GetExpr();
-          if (left_schema->hasColumn(column_name)) {
-            // TODO(zhangqiang): Any other ways to do this without define this inteface
-            values.push_back(expr->Evaluate(&left_tuple, left_schema));
-          } else {
-            values.push_back(expr->Evaluate(&right_tuple, right_schema));
-          }
+          values.push_back(expr->EvaluateJoin(&left_tuple, left_schema, &right_tuple, right_schema));
         }
         Tuple cur_tuple(values, out_final);
         if (tuple) {
