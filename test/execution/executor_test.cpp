@@ -446,7 +446,7 @@ TEST_F(ExecutorTest, SimpleNestedLoopJoinTest) {
 }
 
 // NOLINTNEXTLINE
-TEST_F(ExecutorTest, DISABLED_SimpleAggregationTest) {
+TEST_F(ExecutorTest, SimpleAggregationTest) {
   // SELECT COUNT(colA), SUM(colA), min(colA), max(colA) from test_1;
   std::unique_ptr<AbstractPlanNode> scan_plan;
   const Schema *scan_schema;
@@ -469,9 +469,9 @@ TEST_F(ExecutorTest, DISABLED_SimpleAggregationTest) {
 
     agg_schema = MakeOutputSchema({{"countA", countA}, {"sumA", sumA}, {"minA", minA}, {"maxA", maxA}});
     agg_plan = std::make_unique<AggregationPlanNode>(
-        agg_schema, scan_plan.get(), nullptr, std::vector<const AbstractExpression *>{},
-        std::vector<const AbstractExpression *>{colA, colA, colA, colA},
-        std::vector<AggregationType>{AggregationType::CountAggregate, AggregationType::SumAggregate,
+        agg_schema, scan_plan.get(), /*having*/ nullptr, /*group_by*/ std::vector<const AbstractExpression *>{},
+        /*aggregates*/std::vector<const AbstractExpression *>{colA, colA, colA, colA},
+        /*agg_types*/std::vector<AggregationType>{AggregationType::CountAggregate, AggregationType::SumAggregate,
                                      AggregationType::MinAggregate, AggregationType::MaxAggregate});
   }
   std::vector<Tuple> result_set;

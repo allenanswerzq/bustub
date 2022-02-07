@@ -60,6 +60,7 @@ bool NestedLoopJoinExecutor::Next(Tuple *tuple, RID *rid) {
         return true;
       }
     }
+    // NOTE: reinit after we processed all tuples for right table
     right_executor_->Init();
   }
   return false;
