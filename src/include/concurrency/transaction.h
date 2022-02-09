@@ -258,6 +258,7 @@ class Transaction {
 
  private:
   /** The current transaction state. */
+  // TODO(qiang): this should be atomic
   TransactionState state_;
   /** The isolation level of the transaction. */
   IsolationLevel isolation_level_;

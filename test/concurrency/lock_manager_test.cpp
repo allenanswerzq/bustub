@@ -77,7 +77,7 @@ void BasicTest1() {
     delete txns[i];
   }
 }
-TEST(LockManagerTest, DISABLED_BasicTest) { BasicTest1(); }
+TEST(LockManagerTest, BasicTest) { BasicTest1(); }
 
 void TwoPLTest() {
   LockManager lock_mgr{};
@@ -92,7 +92,7 @@ void TwoPLTest() {
   res = lock_mgr.LockShared(txn, rid0);
   EXPECT_TRUE(res);
   CheckGrowing(txn);
-  CheckTxnLockSize(txn, 1, 0);
+  CheckTxnLockSize(txn, /*shared_size*/1, /*exlusive_size*/0);
 
   res = lock_mgr.LockExclusive(txn, rid1);
   EXPECT_TRUE(res);
@@ -106,15 +106,11 @@ void TwoPLTest() {
 
   try {
     lock_mgr.LockShared(txn, rid0);
-    CheckAborted(txn);
-    // Size shouldn't change here
-    CheckTxnLockSize(txn, 0, 1);
   } catch (TransactionAbortException &e) {
-    // std::cout << e.GetInfo() << std::endl;
-    CheckAborted(txn);
-    // Size shouldn't change here
-    CheckTxnLockSize(txn, 0, 1);
+    std::cout << e.GetInfo() << std::endl;
   }
+  CheckAborted(txn);
+  CheckTxnLockSize(txn, 0, 1);
 
   // Need to call txn_mgr's abort
   txn_mgr.Abort(txn);
@@ -123,7 +119,7 @@ void TwoPLTest() {
 
   delete txn;
 }
-TEST(LockManagerTest, DISABLED_TwoPLTest) { TwoPLTest(); }
+TEST(LockManagerTest, TwoPLTest) { TwoPLTest(); }
 
 void UpgradeTest() {
   LockManager lock_mgr{};
@@ -150,7 +146,7 @@ void UpgradeTest() {
   txn_mgr.Commit(&txn);
   CheckCommitted(&txn);
 }
-TEST(LockManagerTest, DISABLED_UpgradeLockTest) { UpgradeTest(); }
+TEST(LockManagerTest, UpgradeLockTest) { UpgradeTest(); }
 
 TEST(LockManagerTest, DISABLED_GraphEdgeTest) {
   LockManager lock_mgr{};

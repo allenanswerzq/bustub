@@ -58,6 +58,7 @@ void TransactionManager::Commit(Transaction *txn) {
 
 void TransactionManager::Abort(Transaction *txn) {
   txn->SetState(TransactionState::ABORTED);
+
   // Rollback before releasing the lock.
   auto table_write_set = txn->GetWriteSet();
   while (!table_write_set->empty()) {
@@ -102,6 +103,9 @@ void TransactionManager::Abort(Transaction *txn) {
 
   // Release all the locks.
   ReleaseLocks(txn);
+
+  txn->SetState(TransactionState::ABORTED);
+
   // Release the global transaction latch.
   global_txn_latch_.RUnlock();
 }
